@@ -2,48 +2,16 @@ const rates = { base: 85, perKm: 1.65, perTonne: 18, fragile: 1.12, temperature:
 const header = document.querySelector('.site-header');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-const brandMarkup = `
-  <picture>
-    <source media="(max-width: 480px)" srcset="assets/brand/asma-crest-short.svg">
-    <img class="brand-logo" src="assets/brand/asma-full.svg" alt="ASMA Lines">
-  </picture>`;
-
-document.querySelectorAll('.brand').forEach((brand) => {
-  brand.innerHTML = brandMarkup;
-});
-
 if (!document.querySelector('link[rel="icon"]')) {
   const favicon = document.createElement('link');
   favicon.rel = 'icon';
   favicon.type = 'image/svg+xml';
-  favicon.href = 'assets/brand/asma-crest-short.svg';
+  favicon.href = 'assets/brand/asma-mark.svg';
   document.head.append(favicon);
 }
 
 if (header) {
-  if (!document.querySelector('.top-line')) {
-    header.insertAdjacentHTML('beforebegin', `
-      <div class="top-line"><div class="top-line-inner">
-        <span><strong>ASMA LINES</strong> · Внутренние перевозки по Беларуси</span>
-        <span>Гомель · Беларусь</span>
-      </div></div>`);
-  }
-
-  const navigation = header.querySelector('nav');
-  if (navigation && !navigation.querySelector('a[href="faq.html"]')) {
-    navigation.insertAdjacentHTML('beforeend', '<a href="faq.html">FAQ</a>');
-  }
-
-  const menuButton = header.querySelector('.menu-toggle');
-  if (menuButton && !header.querySelector('.theme-toggle')) {
-    menuButton.insertAdjacentHTML('beforebegin', '<button class="theme-toggle" type="button" aria-label="Переключить цветовую тему" title="Переключить тему">◐</button>');
-  }
-
-  if (!document.querySelector('.floating-contact')) {
-    document.body.insertAdjacentHTML('beforeend', '<a class="floating-contact" href="contacts.html" aria-label="Перейти к контактам">↗</a>');
-  }
-
-  const setHeaderState = () => header.classList.toggle('is-scrolled', window.scrollY > 12);
+  const setHeaderState = () => header.classList.toggle('is-scrolled', window.scrollY > 8);
   setHeaderState();
   window.addEventListener('scroll', setHeaderState, { passive: true });
 }
@@ -55,7 +23,7 @@ function setTheme(dark) {
   document.body.dataset.theme = dark ? 'dark' : '';
   localStorage.setItem('asma-theme', dark ? 'dark' : 'light');
   if (themeButton) {
-    themeButton.textContent = dark ? '☼' : '◐';
+    themeButton.textContent = dark ? '☀' : '◐';
     themeButton.setAttribute('aria-label', dark ? 'Включить светлую тему' : 'Включить тёмную тему');
   }
 }
@@ -68,7 +36,7 @@ if (themeButton) {
 document.querySelectorAll('[data-year]').forEach((node) => { node.textContent = new Date().getFullYear(); });
 
 const menu = document.querySelector('.menu-toggle');
-const nav = document.querySelector('nav');
+const nav = document.querySelector('#main-nav');
 if (menu && nav) {
   menu.addEventListener('click', () => {
     const open = nav.classList.toggle('open');
@@ -84,15 +52,9 @@ if (menu && nav) {
   }));
 }
 
-const revealTargets = document.querySelectorAll([
-  '.hero-copy', '.hero-stage', '.page-title > *', '.section > h2', '.section > .grid',
-  '.section > .split', '.card', '.metrics article', '.calculator', '.quote',
-  '.contact-form', '.contacts > div', '.faq-item', '.checks'
-].join(','));
-
+const revealTargets = document.querySelectorAll('[data-reveal]');
 revealTargets.forEach((node, index) => {
-  node.dataset.reveal = '';
-  node.style.transitionDelay = `${Math.min((index % 5) * 55, 180)}ms`;
+  node.style.transitionDelay = `${Math.min((index % 4) * 60, 180)}ms`;
 });
 
 if (reducedMotion || !('IntersectionObserver' in window)) {
@@ -105,7 +67,7 @@ if (reducedMotion || !('IntersectionObserver' in window)) {
         activeObserver.unobserve(entry.target);
       }
     });
-  }, { threshold: .12 });
+  }, { threshold: .14 });
   revealTargets.forEach((node) => observer.observe(node));
 }
 
