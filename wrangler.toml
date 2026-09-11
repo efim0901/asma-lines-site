@@ -1,8 +1,5 @@
 name = "asma-lines-site"
 compatibility_date = "2026-09-10"
 
-# Входная точка для обработки API-запросов
-main = "src/worker.js"
-
 [assets]
 directory = "."
