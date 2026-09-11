@@ -3,3 +3,10 @@ compatibility_date = "2026-09-10"
 
 [assets]
 directory = "."
+
+# Подготовка к интеграции с Bitrix24 (ТЗ п.22)
+# Раскомментируйте блок ниже, когда добавите src/worker.js для обработки /api/lead
+# main = "src/worker.js"
+
+# [vars]
+# BITRIX24_WEBHOOK_URL = "https://your-domain.bitrix24.ru/rest/1/secret_hash/crm.item.add.json"
