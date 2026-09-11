@@ -1,7 +1,18 @@
+/* ============================================================
+   ASMA Lines — site script
+   ------------------------------------------------------------
+   Forms are prepared for Bitrix24 via a server-side proxy.
+   Intended flow (see TZ §22):
+     site → /api/lead → Cloudflare Worker → Bitrix24 REST API
+   Never place the Bitrix24 webhook in client-side code.
+   ============================================================ */
+
 const rates = { base: 85, perKm: 1.65, perTonne: 18, fragile: 1.12, temperature: 1.28, loading: 45 };
+
 const header = document.querySelector('.site-header');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/* favicon fallback */
 if (!document.querySelector('link[rel="icon"]')) {
   const favicon = document.createElement('link');
   favicon.rel = 'icon';
@@ -10,12 +21,14 @@ if (!document.querySelector('link[rel="icon"]')) {
   document.head.append(favicon);
 }
 
+/* sticky header border */
 if (header) {
-  const setHeaderState = () => header.classList.toggle('is-scrolled', window.scrollY > 8);
+  const setHeaderState = () => header.classList.toggle('is-scrolled', window.scrollY > 4);
   setHeaderState();
   window.addEventListener('scroll', setHeaderState, { passive: true });
 }
 
+/* theme */
 const themeButton = document.querySelector('.theme-toggle');
 const savedTheme = localStorage.getItem('asma-theme');
 
@@ -33,11 +46,14 @@ if (themeButton) {
   themeButton.addEventListener('click', () => setTheme(document.body.dataset.theme !== 'dark'));
 }
 
+/* year */
 document.querySelectorAll('[data-year]').forEach((node) => { node.textContent = new Date().getFullYear(); });
 
+/* mobile menu */
 const menu = document.querySelector('.menu-toggle');
 const nav = document.querySelector('#main-nav');
 function setMenuOpen(open) {
+  if (!nav || !menu) return;
   nav.classList.toggle('open', open);
   menu.classList.toggle('is-open', open);
   menu.setAttribute('aria-expanded', String(open));
@@ -56,9 +72,10 @@ if (menu && nav) {
   });
 }
 
+/* reveal on scroll */
 const revealTargets = document.querySelectorAll('[data-reveal]');
 revealTargets.forEach((node, index) => {
-  node.style.transitionDelay = `${Math.min((index % 4) * 60, 180)}ms`;
+  node.style.transitionDelay = `${Math.min((index % 4) * 50, 150)}ms`;
 });
 
 if (reducedMotion || !('IntersectionObserver' in window)) {
@@ -71,10 +88,32 @@ if (reducedMotion || !('IntersectionObserver' in window)) {
         activeObserver.unobserve(entry.target);
       }
     });
-  }, { threshold: .14 });
+  }, { threshold: .12 });
   revealTargets.forEach((node) => observer.observe(node));
 }
 
+/* ------------------------------------------------------------
+   Shared submit helper for Bitrix24 (server-side proxy).
+   Replace the fetch body with the actual endpoint when ready.
+   ------------------------------------------------------------ */
+async function submitLead(payload, statusNode, successMessage) {
+  if (statusNode) statusNode.textContent = 'Отправляем…';
+  try {
+    const response = await fetch('/api/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error('request_failed');
+    if (statusNode) statusNode.textContent = successMessage;
+    return true;
+  } catch (error) {
+    if (statusNode) statusNode.textContent = 'Не удалось отправить заявку. Попробуйте ещё раз или свяжитесь с нами по телефону.';
+    return false;
+  }
+}
+
+/* calculator */
 const calculator = document.querySelector('#calculator');
 if (calculator) {
   calculator.addEventListener('submit', (event) => {
@@ -86,34 +125,54 @@ if (calculator) {
     if (data.get('cargo') === 'fragile') total *= rates.fragile;
     if (data.get('cargo') === 'temperature') total *= rates.temperature;
     if (data.get('loading')) total += rates.loading;
+    const estimate = Math.round(total);
 
     document.querySelector('.quote-label').textContent = `${data.get('from')} → ${data.get('to')}`;
-    document.querySelector('#quote-total').textContent = `от ${Math.round(total).toLocaleString('ru-RU')} BYN`;
+    document.querySelector('#quote-total').textContent = `от ${estimate.toLocaleString('ru-RU')} BYN`;
     document.querySelector('#quote-note').textContent = 'Предварительный расчёт. Финальная стоимость подтверждается менеджером после уточнения параметров перевозки.';
     document.querySelector('#quote-link').classList.remove('hidden');
-
-    // TODO(Bitrix24): payload ready for /api/lead, source: 'website_calculator'
-    // { from, to, distance: km, weight, cargo, loading: !!data.get('loading'), estimate: Math.round(total) }
   });
 }
 
+/* contact form */
 const contact = document.querySelector('[data-contact-form]');
 if (contact) {
-  contact.addEventListener('submit', (event) => {
+  contact.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(contact);
-    // TODO(Bitrix24): POST { name, contact, message, source: 'website_contacts' } to /api/lead
-    contact.querySelector('.form-status').textContent = 'Заявка отправлена. Мы свяжемся с вами в течение рабочего дня.';
-    contact.reset();
+    const ok = await submitLead({
+      name: data.get('name'),
+      contact: data.get('contact'),
+      message: data.get('message'),
+      source: 'website_contacts',
+    }, contact.querySelector('.form-status'), 'Заявка отправлена. Мы свяжемся с вами в течение рабочего дня.');
+    if (ok) contact.reset();
   });
 }
 
+/* partners form */
 const partnersForm = document.querySelector('[data-partners-form]');
 if (partnersForm) {
-  partnersForm.addEventListener('submit', (event) => {
+  partnersForm.addEventListener('submit', async (event) => {
     event.preventDefault();
-    // TODO(Bitrix24): POST { company, contact, direction, message, source: 'website_partners' } to /api/lead
-    partnersForm.querySelector('.form-status').textContent = 'Спасибо! Мы свяжемся с вами для обсуждения сотрудничества.';
-    partnersForm.reset();
+    const data = new FormData(partnersForm);
+    const ok = await submitLead({
+      company: data.get('company'),
+      contact_name: data.get('contact_name'),
+      contact: data.get('contact'),
+      direction: data.get('direction'),
+      message: data.get('message'),
+      source: 'website_partners',
+    }, partnersForm.querySelector('.form-status'), 'Спасибо! Мы свяжемся с вами для обсуждения сотрудничества.');
+    if (ok) partnersForm.reset();
   });
 }
+
+/* ------------------------------------------------------------
+   Optional: extend the calculator so users can send the estimate
+   to Bitrix24 as a lead. Example:
+     source: 'website_calculator',
+     from, to, distance, weight, cargo, loading, estimate
+   The /api/lead endpoint should map these to crm.item.add
+   with entityTypeId = 1.
+   ------------------------------------------------------------ */
