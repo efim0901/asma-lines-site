@@ -565,6 +565,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--wine); box-shado
   border-top: 1px solid var(--line);
   font-size: 13px;
   color: var(--steel);
+  flex-wrap: wrap;
 }
 
 /* ---------- roadmap (statistics page) ---------- */

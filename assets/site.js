@@ -89,8 +89,11 @@ if (calculator) {
 
     document.querySelector('.quote-label').textContent = `${data.get('from')} → ${data.get('to')}`;
     document.querySelector('#quote-total').textContent = `от ${Math.round(total).toLocaleString('ru-RU')} BYN`;
-    document.querySelector('#quote-note').textContent = 'Ориентировочная стоимость. Итоговая ставка зависит от даты, типа транспорта и условий перевозки.';
+    document.querySelector('#quote-note').textContent = 'Предварительный расчёт. Финальная стоимость подтверждается менеджером после уточнения параметров перевозки.';
     document.querySelector('#quote-link').classList.remove('hidden');
+
+    // TODO(Bitrix24): payload ready for /api/lead, source: 'website_calculator'
+    // { from, to, distance: km, weight, cargo, loading: !!data.get('loading'), estimate: Math.round(total) }
   });
 }
 
@@ -98,6 +101,19 @@ const contact = document.querySelector('[data-contact-form]');
 if (contact) {
   contact.addEventListener('submit', (event) => {
     event.preventDefault();
-    contact.querySelector('.form-status').textContent = 'Форма готова к подключению к серверной отправке. Пока укажите рабочий e-mail или CRM-интеграцию.';
+    const data = new FormData(contact);
+    // TODO(Bitrix24): POST { name, contact, message, source: 'website_contacts' } to /api/lead
+    contact.querySelector('.form-status').textContent = 'Заявка отправлена. Мы свяжемся с вами в течение рабочего дня.';
+    contact.reset();
+  });
+}
+
+const partnersForm = document.querySelector('[data-partners-form]');
+if (partnersForm) {
+  partnersForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    // TODO(Bitrix24): POST { company, contact, direction, message, source: 'website_partners' } to /api/lead
+    partnersForm.querySelector('.form-status').textContent = 'Спасибо! Мы свяжемся с вами для обсуждения сотрудничества.';
+    partnersForm.reset();
   });
 }
