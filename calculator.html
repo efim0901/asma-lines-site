@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Предварительный расчёт стоимости перевозки по Беларуси от ASMA Lines.">
 <title>Расчёт стоимости — ASMA Lines</title>
+<link rel="canonical" href="https://asmalines.by/calculator.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ASMA Lines">
+<meta property="og:title" content="Расчёт стоимости — ASMA Lines">
+<meta property="og:description" content="Предварительный расчёт стоимости перевозки по Беларуси от ASMA Lines.">
+<meta property="og:url" content="https://asmalines.by/calculator.html">
+<meta property="og:locale" content="ru_RU">
+<meta name="twitter:card" content="summary">
 <link rel="stylesheet" href="assets/style.css?v=20260911b">
 </head>
 <body>
@@ -60,6 +68,7 @@
         </select>
       </label>
       <label class="check-label"><input name="loading" type="checkbox"> Нужна помощь с погрузкой / разгрузкой</label>
+      <input type="hidden" name="source" value="website_calculator">
       <button class="btn btn-primary" type="submit">Рассчитать</button>
     </form>
 
@@ -67,13 +76,13 @@
       <p class="kicker" style="color:#f2c9cf">Ваш ориентир</p>
       <p class="quote-label">Заполните параметры перевозки</p>
       <strong id="quote-total">—</strong>
-      <p id="quote-note">Тарифы на этой странице настраиваются администратором перед запуском.</p>
+      <p id="quote-note">Укажите параметры перевозки, чтобы увидеть предварительный ориентир по стоимости.</p>
       <a id="quote-link" class="text-link hidden" href="contacts.html">Отправить заявку</a>
     </aside>
   </section>
 
   <section class="container note">
-    <p><b>Важно:</b> в бизнес-плане не приведены утверждённые тарифы. В коде используются стартовые значения-конфигурации; замените их на согласованную тарифную сетку перед публикацией сайта.</p>
+    <p><b>Важно:</b> расчёт даёт предварительный ориентир по стоимости. Финальная цена подтверждается менеджером после уточнения деталей перевозки — даты, типа транспорта и условий погрузки.</p>
   </section>
 </main>
 
@@ -107,6 +116,7 @@
   <div class="container footer-bottom">
     <span>© <span data-year></span> ASMA Lines</span>
     <span>Гомель, Беларусь</span>
+    <span>Юридические реквизиты будут опубликованы после регистрации компании</span>
   </div>
 </footer>
 <script src="assets/site.js?v=20260911b"></script>
