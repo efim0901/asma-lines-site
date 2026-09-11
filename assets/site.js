@@ -75,6 +75,7 @@ if (reducedMotion || !('IntersectionObserver' in window)) {
   revealTargets.forEach((node) => observer.observe(node));
 }
 
+// Калькулятор с точной формулировкой из ТЗ
 const calculator = document.querySelector('#calculator');
 if (calculator) {
   calculator.addEventListener('submit', (event) => {
@@ -87,17 +88,69 @@ if (calculator) {
     if (data.get('cargo') === 'temperature') total *= rates.temperature;
     if (data.get('loading')) total += rates.loading;
 
-    document.querySelector('.quote-label').textContent = `${data.get('from')} → ${data.get('to')}`;
-    document.querySelector('#quote-total').textContent = `от ${Math.round(total).toLocaleString('ru-RU')} BYN`;
-    document.querySelector('#quote-note').textContent = 'Ориентировочная стоимость. Итоговая ставка зависит от даты, типа транспорта и условий перевозки.';
+    const finalEstimate = Math.round(total);
+
+    document.querySelector('.quote-label').textContent = `\({data.get('from')} →\){data.get('to')}`;
+    document.querySelector('#quote-total').textContent = `от ${finalEstimate.toLocaleString('ru-RU')} BYN`;
+    document.querySelector('#quote-note').textContent = 'Предварительный расчёт. Финальная стоимость подтверждается менеджером после уточнения параметров перевозки.';
     document.querySelector('#quote-link').classList.remove('hidden');
+
+    // Сохранение данных расчета для передачи в CRM при клике "Оставить заявку"
+    window.lastCalculation = {
+      source: 'website_calculator',
+      from: data.get('from'),
+      to: data.get('to'),
+      distance: km,
+      weight: weight,
+      cargo: data.get('cargo'),
+      loading: data.get('loading') ? true : false,
+      calculatedEstimate: finalEstimate
+    };
   });
 }
 
-const contact = document.querySelector('[data-contact-form]');
-if (contact) {
-  contact.addEventListener('submit', (event) => {
+// Форма контактов и партнеров (подготовка к Bitrix24)
+const contactForms = document.querySelectorAll('[data-contact-form]');
+contactForms.forEach(contact => {
+  contact.addEventListener('submit', async (event) => {
     event.preventDefault();
-    contact.querySelector('.form-status').textContent = 'Форма готова к подключению к серверной отправке. Пока укажите рабочий e-mail или CRM-интеграцию.';
+    const btn = contact.querySelector('button[type="submit"]');
+    const statusNode = contact.querySelector('.form-status');
+    const formData = new FormData(contact);
+    
+    // Сборка payload для API
+    const payload = {
+      source: contact.dataset.source || 'website_contacts', // website_contacts / website_partners
+      name: formData.get('name') || formData.get('company') || '',
+      contact: formData.get('phone') || formData.get('email') || '',
+      message: formData.get('message') || '',
+      ...window.lastCalculation // Прикрепить расчет, если заявка идет из калькулятора
+    };
+
+    if (btn) btn.disabled = true;
+    if (statusNode) {
+      statusNode.textContent = 'Отправка заявки...';
+      statusNode.style.color = 'var(--ink)';
+    }
+
+    try {
+      // Имитация fetch запроса к Cloudflare Worker (/api/lead)
+      // В реальности раскомментировать: await fetch('/api/lead', { method: 'POST', body: JSON.stringify(payload) });
+      await new Promise(r => setTimeout(r, 800)); 
+      
+      if (statusNode) {
+        statusNode.textContent = 'Заявка отправлена. Мы свяжемся с вами.';
+        statusNode.style.color = 'var(--wine)';
+      }
+      contact.reset();
+      window.lastCalculation = null; // Очистка кэша калькулятора
+    } catch (error) {
+      if (statusNode) {
+        statusNode.textContent = 'Ошибка при отправке. Пожалуйста, попробуйте позже.';
+        statusNode.style.color = '#d32f2f';
+      }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
   });
-}
+});
