@@ -133,13 +133,13 @@ summary:focus-visible {
   align-items: center;
   gap: 2px;
   margin-left: auto;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 500;
 }
 
 #main-nav a {
   position: relative;
-  padding: 8px 11px;
+  padding: 7px 10px;
   border-radius: var(--r-sm);
   color: var(--ink-soft);
   white-space: nowrap;
@@ -228,8 +228,8 @@ body[data-theme='dark'] #main-nav a:hover { background: rgba(245, 241, 231, .07)
 .menu-toggle-box span:nth-child(2) { top: 4.5px; }
 .menu-toggle-box span:nth-child(3) { top: 9px; }
 
-.menu-toggle.is-open { background: var(--ink); border-color: var(--ink); }
-.menu-toggle.is-open .menu-toggle-box span { background: var(--on-ink); }
+.menu-toggle.is-open { background: rgba(110, 31, 44, .1); border-color: var(--wine); }
+.menu-toggle.is-open .menu-toggle-box span { background: var(--wine); }
 .menu-toggle.is-open .menu-toggle-box span:nth-child(1) { top: 4.5px; transform: rotate(45deg); }
 .menu-toggle.is-open .menu-toggle-box span:nth-child(2) { opacity: 0; }
 .menu-toggle.is-open .menu-toggle-box span:nth-child(3) { top: 4.5px; transform: rotate(-45deg); }
@@ -308,35 +308,8 @@ body[data-theme='dark'] .btn-ghost { background: rgba(255, 255, 255, .04); }
 .hero .lede { margin-left: auto; margin-right: auto; }
 .hero .actions { justify-content: center; margin-top: 34px; }
 
-.hero-visual {
-  position: relative;
-  max-width: 920px;
-  margin: clamp(48px, 8vw, 80px) auto 0;
-  padding: clamp(28px, 5vw, 56px);
-  border-radius: var(--r-lg);
-  border: 1px solid var(--line);
-  background: var(--glass-strong);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-}
-
-.hero-visual-inner {
-  position: relative;
-  display: grid;
-  place-items: center;
-  padding: clamp(20px, 6vw, 60px) 0;
-}
-
-.hero-mark {
-  width: min(220px, 42vw);
-  border-radius: var(--r-md);
-  box-shadow: 0 20px 46px rgba(27, 26, 24, .18);
-}
-
 .hero-caption {
-  margin-top: 26px;
+  margin-top: 28px;
   color: var(--steel);
   font-size: 14px;
 }
@@ -662,9 +635,15 @@ a.contact-tile .contact-tile-value { color: var(--wine); }
 
 /* ---------- responsive ---------- */
 
-/* collapse the top nav to a burger well before links start wrapping/overlapping */
-@media (max-width: 1080px) {
+/* on medium-narrow desktop/tablet windows, drop the CTA pill first to free up room
+   before the links themselves would ever need to wrap */
+@media (max-width: 1140px) {
   .nav-cta { display: none; }
+}
+
+/* collapse the top nav to a burger only for genuinely narrow (tablet/phone) viewports —
+   real desktop/laptop windows keep the full link row */
+@media (max-width: 860px) {
   .menu-toggle { display: grid; }
   #main-nav {
     position: absolute;

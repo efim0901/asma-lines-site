@@ -37,19 +37,23 @@ document.querySelectorAll('[data-year]').forEach((node) => { node.textContent = 
 
 const menu = document.querySelector('.menu-toggle');
 const nav = document.querySelector('#main-nav');
+function setMenuOpen(open) {
+  nav.classList.toggle('open', open);
+  menu.classList.toggle('is-open', open);
+  menu.setAttribute('aria-expanded', String(open));
+  menu.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
+}
 if (menu && nav) {
-  menu.addEventListener('click', () => {
-    const open = nav.classList.toggle('open');
-    menu.setAttribute('aria-expanded', String(open));
-    menu.textContent = open ? 'Закрыть' : 'Меню';
-  });
-  nav.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => {
-    if (nav.classList.contains('open')) {
-      nav.classList.remove('open');
-      menu.setAttribute('aria-expanded', 'false');
-      menu.textContent = 'Меню';
+  menu.addEventListener('click', () => setMenuOpen(!nav.classList.contains('open')));
+  nav.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => setMenuOpen(false)));
+  document.addEventListener('click', (event) => {
+    if (nav.classList.contains('open') && !nav.contains(event.target) && !menu.contains(event.target)) {
+      setMenuOpen(false);
     }
-  }));
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && nav.classList.contains('open')) setMenuOpen(false);
+  });
 }
 
 const revealTargets = document.querySelectorAll('[data-reveal]');
