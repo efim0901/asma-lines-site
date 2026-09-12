@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Предварительный расчёт стоимости перевозки от ASMA Lines. Ориентир по маршруту, весу и типу груза.">
+<meta name="description" content="Интерактивный расчёт стоимости перевозки от ASMA Lines. Укажите маршрут на карте — сервис покажет ориентир по стоимости.">
 <title>Расчёт стоимости — ASMA Lines</title>
 <link rel="canonical" href="https://asmalines.by/calculator.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ASMA Lines">
 <meta property="og:title" content="Расчёт стоимости — ASMA Lines">
-<meta property="og:description" content="Предварительный расчёт стоимости перевозки от ASMA Lines.">
+<meta property="og:description" content="Интерактивный предварительный расчёт стоимости перевозки от ASMA Lines.">
 <meta property="og:url" content="https://asmalines.by/calculator.html">
 <meta property="og:locale" content="ru_RU">
 <meta name="twitter:card" content="summary">
-<link rel="stylesheet" href="assets/style.css?v=20260912b">
+<link rel="stylesheet" href="assets/style.css?v=20260913a">
 </head>
 <body>
 <header class="site-header">
@@ -54,9 +54,9 @@
     <div class="hero-photo__overlay"></div>
     <div class="hero-photo__inner container">
       <div class="hero-photo__content">
-        <p class="kicker">Предварительный расчёт</p>
+        <p class="kicker">Интерактивный расчёт</p>
         <h1 class="display-1">Стоимость перевозки</h1>
-        <p class="lede">Укажите параметры — сервис даст ориентир. Финальную ставку подтверждает менеджер после согласования условий.</p>
+        <p class="lede">Начните вводить города — они появятся на карте. Стоимость пересчитывается мгновенно, прямо во время ввода.</p>
       </div>
     </div>
     <div class="hero-photo__badge">
@@ -68,30 +68,77 @@
     <form id="calculator" class="calculator">
       <div class="card-head">
         <h3 class="display-3">Параметры перевозки</h3>
-        <p>Заполните поля, чтобы получить ориентир по стоимости</p>
+        <p>Расчёт обновляется автоматически — кнопка не нужна</p>
       </div>
-      <label>Маршрут — откуда<input name="from" required placeholder="Город или адрес"></label>
-      <label>Маршрут — куда<input name="to" required placeholder="Город или адрес"></label>
-      <div class="form-row">
-        <label>Расстояние, км<input name="distance" required type="number" min="1" placeholder="Например, 310"></label>
-        <label>Вес груза, т<input name="weight" required type="number" min="0.1" step="0.1" placeholder="Например, 2.5"></label>
-      </div>
-      <label>Тип груза
-        <select name="cargo">
-          <option value="standard">Стандартный</option>
-          <option value="fragile">Хрупкий</option>
-          <option value="temperature">Температурный режим</option>
-        </select>
+
+      <label>Маршрут — откуда
+        <input name="from" id="calc-from" placeholder="Например: Гомель" autocomplete="off" list="city-list">
       </label>
-      <label class="check-label"><input name="loading" type="checkbox"> Нужна помощь с погрузкой / разгрузкой</label>
+      <label>Маршрут — куда
+        <input name="to" id="calc-to" placeholder="Например: Минск" autocomplete="off" list="city-list">
+      </label>
+      <datalist id="city-list"></datalist>
+
+      <label>Расстояние, км
+        <span class="range-row">
+          <input name="distance" id="calc-distance" type="number" min="1" max="2000" inputmode="numeric" placeholder="Например, 310">
+          <input name="distance-range" id="calc-distance-range" type="range" min="1" max="700" step="1" value="310" aria-label="Расстояние по ползунку">
+        </span>
+      </label>
+
+      <label>Вес груза, т
+        <input name="weight" id="calc-weight" type="number" min="0.1" max="40" step="0.1" inputmode="decimal" placeholder="Например, 2.5">
+      </label>
+      <div class="weight-chips" role="group" aria-label="Быстрый выбор веса">
+        <button type="button" data-weight="0.5">0,5 т</button>
+        <button type="button" data-weight="1">1 т</button>
+        <button type="button" data-weight="2.5">2,5 т</button>
+        <button type="button" data-weight="5">5 т</button>
+        <button type="button" data-weight="10">10 т</button>
+        <button type="button" data-weight="20">20 т</button>
+      </div>
+
+      <fieldset class="cargo-chips">
+        <legend>Тип груза</legend>
+        <label><input type="radio" name="cargo" value="standard" checked><span>Стандартный</span></label>
+        <label><input type="radio" name="cargo" value="fragile"><span>Хрупкий</span></label>
+        <label><input type="radio" name="cargo" value="temperature"><span>Температурный</span></label>
+      </fieldset>
+
+      <label class="check-label"><input name="loading" id="calc-loading" type="checkbox"> Нужна помощь с погрузкой / разгрузкой</label>
+
       <input type="hidden" name="source" value="website_calculator">
-      <button class="btn btn-primary" type="submit">Рассчитать</button>
     </form>
 
     <aside class="quote" aria-live="polite">
       <p class="kicker">Ваш ориентир</p>
-      <p class="quote-label">Заполните параметры перевозки</p>
+
+      <div class="calc-map" id="calc-map-wrap">
+        <svg id="calc-map" viewBox="0 0 520 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Карта Беларуси с маршрутом">
+          <path class="map-border" d="M28 210 L25 296 L33 342 L92 372 L184 384 L250 376 L326 388 L403 373 L443 331 L464 296 L449 239 L428 188 L459 127 L446 81 L403 19 L367 19 L316 38 L265 23 L214 31 L194 54 L158 58 L117 69 L110 115 L120 158 L97 188 L56 188 L31 208 Z"/>
+          <path id="route-path" class="route-path" d="" fill="none"/>
+          <g id="map-truck" class="map-truck" visibility="hidden">
+            <rect x="-8" y="-5" width="11" height="7" rx="1.5"/>
+            <rect x="3" y="-3" width="5" height="5" rx="1"/>
+            <circle cx="-4.5" cy="3.5" r="1.8"/>
+            <circle cx="2" cy="3.5" r="1.8"/>
+            <circle cx="6" cy="3.5" r="1.8"/>
+          </g>
+          <g id="map-cities"></g>
+        </svg>
+        <p class="calc-hint" id="calc-hint">Начните вводить город — он появится на карте</p>
+      </div>
+
+      <p class="quote-label" id="quote-label">Заполните параметры перевозки</p>
       <strong id="quote-total">—</strong>
+
+      <div class="quote-breakdown" id="quote-breakdown" hidden>
+        <div class="qd-row"><span>Подача</span><div class="qd-bar"><i id="qd-base"></i></div><b id="qd-base-v"></b></div>
+        <div class="qd-row"><span>Километраж</span><div class="qd-bar"><i id="qd-km"></i></div><b id="qd-km-v"></b></div>
+        <div class="qd-row"><span>Вес</span><div class="qd-bar"><i id="qd-t"></i></div><b id="qd-t-v"></b></div>
+      </div>
+      <p class="quote-multi" id="quote-multi" hidden></p>
+
       <p id="quote-note">Укажите параметры перевозки, чтобы увидеть предварительный ориентир по стоимости.</p>
       <a id="quote-link" class="text-link hidden" href="contacts.html">Отправить заявку</a>
     </aside>
@@ -129,6 +176,6 @@
     </div>
   </div>
 </footer>
-<script src="assets/site.js?v=20260912b"></script>
+<script src="assets/site.js?v=20260913a"></script>
 </body>
-</html>      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav" aria-label="Открыть меню">
+</html>
