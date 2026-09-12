@@ -336,6 +336,87 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -.022em; }
   border: 0;
 }
 
+/* ---------- photographic hero media ---------- */
+/* NOTE: rendered as original brand illustration (SVG), not a licensed
+   photograph. Swap the background-image for a licensed photo of a
+   truck/road before launch if a photographic look is preferred. */
+.hero-media {
+  position: relative;
+  margin-top: clamp(36px, 5vw, 56px);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  aspect-ratio: 16/7;
+  background:
+    linear-gradient(180deg, rgba(20,17,15,0) 40%, rgba(15,12,10,.92) 100%),
+    linear-gradient(100deg, #2b1116 0%, #4a1620 32%, #7a2a2f 55%, #b6602f 78%, #e2a24a 100%);
+}
+.hero-media svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hero-media-badge {
+  position: absolute;
+  right: clamp(16px, 3vw, 32px);
+  bottom: clamp(16px, 3vw, 32px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: var(--r-md);
+  background: rgba(107, 30, 45, .88);
+  color: var(--on-ink);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  backdrop-filter: blur(6px);
+}
+.hero-media-badge .sep { color: var(--on-ink-soft); font-weight: 400; }
+
+/* compact media band used on inner page titles */
+.title-media {
+  position: relative;
+  margin-top: clamp(28px, 4vw, 40px);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  aspect-ratio: 21/6;
+  background:
+    linear-gradient(180deg, rgba(19,19,17,.15) 0%, rgba(15,12,10,.94) 100%),
+    linear-gradient(110deg, #241417 0%, #4a1620 40%, #6f2a2c 70%, #a9683a 100%);
+}
+.title-media svg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .9; }
+.title-media-tag {
+  position: absolute;
+  left: clamp(16px, 3vw, 28px);
+  bottom: clamp(14px, 2.4vw, 22px);
+  color: var(--on-ink);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  opacity: .85;
+}
+
+/* ---------- route / coverage map ---------- */
+.route-section {
+  border-radius: var(--r-lg);
+  margin: 0 auto;
+  max-width: var(--max);
+  padding: clamp(48px, 7vw, 84px) clamp(28px, 6vw, 72px);
+  background: var(--charcoal);
+  color: var(--on-ink);
+  display: grid;
+  grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+  gap: clamp(32px, 5vw, 64px);
+  align-items: center;
+}
+.route-section .kicker { color: #e2a24a; }
+.route-section h2 { color: var(--on-ink); }
+.route-section p { color: var(--on-ink-soft); margin-top: 14px; }
+.route-map { position: relative; }
+.route-map svg { width: 100%; height: auto; display: block; }
+.route-map .city-label { font: 600 11px/1 Inter, sans-serif; fill: var(--on-ink-soft); letter-spacing: .02em; }
+.route-map .city-label.origin { fill: #e2a24a; font-weight: 700; }
+.route-map .city-dot { fill: var(--on-ink-soft); }
+.route-map .city-dot.origin { fill: #e2a24a; }
+.route-map .route-line { stroke: rgba(248,247,239,.28); stroke-width: 1.4; stroke-dasharray: 3 4; fill: none; }
+
 /* ---------- direction strip ---------- */
 .directions {
   display: flex;
@@ -407,6 +488,30 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -.022em; }
   letter-spacing: -.012em;
 }
 .service p { margin: 0; color: var(--ink-soft); font-size: 14.5px; line-height: 1.6; }
+
+/* ---------- illustrated service cards (grid with visual thumb) ---------- */
+.service-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.service-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--surface);
+  transition: border-color .2s var(--ease), transform .2s var(--ease);
+}
+.service-card:hover { border-color: var(--line-strong); transform: translateY(-2px); }
+.service-thumb {
+  aspect-ratio: 16/10;
+  position: relative;
+  background: linear-gradient(135deg, #2b1116 0%, #6f2a2c 55%, #b6602f 100%);
+}
+.service-thumb svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.service-card-body { padding: 22px 24px 26px; }
+.service-card-body h3 { font-size: 17px; font-weight: 600; margin: 0 0 8px; letter-spacing: -.01em; }
+.service-card-body p { margin: 0 0 14px; color: var(--ink-soft); font-size: 14.5px; line-height: 1.6; }
 
 /* ---------- steps (how we work) ---------- */
 .steps {
@@ -726,7 +831,21 @@ a.contact-tile .contact-tile-value { color: var(--burgundy); }
 }
 .footer-brand .brand { margin-bottom: 16px; }
 .footer-brand .brand-logo { width: 28px; height: 28px; }
-.footer-brand p { max-width: 280px; margin: 0; color: var(--ink-mute); font-size: 13.5px; line-height: 1.6; }
+.footer-brand p { max-width: 280px; margin: 0 0 18px; color: var(--ink-mute); font-size: 13.5px; line-height: 1.6; }
+
+.footer-social { display: flex; gap: 10px; }
+.footer-social a {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  color: var(--ink-mute);
+  transition: border-color .18s var(--ease), color .18s var(--ease);
+}
+.footer-social a:hover { border-color: var(--burgundy); color: var(--burgundy); }
+.footer-social svg { width: 15px; height: 15px; }
 
 .footer-heading {
   margin: 0 0 16px;
@@ -818,12 +937,17 @@ a.contact-tile .contact-tile-value { color: var(--burgundy); }
   .roadmap-item { grid-template-columns: 1fr; gap: 8px; }
   .footer-grid { grid-template-columns: 1fr 1fr; gap: 36px 24px; }
   .footer-brand { grid-column: 1 / -1; }
+  .route-section { grid-template-columns: 1fr; }
+  .service-grid { grid-template-columns: 1fr; }
+  .hero-media { aspect-ratio: 4/3; }
 }
 
 @media (max-width: 640px) {
   .services, .steps { grid-template-columns: 1fr; }
   .step-item { padding-left: 0 !important; padding-right: 0 !important; border-right: 0 !important; }
   .grid.two, .metrics { grid-template-columns: 1fr; }
+  .title-media { aspect-ratio: 16/10; }
+  .hero-media-badge { font-size: 12px; padding: 10px 14px; }
   .form-row { grid-template-columns: 1fr; }
   .band { flex-direction: column; align-items: flex-start; text-align: left; }
   .footer-grid { grid-template-columns: 1fr; gap: 28px; }
