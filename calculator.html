@@ -50,7 +50,7 @@
 
 <main>
   <section class="hero-photo hero-photo--inner">
-    <div class="hero-photo__bg" style="background-image:linear-gradient(120deg,#1a1210 0%,#3a1c1c 60%,#7a3a2e 100%), url('assets/img/calc-road.jpg')"></div>
+    <div class="hero-photo__bg" style="background-image:linear-gradient(120deg,#1a1210 0%,#3a1c1c 60%,#7a3a2e 100%), url('assets/img/calc-road.png')"></div>
     <div class="hero-photo__overlay"></div>
     <div class="hero-photo__inner container">
       <div class="hero-photo__content">
@@ -132,90 +132,3 @@
 <script src="assets/site.js?v=20260912b"></script>
 </body>
 </html>      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav" aria-label="Открыть меню">
-        <span class="menu-toggle-box"><span></span><span></span><span></span></span>
-      </button>
-    </div>
-  </div>
-</header>
-
-<main>
-  <section class="page-title container compact">
-    <p class="kicker">Предварительный расчёт</p>
-    <h1 class="display-1">Стоимость перевозки</h1>
-    <p class="lede">Укажите параметры — сервис даст ориентир. Финальную ставку подтверждает менеджер после согласования условий.</p>
-  </section>
-
-  <section class="section container calculator-layout">
-    <form id="calculator" class="calculator">
-      <div class="card-head">
-        <h3 class="display-3">Параметры перевозки</h3>
-        <p>Заполните все поля для точного ориентира</p>
-      </div>
-      <label>Откуда<input name="from" required placeholder="Город или адрес"></label>
-      <label>Куда<input name="to" required placeholder="Город или адрес"></label>
-      <div class="form-row">
-        <label>Расстояние, км<input name="distance" required type="number" min="1" placeholder="Например, 310"></label>
-        <label>Вес груза, т<input name="weight" required type="number" min="0.1" step="0.1" placeholder="Например, 2.5"></label>
-      </div>
-      <label>Тип груза
-        <select name="cargo">
-          <option value="standard">Стандартный</option>
-          <option value="fragile">Хрупкий</option>
-          <option value="temperature">Температурный режим</option>
-        </select>
-      </label>
-      <label class="check-label"><input name="loading" type="checkbox"> Нужна помощь с погрузкой / разгрузкой</label>
-      <input type="hidden" name="source" value="website_calculator">
-      <button class="btn btn-primary" type="submit">Рассчитать</button>
-    </form>
-
-    <aside class="quote" aria-live="polite">
-      <p class="kicker">Ваш ориентир</p>
-      <p class="quote-label">Заполните параметры перевозки</p>
-      <strong id="quote-total">—</strong>
-      <p id="quote-note">Укажите параметры перевозки, чтобы увидеть предварительный ориентир по стоимости.</p>
-      <a id="quote-link" class="text-link hidden" href="contacts.html">Отправить заявку</a>
-    </aside>
-  </section>
-
-  <section class="container note">
-    <p><b>Важно:</b> расчёт даёт предварительный ориентир по стоимости. Финальная цена подтверждается менеджером после уточнения деталей перевозки — даты, типа транспорта и условий погрузки.</p>
-  </section>
-</main>
-
-<footer class="site-footer">
-  <div class="container footer-grid">
-    <div class="footer-brand">
-      <a class="brand" href="index.html">
-        <img class="brand-logo" src="assets/brand/asma-mark.svg" alt="" width="28" height="28">
-        <span>ASMA <i>Lines</i></span>
-      </a>
-      <p>Автомобильные грузоперевозки для бизнеса. Гомель, Беларусь.</p>
-    </div>
-    <div class="footer-col">
-      <p class="footer-heading">Компания</p>
-      <a href="about.html">О нас</a>
-      <a href="partners.html">Партнёры</a>
-      <a href="statistics.html">Статистика</a>
-    </div>
-    <div class="footer-col">
-      <p class="footer-heading">Сервис</p>
-      <a href="calculator.html">Расчёт стоимости</a>
-      <a href="faq.html">FAQ</a>
-      <a href="contacts.html">Контакты</a>
-    </div>
-    <div class="footer-col">
-      <p class="footer-heading">Связь</p>
-      <a href="tel:+375000000000">+375 (00) 000-00-00</a>
-      <a href="mailto:hello@asmalines.by">hello@asmalines.by</a>
-    </div>
-  </div>
-  <div class="container footer-bottom">
-    <span>© <span data-year></span> ASMA Lines · Гомель, Беларусь</span>
-    <a href="privacy.html">Политика конфиденциальности</a>
-    <span>Юридические реквизиты будут опубликованы после регистрации компании</span>
-  </div>
-</footer>
-<script src="assets/site.js?v=20260911c"></script>
-</body>
-</html>
