@@ -1,5 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600&display=swap');
 
 /* ============================================================
    ASMA Lines — design tokens
@@ -404,40 +403,48 @@ h1, h2, h3 { margin: 0; font-weight: 700; letter-spacing: -.024em; }
 .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .grid.five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 
-/* ---------- numbered steps ---------- */
-.steps {
+/* ---------- step cards (how we work) ---------- */
+.step-cards {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0;
-  border-top: 1px solid var(--line);
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.step-item {
-  position: relative;
-  padding: 32px 24px 36px 0;
-  border-bottom: 1px solid var(--line);
-  border-right: 1px solid var(--line);
+.step-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  transition: border-color .25s var(--ease), transform .25s var(--ease), box-shadow .25s var(--ease);
 }
-.step-item:not(:first-child) { padding-left: 24px; }
-.step-item:last-child { border-right: 0; }
-.step-num {
-  display: block;
-  margin-bottom: 26px;
+.step-card:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+.step-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--brand-soft);
   color: var(--burgundy);
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-style: italic;
-  font-weight: 600;
-  font-size: 30px;
-  line-height: 1;
-  letter-spacing: 0;
 }
-.step-item h3 {
-  font-size: 15px;
+.step-icon svg { width: 22px; height: 22px; }
+.step-card .timeline-step { margin-bottom: 0; }
+.step-card h3 {
+  font-size: 14px;
   font-weight: 700;
-  margin-bottom: 10px;
   letter-spacing: .04em;
   text-transform: uppercase;
 }
-.step-item p { margin: 0; color: var(--ink-soft); font-size: 14.5px; line-height: 1.6; }
+.step-card p { margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.6; }
 
 /* ---------- dark sections ---------- */
 .dark-section {
@@ -938,11 +945,7 @@ a.contact-tile .contact-tile-value { color: var(--burgundy); }
 /* 5-col blocks → 2 col */
 @media (max-width: 1040px) {
   .principles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .step-item { padding-left: 24px !important; padding-right: 24px; }
-  .step-item:nth-child(2n) { border-right: 0; padding-right: 0; }
-  .step-item:nth-child(2n+1) { padding-left: 0 !important; }
-  .step-item:nth-child(2n+1):last-child { border-right: 0; }
+  .step-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
@@ -1002,8 +1005,7 @@ a.contact-tile .contact-tile-value { color: var(--burgundy); }
 
 @media (max-width: 640px) {
   :root { --gutter: 20px; }
-  .steps, .principles { grid-template-columns: 1fr; }
-  .step-item { padding-left: 0 !important; padding-right: 0 !important; border-right: 0 !important; }
+  .step-cards, .principles { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .footer-bottom { flex-direction: column; align-items: flex-start; gap: 8px; }
   .footer-bar { flex-direction: column; align-items: flex-start; }
