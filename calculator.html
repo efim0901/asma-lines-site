@@ -13,7 +13,8 @@
 <meta property="og:url" content="https://asmalines.by/calculator.html">
 <meta property="og:locale" content="ru_RU">
 <meta name="twitter:card" content="summary">
-<link rel="stylesheet" href="assets/style.css?v=20260913d">
+<link rel="stylesheet" href="assets/style.css?v=20260913f">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 </head>
 <body>
 <header class="site-header">
@@ -56,7 +57,7 @@
       <div class="hero-photo__content">
         <p class="kicker">Интерактивный расчёт</p>
         <h1 class="display-1">Стоимость перевозки</h1>
-        <p class="lede">Начните вводить города — они появятся на карте. Стоимость пересчитывается мгновенно, прямо во время ввода.</p>
+        <p class="lede">Введите любой населённый пункт Беларуси — от областного центра до деревни. Расстояние по дорогам и маршрут на карте определяются автоматически, стоимость пересчитывается мгновенно.</p>
       </div>
     </div>
     <div class="hero-photo__badge">
@@ -72,12 +73,29 @@
       </div>
 
       <label>Маршрут — откуда
-        <input name="from" id="calc-from" placeholder="Например: Гомель" autocomplete="off" list="city-list">
+        <input name="from" id="calc-from" placeholder="Город, посёлок или деревня" autocomplete="off" list="city-list" minlength="2">
       </label>
       <label>Маршрут — куда
-        <input name="to" id="calc-to" placeholder="Например: Минск" autocomplete="off" list="city-list">
+        <input name="to" id="calc-to" placeholder="Город, посёлок или деревня" autocomplete="off" list="city-list" minlength="2">
       </label>
-      <datalist id="city-list"></datalist>
+      <datalist id="city-list">
+        <option value="Гомель"></option>
+        <option value="Минск"></option>
+        <option value="Могилёв"></option>
+        <option value="Витебск"></option>
+        <option value="Гродно"></option>
+        <option value="Брест"></option>
+        <option value="Бобруйск"></option>
+        <option value="Барановичи"></option>
+        <option value="Борисов"></option>
+        <option value="Пинск"></option>
+        <option value="Орша"></option>
+        <option value="Мозырь"></option>
+        <option value="Солигорск"></option>
+        <option value="Новополоцк"></option>
+        <option value="Лида"></option>
+      </datalist>
+      <p class="muted" style="font-size:12px;margin:-8px 0 0">Подсказки показывают крупные города, но поиск работает по любому населённому пункту Беларуси — вплоть до деревень.</p>
 
       <label>Расстояние, км
         <span class="range-row">
@@ -114,19 +132,8 @@
       <p class="kicker">Ваш ориентир</p>
 
       <div class="calc-map" id="calc-map-wrap">
-        <svg id="calc-map" viewBox="0 0 520 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Карта Беларуси с маршрутом">
-          <path class="map-border" d="M28 210 L25 296 L33 342 L92 372 L184 384 L250 376 L326 388 L403 373 L443 331 L464 296 L449 239 L428 188 L459 127 L446 81 L403 19 L367 19 L316 38 L265 23 L214 31 L194 54 L158 58 L117 69 L110 115 L120 158 L97 188 L56 188 L31 208 Z"/>
-          <path id="route-path" class="route-path" d="" fill="none"/>
-          <g id="map-truck" class="map-truck" visibility="hidden">
-            <rect x="-8" y="-5" width="11" height="7" rx="1.5"/>
-            <rect x="3" y="-3" width="5" height="5" rx="1"/>
-            <circle cx="-4.5" cy="3.5" r="1.8"/>
-            <circle cx="2" cy="3.5" r="1.8"/>
-            <circle cx="6" cy="3.5" r="1.8"/>
-          </g>
-          <g id="map-cities"></g>
-        </svg>
-        <p class="calc-hint" id="calc-hint">Начните вводить город — он появится на карте</p>
+        <div id="calc-leaflet-map" class="calc-leaflet-map" role="img" aria-label="Карта Беларуси с отмеченным маршрутом"></div>
+        <p class="calc-hint" id="calc-hint">Начните вводить город, посёлок или деревню — любой населённый пункт Беларуси</p>
       </div>
 
       <p class="quote-label" id="quote-label">Заполните параметры перевозки</p>
@@ -145,7 +152,7 @@
   </section>
 
   <section class="container note">
-    <p><b>Важно:</b> расчёт даёт предварительный ориентир по стоимости. Финальная цена подтверждается менеджером после уточнения деталей перевозки — даты, типа транспорта и условий погрузки.</p>
+    <p><b>Важно:</b> расчёт даёт предварительный ориентир по стоимости на основе расстояния по дорогам между указанными точками. Финальная цена подтверждается менеджером после уточнения деталей перевозки — даты, типа транспорта и условий погрузки. Карта и поиск населённых пунктов используют открытые картографические данные OpenStreetMap.</p>
   </section>
 </main>
 
@@ -176,6 +183,8 @@
     </div>
   </div>
 </footer>
-<script src="assets/site.js?v=20260913d"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="assets/site.js?v=20260913e"></script>
+<script src="assets/calculator.js?v=20260913f"></script>
 </body>
 </html>
