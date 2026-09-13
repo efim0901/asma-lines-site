@@ -73,29 +73,12 @@
       </div>
 
       <label>Маршрут — откуда
-        <input name="from" id="calc-from" placeholder="Город, посёлок или деревня" autocomplete="off" list="city-list" minlength="2">
+        <input name="from" id="calc-from" placeholder="Город, посёлок или деревня" autocomplete="off" minlength="2">
       </label>
       <label>Маршрут — куда
-        <input name="to" id="calc-to" placeholder="Город, посёлок или деревня" autocomplete="off" list="city-list" minlength="2">
+        <input name="to" id="calc-to" placeholder="Город, посёлок или деревня" autocomplete="off" minlength="2">
       </label>
-      <datalist id="city-list">
-        <option value="Гомель"></option>
-        <option value="Минск"></option>
-        <option value="Могилёв"></option>
-        <option value="Витебск"></option>
-        <option value="Гродно"></option>
-        <option value="Брест"></option>
-        <option value="Бобруйск"></option>
-        <option value="Барановичи"></option>
-        <option value="Борисов"></option>
-        <option value="Пинск"></option>
-        <option value="Орша"></option>
-        <option value="Мозырь"></option>
-        <option value="Солигорск"></option>
-        <option value="Новополоцк"></option>
-        <option value="Лида"></option>
-      </datalist>
-      <p class="muted" style="font-size:12px;margin:-8px 0 0">Подсказки показывают крупные города, но поиск работает по любому населённому пункту Беларуси — вплоть до деревень.</p>
+      <p class="muted" style="font-size:12px;margin:-8px 0 0">Поиск работает по любому населённому пункту Беларуси — вплоть до деревень.</p>
 
       <label>Расстояние, км
         <span class="range-row">
@@ -184,6 +167,7 @@
   </div>
 </footer>
 <script src="assets/vendor/leaflet/leaflet.js?v=20260913j"></script>
+<script src="assets/vehicles.js?v=20260913j"></script>
 <script src="assets/site.js?v=20260913j"></script>
 <script src="assets/calculator.js?v=20260913j"></script>
 </body>
