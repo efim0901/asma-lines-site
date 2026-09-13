@@ -84,25 +84,30 @@
   const BY_BOUNDS = window.L.latLngBounds([50.9, 22.6], [56.4, 33.1]);
   const map = window.L.map(mapEl, {
     zoomControl: true,
-    attributionControl: true,
+    attributionControl: false, // a custom, no-prefix control is added below
     scrollWheelZoom: false,
     minZoom: 6,
     maxZoom: 15,
   }).setView(BY_CENTER, 7);
   map.setMaxBounds(BY_BOUNDS.pad(0.2));
 
-  /* PROVIDER: tile source. Switched from the standard OSM raster tiles
-     (which render shop/POI icons — including, on some nodes, national
-     flag glyphs — baked directly into the tile images) to CARTO's
-     "Dark Matter" basemap: roads, water, and place labels only, no
-     business/POI iconography. Free to use with attribution, no API key.
-     Swap this URL for a commercial tile provider (Yandex, Mapbox,
-     MapTiler, 2GIS) if that free-tier policy doesn't fit production
-     traffic. */
-  window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>',
-    subdomains: 'abcd',
-    maxZoom: 18,
+  /* `prefix: false` drops Leaflet's own default attribution prefix link
+     (recent Leaflet versions add a Ukraine-flag emoji to that prefix as
+     a maintainer statement) — we keep only the map-data attribution
+     text supplied by the tile layer below. */
+  window.L.control.attribution({ prefix: false, position: 'bottomright' }).addTo(map);
+
+  /* PROVIDER: tile source. Standard OpenStreetMap raster tiles — free,
+     keyless, no signup. (An earlier version of this file used CARTO's
+     hosted basemaps, which now require a registered API key and serve
+     a "API key required" watermark tile without one — reverted to plain
+     OSM tiles to avoid that dependency.) Swap this URL for a commercial
+     tile provider (Yandex, Mapbox, MapTiler, 2GIS) with your own API key
+     if you'd rather not rely on OSM's free-tier tile usage policy at
+     production traffic. */
+  window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
+    maxZoom: 19,
   }).addTo(map);
 
   function pinIcon(isOrigin) {
