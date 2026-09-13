@@ -1260,6 +1260,38 @@ input[type='range']::-moz-range-thumb {
   background: linear-gradient(90deg, #8B2536, #E6A9B4);
   transition: width .6s var(--ease);
 }
+/* ============================================================
+   Vehicle marker (calculator)
+   ============================================================ */
+.calc-vehicle {
+  width: 80px !important;
+  height: 24px !important;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .45));
+  transition: opacity .3s var(--ease);
+  will-change: transform;
+}
+.calc-vehicle svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  transition: transform .25s var(--ease);
+  transform-origin: 50% 50%;
+}
+
+/* keep the older simple-arrow fallback rule for the rare case
+   assets/vehicles.js fails to load */
+.calc-van { width: 16px; height: 16px; display: grid; place-items: center; }
+.calc-van-arrow {
+  display: block;
+  width: 0; height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 12px solid #F8F7EF;
+  filter: drop-shadow(0 0 3px rgba(230,169,180,.7));
+  transform-origin: 50% 65%;
+}
+
 .quote-multi {
   margin: 0 0 12px;
   color: #E6A9B4;
