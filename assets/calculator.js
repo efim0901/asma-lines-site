@@ -2,37 +2,20 @@
    ASMA Lines — interactive shipping cost calculator
    Loaded only on calculator.html.
 
-   MAP PROVIDER — how this is wired up
+   MAP PROVIDER
    ------------------------------------------------------------
-   Instead of a hand-drawn SVG outline with ~20 hardcoded cities,
-   the map is a real Leaflet map on OpenStreetMap tiles, and city
-   lookup goes through OSM's free geocoder (Nominatim) restricted
-   to Belarus. That means EVERY settlement in OSM's database is
-   searchable — regional cities, towns, and villages — not just a
-   short hand list. Road distance comes from OSRM's public routing
-   demo (falls back to a great-circle estimate if it's unreachable).
+   Leaflet + OSM tiles, Nominatim geocoder scoped to Belarus,
+   OSRM routing. See comments below for production notes.
 
-   This uses only free, keyless public services, so it works out
-   of the box. Two things the site owner should do before relying
-   on this at real traffic volumes:
-     1. Nominatim's and OSRM's public demo servers are rate-limited
-        and meant for light/dev use (see their usage policies). For
-        production traffic, self-host both (Docker images exist for
-        both) or move to a commercial provider.
-     2. If a commercial map is preferred (Yandex Maps API or Google
-        Maps Platform both have good Belarus coverage), swap the
-        three functions marked "PROVIDER:" below for calls to that
-        provider's geocoder/router/map SDK — the rest of the
-        calculator (pricing, form, UI) does not need to change.
-        Both require the owner's own paid/registered API key, which
-        is why they aren't wired in here directly.
-
-   Everything else follows the original brief:
-   - "Calculator without a button" — input/change recalculates
-     instantly.
-   - Self-contained IIFE, no globals, delegated form listeners.
-   - prefers-reduced-motion disables the tween and the van
-     animation; recalculation itself is always instant.
+   VEHICLE MARKER
+   ------------------------------------------------------------
+   The driving marker is a real side-view truck/van rendered by
+   assets/vehicles.js. Its shape depends on:
+     - weight class (5 ranges: xs / s / m / l / xl)
+     - cargo type (standard / fragile / temperature)
+   A random variant (0..4) is chosen each time weight class or
+   cargo type changes, so the animation looks different every
+   time the user changes parameters.
    ============================================================ */
 (function initCalculator() {
   const form = document.querySelector('#calculator');
@@ -42,18 +25,19 @@
   const hintElFallback = document.querySelector('#calc-hint');
   if (!mapEl) return;
   if (typeof window.L === 'undefined') {
-    // Leaflet's local script (assets/vendor/leaflet/leaflet.js) failed to
-    // load or execute — fail visibly instead of silently.
     mapEl.classList.add('calc-leaflet-map--error');
     mapEl.textContent = 'Карта временно недоступна. Расстояние можно ввести вручную ниже.';
     if (hintElFallback) hintElFallback.textContent = 'Карта не загрузилась. Проверьте, что файл assets/vendor/leaflet/leaflet.js доступен на сервере (см. консоль браузера, F12).';
     console.error('[ASMA calculator] Leaflet (assets/vendor/leaflet/leaflet.js) did not load — map disabled, form still works manually.');
     return;
   }
+  if (!window.ASMAVehicles) {
+    console.error('[ASMA calculator] assets/vehicles.js did not load — falling back to simple arrow marker.');
+  }
 
-  /* ---- self-contained config ---- */
+  /* ---- config ---- */
   const RATES = { base: 85, perKm: 1.65, perTonne: 18, fragile: 1.12, temperature: 1.28, loading: 45 };
-  const ROAD_COEFFICIENT = 1.28; // used only as a fallback when routing is unavailable
+  const ROAD_COEFFICIENT = 1.28;
   const GEOCODE_DEBOUNCE_MS = 550;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -77,34 +61,21 @@
   };
 
   /* ------------------------------------------------------------
-     Map setup — real OSM tiles, bounded and tinted to fit the
-     brand's dark palette (see .calc-leaflet-map in style.css).
+     Map
      ------------------------------------------------------------ */
   const BY_CENTER = [53.55, 28.0];
   const BY_BOUNDS = window.L.latLngBounds([50.9, 22.6], [56.4, 33.1]);
   const map = window.L.map(mapEl, {
     zoomControl: true,
-    attributionControl: false, // a custom, no-prefix control is added below
+    attributionControl: false,
     scrollWheelZoom: false,
     minZoom: 6,
     maxZoom: 15,
   }).setView(BY_CENTER, 7);
   map.setMaxBounds(BY_BOUNDS.pad(0.2));
 
-  /* `prefix: false` drops Leaflet's own default attribution prefix link
-     (recent Leaflet versions add a Ukraine-flag emoji to that prefix as
-     a maintainer statement) — we keep only the map-data attribution
-     text supplied by the tile layer below. */
   window.L.control.attribution({ prefix: false, position: 'bottomright' }).addTo(map);
 
-  /* PROVIDER: tile source. Standard OpenStreetMap raster tiles — free,
-     keyless, no signup. (An earlier version of this file used CARTO's
-     hosted basemaps, which now require a registered API key and serve
-     a "API key required" watermark tile without one — reverted to plain
-     OSM tiles to avoid that dependency.) Swap this URL for a commercial
-     tile provider (Yandex, Mapbox, MapTiler, 2GIS) with your own API key
-     if you'd rather not rely on OSM's free-tier tile usage policy at
-     production traffic. */
   window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
     maxZoom: 19,
@@ -118,13 +89,50 @@
       iconAnchor: [8, 8],
     });
   }
-  function vanIcon() {
+
+  /* ------------------------------------------------------------
+     Dynamic vehicle marker
+     ------------------------------------------------------------ */
+  function currentCargoType() {
+    const cargo = form.querySelector('input[name="cargo"]:checked');
+    return cargo ? cargo.value : 'standard';
+  }
+  function currentWeightClass() {
+    const w = Number(els.weight.value) || 0;
+    if (!window.ASMAVehicles) return 'm';
+    return window.ASMAVehicles.classFor(w);
+  }
+
+  let vehicleState = { class: null, cargo: null, html: '' };
+
+  function buildVehicleIcon() {
+    if (!window.ASMAVehicles) {
+      /* fallback: simple arrow when vehicles.js didn't load */
+      return window.L.divIcon({
+        className: 'calc-van',
+        html: '<span class="calc-van-arrow"></span>',
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
+      });
+    }
+    const wc = currentWeightClass();
+    const ct = currentCargoType();
+    /* rebuild only if class or cargo changed, otherwise reuse the same vehicle */
+    if (vehicleState.class !== wc || vehicleState.cargo !== ct || !vehicleState.html) {
+      const pick = window.ASMAVehicles.pickRandom(wc, ct);
+      vehicleState = { class: wc, cargo: ct, html: pick.svg };
+    }
     return window.L.divIcon({
-      className: 'calc-van',
-      html: '<span class="calc-van-arrow"></span>',
-      iconSize: [16, 16],
-      iconAnchor: [8, 8],
+      className: 'calc-vehicle',
+      html: vehicleState.html,
+      iconSize: [80, 24],
+      iconAnchor: [40, 12],
     });
+  }
+
+  function refreshVehicleMarker() {
+    if (!vanMarker) return;
+    vanMarker.setIcon(buildVehicleIcon());
   }
 
   let markerFrom = null;
@@ -134,8 +142,7 @@
   let vanRaf = null;
 
   /* ------------------------------------------------------------
-     PROVIDER: geocoding. Nominatim (OSM), scoped to Belarus.
-     Covers every settlement in OSM's data, not a hand-picked list.
+     Geocoding / routing
      ------------------------------------------------------------ */
   const geocodeCache = new Map();
   function geocode(query) {
@@ -156,8 +163,6 @@
       .catch(() => null);
   }
 
-  /* great-circle distance in km, used for the fallback estimate and for
-     walking a van marker along the route geometry at a constant speed */
   function haversineKm(a, b) {
     const R = 6371;
     const toRad = (d) => (d * Math.PI) / 180;
@@ -168,10 +173,6 @@
     return 2 * R * Math.asin(Math.sqrt(s));
   }
 
-  /* ------------------------------------------------------------
-     PROVIDER: routing. OSRM public demo server, driving profile.
-     Falls back to a straight line x road coefficient if it fails.
-     ------------------------------------------------------------ */
   async function fetchRoute(a, b) {
     try {
       const url = `https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson`;
@@ -191,15 +192,19 @@
     }
   }
 
-  /* van driving along the real route geometry, constant real-world speed */
+  /* --- van driving along the route ---------------------------- */
   function driveVan(coords) {
     if (reducedMotion) return;
     cancelAnimationFrame(vanRaf);
+    const icon = buildVehicleIcon();
     if (!vanMarker) {
-      vanMarker = window.L.marker(coords[0], { icon: vanIcon(), interactive: false }).addTo(map);
+      vanMarker = window.L.marker(coords[0], { icon, interactive: false }).addTo(map);
     } else {
-      vanMarker.setIcon(vanIcon());
+      vanMarker.setIcon(icon);
     }
+    const el = vanMarker.getElement();
+    if (el) el.style.transformOrigin = 'center';
+
     const cum = [0];
     for (let i = 1; i < coords.length; i++) cum.push(cum[i - 1] + haversineKm(coords[i - 1], coords[i]));
     const total = cum[cum.length - 1] || 1;
@@ -226,9 +231,14 @@
       const lat = segStart[0] + (segEnd[0] - segStart[0]) * segT;
       const lon = segStart[1] + (segEnd[1] - segStart[1]) * segT;
       vanMarker.setLatLng([lat, lon]);
-      const bearing = (Math.atan2(segEnd[1] - segStart[1], segEnd[0] - segStart[0]) * 180) / Math.PI;
-      const arrow = vanMarker.getElement() && vanMarker.getElement().querySelector('.calc-van-arrow');
-      if (arrow) arrow.style.transform = `rotate(${bearing + 90}deg)`;
+
+      /* flip horizontally if driving westward — side-view vehicle */
+      const goingLeft = segEnd[1] < segStart[1];
+      const node = vanMarker.getElement();
+      if (node) {
+        const inner = node.querySelector('svg');
+        if (inner) inner.style.transform = goingLeft ? 'scaleX(-1)' : 'scaleX(1)';
+      }
       vanRaf = requestAnimationFrame(tick);
     }
     vanRaf = requestAnimationFrame(tick);
@@ -238,10 +248,7 @@
     if (vanMarker) { map.removeLayer(vanMarker); vanMarker = null; }
   }
 
-  /* ------------------------------------------------------------
-     Pricing (unchanged formula): base 85 + km*1.65 + t*18,
-     cargo multipliers apply to the subtotal, loading is a flat add-on.
-     ------------------------------------------------------------ */
+  /* --- pricing ------------------------------------------------ */
   function currentTotal() {
     const km = Number(els.distance.value) || 0;
     const weight = Number(els.weight.value) || 0;
@@ -295,6 +302,9 @@
       btn.classList.toggle('is-active', weight > 0 && Number(btn.dataset.weight) === weight);
     });
 
+    /* swap vehicle if class or cargo changed */
+    if (vanMarker) refreshVehicleMarker();
+
     if (!total) {
       els.label.textContent = 'Заполните параметры перевозки';
       els.total.textContent = '—';
@@ -335,14 +345,12 @@
     els.link.classList.remove('hidden');
   }
 
-  /* ------------------------------------------------------------
-     Map + route state
-     ------------------------------------------------------------ */
+  /* --- map state ---------------------------------------------- */
   let fromPlace = null;
   let toPlace = null;
   let distanceTouched = false;
   let lastPairKey = '';
-  let routeToken = 0; // guards against out-of-order async responses
+  let routeToken = 0;
 
   function setHint(text, isError) {
     els.hint.textContent = text;
@@ -374,7 +382,7 @@
       setHint(`Маршрут: ${fromPlace.name} → ${toPlace.name}`);
       const token = ++routeToken;
       const route = await fetchRoute(fromPlace, toPlace);
-      if (token !== routeToken) return; // a newer request already superseded this one
+      if (token !== routeToken) return;
 
       if (routeLine) map.removeLayer(routeLine);
       routeLine = window.L.polyline(route.coords, {
@@ -433,10 +441,7 @@
     }, GEOCODE_DEBOUNCE_MS);
   }
 
-  /* ------------------------------------------------------------
-     Delegated events — three listeners on the form (input, change,
-     click), no per-field listeners, no globals outside this closure.
-     ------------------------------------------------------------ */
+  /* --- events ------------------------------------------------- */
   form.addEventListener('input', (event) => {
     const target = event.target;
     if (target === els.from) { handleCityInput('from'); return; }
@@ -453,6 +458,10 @@
   form.addEventListener('change', (event) => {
     const target = event.target;
     if (target === els.from || target === els.to) { handleCityInput(target === els.from ? 'from' : 'to'); return; }
+    /* weight / cargo change → try to swap the vehicle icon */
+    if (target === els.weight || target.name === 'cargo') {
+      if (vanMarker) refreshVehicleMarker();
+    }
     recalc();
   });
 
@@ -460,6 +469,7 @@
     const chip = event.target.closest('.weight-chips button');
     if (!chip) return;
     els.weight.value = chip.dataset.weight;
+    if (vanMarker) refreshVehicleMarker();
     recalc();
   });
 
