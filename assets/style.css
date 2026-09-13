@@ -1046,10 +1046,11 @@ a.contact-tile .contact-tile-value { color: var(--burgundy); }
   height: 300px;
   background: #14110f;
 }
-/* darken/desaturate the raster tiles so a stock OSM map reads as part of
-   the dark burgundy/charcoal brand rather than a bright default map */
+/* CARTO's "Dark Matter" tiles are already dark and clean (no baked-in
+   POI/shop icons); this filter just nudges the tone toward brand burgundy
+   instead of the tiles' default blue-grey, no heavy darkening needed. */
 .calc-leaflet-map .leaflet-tile-pane {
-  filter: grayscale(.5) brightness(.62) contrast(1.15) sepia(.15) hue-rotate(-6deg);
+  filter: sepia(.25) hue-rotate(-6deg) saturate(1.15);
 }
 .calc-leaflet-map .leaflet-control-attribution {
   background: rgba(15, 12, 10, .72);

@@ -91,11 +91,17 @@
   }).setView(BY_CENTER, 7);
   map.setMaxBounds(BY_BOUNDS.pad(0.2));
 
-  /* PROVIDER: tile source. Swap this URL for a commercial tile
-     provider (Yandex, Mapbox, MapTiler, 2GIS) if the free OSM tile
-     policy doesn't fit production traffic. */
-  window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
+  /* PROVIDER: tile source. Switched from the standard OSM raster tiles
+     (which render shop/POI icons — including, on some nodes, national
+     flag glyphs — baked directly into the tile images) to CARTO's
+     "Dark Matter" basemap: roads, water, and place labels only, no
+     business/POI iconography. Free to use with attribution, no API key.
+     Swap this URL for a commercial tile provider (Yandex, Mapbox,
+     MapTiler, 2GIS) if that free-tier policy doesn't fit production
+     traffic. */
+  window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>',
+    subdomains: 'abcd',
     maxZoom: 18,
   }).addTo(map);
 
