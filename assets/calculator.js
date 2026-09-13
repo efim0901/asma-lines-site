@@ -42,12 +42,12 @@
   const hintElFallback = document.querySelector('#calc-hint');
   if (!mapEl) return;
   if (typeof window.L === 'undefined') {
-    // Leaflet didn't load (CDN blocked, offline, ad-blocker, etc.) — fail
-    // visibly instead of silently, so this is easy to notice and diagnose.
+    // Leaflet's local script (assets/vendor/leaflet/leaflet.js) failed to
+    // load or execute — fail visibly instead of silently.
     mapEl.classList.add('calc-leaflet-map--error');
     mapEl.textContent = 'Карта временно недоступна. Расстояние можно ввести вручную ниже.';
-    if (hintElFallback) hintElFallback.textContent = 'Карта не загрузилась — проверьте подключение к интернету или отключите блокировщик скриптов для cdnjs.cloudflare.com.';
-    console.error('[ASMA calculator] Leaflet failed to load from CDN — map disabled, form still works manually.');
+    if (hintElFallback) hintElFallback.textContent = 'Карта не загрузилась. Проверьте, что файл assets/vendor/leaflet/leaflet.js доступен на сервере (см. консоль браузера, F12).';
+    console.error('[ASMA calculator] Leaflet (assets/vendor/leaflet/leaflet.js) did not load — map disabled, form still works manually.');
     return;
   }
 
