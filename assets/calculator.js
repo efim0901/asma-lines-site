@@ -39,7 +39,17 @@
   if (!form) return;
 
   const mapEl = document.querySelector('#calc-leaflet-map');
-  if (!mapEl || typeof window.L === 'undefined') return; // Leaflet failed to load — fail quietly, form still works without the map
+  const hintElFallback = document.querySelector('#calc-hint');
+  if (!mapEl) return;
+  if (typeof window.L === 'undefined') {
+    // Leaflet didn't load (CDN blocked, offline, ad-blocker, etc.) — fail
+    // visibly instead of silently, so this is easy to notice and diagnose.
+    mapEl.classList.add('calc-leaflet-map--error');
+    mapEl.textContent = 'Карта временно недоступна. Расстояние можно ввести вручную ниже.';
+    if (hintElFallback) hintElFallback.textContent = 'Карта не загрузилась — проверьте подключение к интернету или отключите блокировщик скриптов для cdnjs.cloudflare.com.';
+    console.error('[ASMA calculator] Leaflet failed to load from CDN — map disabled, form still works manually.');
+    return;
+  }
 
   /* ---- self-contained config ---- */
   const RATES = { base: 85, perKm: 1.65, perTonne: 18, fragile: 1.12, temperature: 1.28, loading: 45 };
