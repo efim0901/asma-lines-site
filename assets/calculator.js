@@ -64,11 +64,64 @@
   }).setView(BY_CENTER, 7);
   map.setMaxBounds(BY_BOUNDS.pad(0.2));
 
-  // High-detail dark graphite basemap served via internal proxy — no external keys or watermarks, full road network
-  window.L.tileLayer('/api/tile/{z}/{x}/{y}.png', {
-    maxZoom: 18,
-    attribution: '',
-  }).addTo(map);
+  // Multi-tier resilient tile layer configuration (100% compatible with Cloudflare & static CDN deployment)
+  const TILE_SOURCES = [
+    {
+      url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      subdomains: 'abcd',
+      maxZoom: 19,
+    },
+    {
+      url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      subdomains: 'abcd',
+      maxZoom: 19,
+    },
+    {
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      subdomains: 'abc',
+      maxZoom: 19,
+    }
+  ];
+
+  let currentTileLayer = null;
+  function setupTiles(sourceIndex = 0) {
+    if (sourceIndex >= TILE_SOURCES.length) return;
+    if (currentTileLayer) {
+      try { map.removeLayer(currentTileLayer); } catch (_) {}
+    }
+    const cfg = TILE_SOURCES[sourceIndex];
+    currentTileLayer = window.L.tileLayer(cfg.url, {
+      subdomains: cfg.subdomains,
+      maxZoom: cfg.maxZoom,
+      crossOrigin: true,
+      attribution: '',
+    });
+
+    let failedTileCount = 0;
+    currentTileLayer.on('tileerror', () => {
+      failedTileCount++;
+      if (failedTileCount > 4 && sourceIndex + 1 < TILE_SOURCES.length) {
+        setupTiles(sourceIndex + 1);
+      }
+    });
+
+    currentTileLayer.addTo(map);
+  }
+
+  setupTiles(0);
+
+  // Invalidate map size on multiple stages to guarantee full rendering in all viewports / Cloudflare environments
+  function triggerInvalidate() {
+    try { map.invalidateSize(); } catch (_) {}
+  }
+  setTimeout(triggerInvalidate, 80);
+  setTimeout(triggerInvalidate, 350);
+  setTimeout(triggerInvalidate, 1000);
+  window.addEventListener('resize', triggerInvalidate);
+  window.addEventListener('load', triggerInvalidate);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) triggerInvalidate();
+  });
 
   function pinIcon(isOrigin) {
     return window.L.divIcon({
@@ -132,39 +185,133 @@
   let vanMarker = null;
   let vanRaf = null;
 
+  // Pre-compiled offline dictionary of 70+ Belarusian cities and regional hubs for instant zero-latency lookup
+  const BY_SETTLEMENTS = {
+    'минск': { lat: 53.9045, lon: 27.5615, name: 'Минск' },
+    'гомель': { lat: 52.4345, lon: 30.9754, name: 'Гомель' },
+    'брест': { lat: 52.0976, lon: 23.7341, name: 'Брест' },
+    'гродно': { lat: 53.6688, lon: 23.8258, name: 'Гродно' },
+    'витебск': { lat: 55.1904, lon: 30.2049, name: 'Витебск' },
+    'могилев': { lat: 53.8981, lon: 30.3325, name: 'Могилёв' },
+    'могилёв': { lat: 53.8981, lon: 30.3325, name: 'Могилёв' },
+    'барановичи': { lat: 53.1327, lon: 26.0139, name: 'Барановичи' },
+    'бобруйск': { lat: 53.1384, lon: 29.2214, name: 'Бобруйск' },
+    'пинск': { lat: 52.1153, lon: 26.1031, name: 'Пинск' },
+    'мозырь': { lat: 52.0495, lon: 29.2456, name: 'Мозырь' },
+    'орша': { lat: 54.5070, lon: 30.4262, name: 'Орша' },
+    'полоцк': { lat: 55.4856, lon: 28.7686, name: 'Полоцк' },
+    'новополоцк': { lat: 55.5323, lon: 28.6582, name: 'Новополоцк' },
+    'лида': { lat: 53.8828, lon: 25.3013, name: 'Лида' },
+    'борисов': { lat: 54.2276, lon: 28.5050, name: 'Борисов' },
+    'солигорск': { lat: 52.7876, lon: 27.5415, name: 'Солигорск' },
+    'слуцк': { lat: 53.0274, lon: 27.5595, name: 'Слуцк' },
+    'жлобин': { lat: 52.8906, lon: 30.0247, name: 'Жлобин' },
+    'светлогорск': { lat: 52.6331, lon: 29.7389, name: 'Светлогорск' },
+    'речица': { lat: 52.3639, lon: 30.3953, name: 'Речица' },
+    'кобрин': { lat: 52.2138, lon: 24.3564, name: 'Кобрин' },
+    'слоним': { lat: 53.0933, lon: 25.3161, name: 'Слоним' },
+    'волковыск': { lat: 53.1611, lon: 24.4539, name: 'Волковыск' },
+    'сморгонь': { lat: 54.4811, lon: 26.3986, name: 'Сморгонь' },
+    'калинковичи': { lat: 52.1286, lon: 29.3244, name: 'Калинковичи' },
+    'рогачев': { lat: 53.0931, lon: 30.0494, name: 'Рогачёв' },
+    'рогачёв': { lat: 53.0931, lon: 30.0494, name: 'Рогачёв' },
+    'горки': { lat: 54.2861, lon: 30.9856, name: 'Горки' },
+    'осиповичи': { lat: 53.3056, lon: 28.6444, name: 'Осиповичи' },
+    'береза': { lat: 52.5317, lon: 24.9789, name: 'Берёза' },
+    'берёза': { lat: 52.5317, lon: 24.9789, name: 'Берёза' },
+    'ивацевичи': { lat: 52.7094, lon: 25.3406, name: 'Ивацевичи' },
+    'дзержинск': { lat: 53.6833, lon: 27.1333, name: 'Дзержинск' },
+    'вилейка': { lat: 54.4914, lon: 26.9108, name: 'Вилейка' },
+    'лунинец': { lat: 52.2483, lon: 26.8011, name: 'Лунинец' },
+    'марьина горка': { lat: 53.5083, lon: 28.1517, name: 'Марьина Горка' },
+    'поставы': { lat: 55.1117, lon: 26.8322, name: 'Поставы' },
+    'пружаны': { lat: 52.5561, lon: 24.4642, name: 'Пружаны' },
+    'глубокое': { lat: 55.1378, lon: 27.6908, name: 'Глубокое' },
+    'добруш': { lat: 52.4117, lon: 31.3211, name: 'Добруш' },
+    'лепель': { lat: 54.8814, lon: 28.6967, name: 'Лепель' },
+    'быхов': { lat: 53.5208, lon: 30.2528, name: 'Быхов' },
+    'кричев': { lat: 53.7144, lon: 31.7139, name: 'Кричев' },
+    'мосты': { lat: 53.4111, lon: 24.5361, name: 'Мосты' },
+    'щучин': { lat: 53.6042, lon: 24.7436, name: 'Щучин' },
+    'ошмяны': { lat: 54.4253, lon: 25.9361, name: 'Ошмяны' },
+    'столбцы': { lat: 53.4833, lon: 26.7333, name: 'Столбцы' },
+    'климовичи': { lat: 53.6108, lon: 31.9567, name: 'Климовичи' },
+    'шклов': { lat: 54.2047, lon: 30.2978, name: 'Шклов' },
+    'житковичи': { lat: 52.2189, lon: 27.8592, name: 'Житковичи' },
+    'браслав': { lat: 55.6389, lon: 27.0319, name: 'Браслав' },
+    'островец': { lat: 54.6139, lon: 25.9556, name: 'Островец' },
+    'фаниполь': { lat: 53.7500, lon: 27.3333, name: 'Фаниполь' },
+    'логойск': { lat: 54.2056, lon: 27.8486, name: 'Логойск' },
+    'несвиж': { lat: 53.2194, lon: 26.6806, name: 'Несвиж' },
+    'столин': { lat: 51.8906, lon: 26.8456, name: 'Столин' },
+    'микашевичи': { lat: 52.2178, lon: 27.4764, name: 'Микашевичи' },
+    'заславль': { lat: 54.0083, lon: 27.2917, name: 'Заславль' },
+    'белоозерск': { lat: 52.4719, lon: 25.1764, name: 'Белоозёрск' },
+    'петриков': { lat: 52.1289, lon: 27.7478, name: 'Петриков' },
+    'хойники': { lat: 51.8917, lon: 29.9667, name: 'Хойники' },
+    'жодино': { lat: 54.1000, lon: 28.3500, name: 'Жодино' },
+    'чечерск': { lat: 52.9167, lon: 30.9167, name: 'Чечерск' },
+    'буда-кошелево': { lat: 52.7167, lon: 30.7000, name: 'Буда-Кошелёво' },
+    'ельск': { lat: 51.8167, lon: 29.1500, name: 'Ельск' },
+    'наровля': { lat: 51.8000, lon: 29.5000, name: 'Наровля' },
+    'ветка': { lat: 52.5667, lon: 31.1833, name: 'Ветка' },
+    'лоев': { lat: 51.9333, lon: 30.8000, name: 'Лоев' },
+    'брагин': { lat: 51.7833, lon: 30.2667, name: 'Брагин' },
+    'комарин': { lat: 51.2742, lon: 30.5317, name: 'Комарин' },
+  };
+
   const geocodeCache = new Map();
-  async function geocode(query) {
-    const key = query.trim().toLowerCase();
-    if (!key) return null;
-    if (geocodeCache.has(key)) return geocodeCache.get(key);
+  async function geocode(rawQuery) {
+    const cleanQuery = rawQuery.replace(/,?\s*беларусь/gi, '').trim().toLowerCase();
+    if (!cleanQuery) return null;
+    
+    // 1. Instant offline settlements dictionary match
+    if (BY_SETTLEMENTS[cleanQuery]) {
+      return BY_SETTLEMENTS[cleanQuery];
+    }
+    // Partial starting match (e.g. "гоме" -> "Гомель")
+    for (const [key, item] of Object.entries(BY_SETTLEMENTS)) {
+      if (cleanQuery.length >= 3 && key.startsWith(cleanQuery)) {
+        return item;
+      }
+    }
+
+    if (geocodeCache.has(cleanQuery)) return geocodeCache.get(cleanQuery);
+
+    // 2. Try proxy endpoint if available
     try {
-      const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/geocode?q=${encodeURIComponent(cleanQuery + ', Беларусь')}`);
       if (res.ok) {
         const place = await res.json();
         if (place && place.lat && place.lon) {
-          geocodeCache.set(key, place);
+          geocodeCache.set(cleanQuery, place);
           return place;
         }
       }
     } catch {
-      // Internal request fallback
+      // Cloudflare / static hosting fallback
     }
 
-    // Direct fallback if server endpoint is ever unavailable
+    // 3. Direct Public OpenStreetMap Nominatim with retry
     try {
-      const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=by&accept-language=ru&q=${encodeURIComponent(query)}`;
+      const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=by&accept-language=ru&q=${encodeURIComponent(cleanQuery + ', Беларусь')}`;
       const res = await fetch(url);
-      if (!res.ok) return null;
-      const rows = await res.json();
-      const row = rows && rows[0];
-      const place = row
-        ? { lat: parseFloat(row.lat), lon: parseFloat(row.lon), name: (row.display_name || query).split(',')[0].trim() }
-        : null;
-      if (place) geocodeCache.set(key, place);
-      return place;
+      if (res.ok) {
+        const rows = await res.json();
+        const row = rows && rows[0];
+        const place = row
+          ? { lat: parseFloat(row.lat), lon: parseFloat(row.lon), name: (row.display_name || cleanQuery).split(',')[0].trim() }
+          : null;
+        if (place) {
+          geocodeCache.set(cleanQuery, place);
+          return place;
+        }
+      }
     } catch {
-      return null;
+      // Network limitation fallback
     }
+
+    return null;
   }
 
   function haversineKm(a, b) {
