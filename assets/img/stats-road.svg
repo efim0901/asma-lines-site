@@ -1,43 +1,60 @@
 <svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="stat_sky" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#181114"/>
-      <stop offset="50%" stop-color="#28141B"/>
-      <stop offset="100%" stop-color="#120E10"/>
+    <linearGradient id="stats_sky_c" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#140A0D"/>
+      <stop offset="45%" stop-color="#2D121B"/>
+      <stop offset="80%" stop-color="#4F1A29"/>
+      <stop offset="100%" stop-color="#140A0E"/>
+    </linearGradient>
+    <pattern id="stat_dots" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="20" cy="20" r="1.5" fill="#E6A9B4" fill-opacity="0.16"/>
+    </pattern>
+    <linearGradient id="chart_glow" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#8B2536" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#FF2E50" stop-opacity="0.45"/>
     </linearGradient>
   </defs>
 
-  <rect width="1920" height="1080" fill="url(#stat_sky)"/>
+  <rect width="1920" height="1080" fill="url(#stats_sky_c)"/>
+  <rect width="1920" height="1080" fill="url(#stat_dots)"/>
 
-  <!-- Analytical Chart Vectors & Progress Meters -->
-  <g opacity="0.16" stroke="#F8F7EF" stroke-width="1.5">
+  <!-- Centered Logistics Performance Grid & Chart Curves (Visible on mobile) -->
+  <g transform="translate(960, 420)">
     <!-- Grid -->
-    <line x1="200" y1="800" x2="1720" y2="800"/>
-    <line x1="200" y1="650" x2="1720" y2="650" stroke-dasharray="10 10"/>
-    <line x1="200" y1="500" x2="1720" y2="500" stroke-dasharray="10 10"/>
-    <line x1="200" y1="350" x2="1720" y2="350" stroke-dasharray="10 10"/>
-
-    <!-- Bar Growth Curves -->
-    <rect x="360" y="680" width="80" height="120" fill="#4A1E27"/>
-    <rect x="520" y="600" width="80" height="200" fill="#6A2230"/>
-    <rect x="680" y="520" width="80" height="280" fill="#8B2536"/>
-    <rect x="840" y="420" width="80" height="380" fill="#A33246"/>
+    <line x1="-540" y1="120" x2="540" y2="120" stroke="#8B2536" stroke-width="2"/>
+    <line x1="-540" y1="0" x2="540" y2="0" stroke="#8B2536" stroke-width="1.5" stroke-dasharray="6 6" opacity="0.4"/>
+    <line x1="-540" y1="-120" x2="540" y2="-120" stroke="#8B2536" stroke-width="1.5" stroke-dasharray="6 6" opacity="0.4"/>
+    
+    <!-- Flowing Growth Curve Area -->
+    <path d="M -540 120 Q -270 40 0 -20 T 540 -180 L 540 120 Z" fill="url(#chart_glow)"/>
+    <path d="M -540 120 Q -270 40 0 -20 T 540 -180" fill="none" stroke="#FF2E50" stroke-width="4"/>
+    
+    <!-- Node points -->
+    <circle cx="-360" cy="80" r="14" fill="#140A0D" stroke="#E6A9B4" stroke-width="3"/>
+    <circle cx="-360" cy="80" r="5" fill="#FFC048"/>
+    <circle cx="0" cy="-20" r="18" fill="#140A0D" stroke="#FF2E50" stroke-width="4"/>
+    <circle cx="0" cy="-20" r="7" fill="#FFF"/>
+    <circle cx="360" cy="-120" r="16" fill="#140A0D" stroke="#FFC048" stroke-width="4"/>
+    <circle cx="360" cy="-120" r="6" fill="#FFC048"/>
   </g>
 
-  <!-- Metric Trending Line -->
-  <path d="M 300 750 L 560 660 L 800 580 L 1100 420 L 1400 360 L 1700 240" fill="none" stroke="#E6A9B4" stroke-width="4" stroke-linecap="round"/>
-  <!-- Key Data Points -->
-  <circle cx="560" cy="660" r="8" fill="#8B2536" stroke="#F8F7EF" stroke-width="2"/>
-  <circle cx="800" cy="580" r="8" fill="#8B2536" stroke="#F8F7EF" stroke-width="2"/>
-  <circle cx="1100" cy="420" r="10" fill="#E6A9B4" stroke="#181114" stroke-width="3"/>
-  <circle cx="1400" cy="360" r="8" fill="#8B2536" stroke="#F8F7EF" stroke-width="2"/>
-  <circle cx="1700" cy="240" r="12" fill="#8B2536" stroke="#F8F7EF" stroke-width="3"/>
+  <!-- Highway Perspective -->
+  <path d="M 0 660 Q 960 620 1920 580 L 1920 1080 L 0 1080 Z" fill="#151013"/>
+  <path d="M 0 660 Q 960 620 1920 580" stroke="#8B2536" stroke-width="4"/>
+  <path d="M 0 820 Q 960 780 1920 740" stroke="#E6A9B4" stroke-width="4" stroke-dasharray="50 35" opacity="0.45"/>
+  <path d="M 0 960 Q 960 920 1920 880" stroke="#FFC048" stroke-width="3" opacity="0.4"/>
 
-  <g transform="translate(1500, 100)">
-    <rect width="320" height="90" rx="12" fill="#1C1316" stroke="#4D202A" stroke-width="2"/>
-    <circle cx="36" cy="35" r="8" fill="#8B2536"/>
-    <circle cx="36" cy="35" r="4" fill="#F8F7EF"/>
-    <text x="60" y="39" fill="#F8F7EF" font-family="system-ui, sans-serif" font-size="14" font-weight="700">ОПЕРАЦИОННЫЕ ДАННЫЕ</text>
-    <text x="60" y="63" fill="#E6A9B4" font-family="system-ui, sans-serif" font-size="12">Реальные цифры и открытость</text>
+  <!-- Centered Logistics Speed Truck Silhouette -->
+  <g transform="translate(740, 520)">
+    <ellipse cx="240" cy="210" rx="300" ry="20" fill="#030203" opacity="0.9"/>
+    <rect x="0" y="30" width="300" height="150" rx="4" fill="#241E22" stroke="#8B2536" stroke-width="2"/>
+    <text x="30" y="85" fill="#F8F7EF" font-family="system-ui, sans-serif" font-size="22" font-weight="900" letter-spacing="4">ASMA 2026</text>
+    <text x="30" y="105" fill="#E6A9B4" font-family="system-ui, sans-serif" font-size="11" font-weight="700">ОПЕРАЦИОННЫЕ ДАННЫЕ</text>
+    <path d="M305 70 L370 65 L400 95 L420 145 L425 190 L305 190 Z" fill="#8B2536" stroke="#E6A9B4" stroke-width="2"/>
+    <circle cx="415" cy="160" r="5" fill="#FFF8E0"/>
+    <circle cx="415" cy="160" r="12" fill="#FFC048" fill-opacity="0.5"/>
+    <circle cx="180" cy="195" r="20" fill="#0C0A0B" stroke="#4D3F47" stroke-width="4"/>
+    <circle cx="240" cy="195" r="20" fill="#0C0A0B" stroke="#4D3F47" stroke-width="4"/>
+    <circle cx="380" cy="195" r="20" fill="#0C0A0B" stroke="#4D3F47" stroke-width="4"/>
   </g>
 </svg>
