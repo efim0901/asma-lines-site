@@ -1,0 +1,6 @@
+{
+  "name": "ASMA Lines",
+  "description": "ASMA Lines — белорусская логистическая компания из Гомеля. Организация автомобильных грузоперевозок по Беларуси.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

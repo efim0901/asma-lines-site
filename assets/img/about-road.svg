@@ -1,0 +1,36 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="about_sky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1B1114"/>
+      <stop offset="50%" stop-color="#2D151D"/>
+      <stop offset="100%" stop-color="#120D0F"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#about_sky)"/>
+
+  <!-- Compass Rose / Logistics Wayfinding -->
+  <g transform="translate(1340, 520)" opacity="0.18">
+    <circle cx="0" cy="0" r="260" stroke="#F8F7EF" stroke-width="1.5" fill="none"/>
+    <circle cx="0" cy="0" r="180" stroke="#F8F7EF" stroke-width="1.5" fill="none" stroke-dasharray="8 6"/>
+    <!-- North/South/East/West needles -->
+    <polygon points="0,-240 18,-40 0,0 -18,-40" fill="#8B2536"/>
+    <polygon points="0,240 18,40 0,0 -18,40" fill="#42353A"/>
+    <polygon points="240,0 40,18 0,0 40,-18" fill="#42353A"/>
+    <polygon points="-240,0 -40,18 0,0 -40,-18" fill="#42353A"/>
+    <circle cx="0" cy="0" r="14" fill="#E6A9B4"/>
+  </g>
+
+  <!-- Highway Ribbon through Belarus Landscape -->
+  <path d="M0 840 Q 640 820 960 720 T 1920 620" fill="none" stroke="#261E22" stroke-width="120"/>
+  <path d="M0 840 Q 640 820 960 720 T 1920 620" fill="none" stroke="#8B2536" stroke-width="4"/>
+  <path d="M0 840 Q 640 820 960 720 T 1920 620" fill="none" stroke="#E6A9B4" stroke-width="2" stroke-dasharray="24 16"/>
+
+  <g transform="translate(1500, 100)">
+    <rect width="320" height="90" rx="12" fill="#1C1316" stroke="#4D202A" stroke-width="2"/>
+    <circle cx="36" cy="35" r="8" fill="#8B2536"/>
+    <circle cx="36" cy="35" r="4" fill="#F8F7EF"/>
+    <text x="60" y="39" fill="#F8F7EF" font-family="system-ui, sans-serif" font-size="14" font-weight="700">О КОМПАНИИ ASMA</text>
+    <text x="60" y="63" fill="#E6A9B4" font-family="system-ui, sans-serif" font-size="12">Логистический оператор</text>
+  </g>
+</svg>

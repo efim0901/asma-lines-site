@@ -1,0 +1,70 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="map_bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141113"/>
+      <stop offset="50%" stop-color="#24141A"/>
+      <stop offset="100%" stop-color="#0F0D0E"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#map_bg)"/>
+
+  <!-- Belarus Map Contour Vector (Stylized Geometric Border) -->
+  <path d="M 620 240 L 860 180 L 1180 210 L 1420 320 L 1490 560 L 1380 820 L 1180 940 L 880 960 L 600 860 L 440 680 L 460 440 Z" fill="#1C1318" stroke="#5A2430" stroke-width="2.5" opacity="0.65"/>
+
+  <!-- Administrative / Transit Corridors -->
+  <!-- M-1 Brest-Minsk-Orsha -->
+  <path d="M 490 740 L 960 520 L 1360 360" stroke="#8B2536" stroke-width="4" stroke-linecap="round"/>
+  <!-- M-5 Gomel-Minsk -->
+  <path d="M 1290 850 L 960 520" stroke="#E6A9B4" stroke-width="5" stroke-linecap="round" stroke-dasharray="14 10"/>
+  <!-- M-8 Vitebsk-Mogilev-Gomel -->
+  <path d="M 1280 290 L 1270 560 L 1290 850" stroke="#E6A9B4" stroke-width="4" stroke-linecap="round"/>
+  <!-- M-10 Brest-Pinsk-Mozyr-Gomel -->
+  <path d="M 490 740 L 760 760 L 1050 820 L 1290 850" stroke="#E6A9B4" stroke-width="3" stroke-linecap="round"/>
+  <!-- M-6 Minsk-Grodno -->
+  <path d="M 960 520 L 520 440" stroke="#8B2536" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Regional Hub Hubs (Nodes) -->
+  <!-- Gomel (Hero Origin) -->
+  <g transform="translate(1290, 850)">
+    <circle cx="0" cy="0" r="38" fill="none" stroke="#E6A9B4" stroke-width="1.5" opacity="0.6"/>
+    <circle cx="0" cy="0" r="22" fill="#8B2536" stroke="#F8F7EF" stroke-width="3"/>
+    <circle cx="0" cy="0" r="8" fill="#F8F7EF"/>
+    <text x="32" y="8" fill="#F8F7EF" font-family="system-ui, sans-serif" font-size="20" font-weight="900" letter-spacing="2">ГОМЕЛЬ (ХАБ)</text>
+  </g>
+
+  <!-- Minsk -->
+  <g transform="translate(960, 520)">
+    <circle cx="0" cy="0" r="16" fill="#8B2536" stroke="#F8F7EF" stroke-width="2.5"/>
+    <circle cx="0" cy="0" r="6" fill="#F8F7EF"/>
+    <text x="24" y="6" fill="#F8F7EF" font-family="system-ui, sans-serif" font-size="16" font-weight="700">МИНСК</text>
+  </g>
+
+  <!-- Brest -->
+  <g transform="translate(490, 740)">
+    <circle cx="0" cy="0" r="12" fill="#3D2930" stroke="#E6A9B4" stroke-width="2"/>
+    <circle cx="0" cy="0" r="4" fill="#E6A9B4"/>
+    <text x="-90" y="6" fill="#C9C5B9" font-family="system-ui, sans-serif" font-size="15" font-weight="600">БРЕСТ</text>
+  </g>
+
+  <!-- Grodno -->
+  <g transform="translate(520, 440)">
+    <circle cx="0" cy="0" r="12" fill="#3D2930" stroke="#E6A9B4" stroke-width="2"/>
+    <circle cx="0" cy="0" r="4" fill="#E6A9B4"/>
+    <text x="-95" y="6" fill="#C9C5B9" font-family="system-ui, sans-serif" font-size="15" font-weight="600">ГРОДНО</text>
+  </g>
+
+  <!-- Vitebsk -->
+  <g transform="translate(1280, 290)">
+    <circle cx="0" cy="0" r="12" fill="#3D2930" stroke="#E6A9B4" stroke-width="2"/>
+    <circle cx="0" cy="0" r="4" fill="#E6A9B4"/>
+    <text x="24" y="6" fill="#C9C5B9" font-family="system-ui, sans-serif" font-size="15" font-weight="600">ВИТЕБСК</text>
+  </g>
+
+  <!-- Mogilev -->
+  <g transform="translate(1270, 560)">
+    <circle cx="0" cy="0" r="12" fill="#3D2930" stroke="#E6A9B4" stroke-width="2"/>
+    <circle cx="0" cy="0" r="4" fill="#E6A9B4"/>
+    <text x="24" y="6" fill="#C9C5B9" font-family="system-ui, sans-serif" font-size="15" font-weight="600">МОГИЛЁВ</text>
+  </g>
+</svg>

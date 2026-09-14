@@ -1,0 +1,73 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="road_sky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#191114"/>
+      <stop offset="50%" stop-color="#2D141C"/>
+      <stop offset="100%" stop-color="#140E10"/>
+    </linearGradient>
+    <linearGradient id="road_surf" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1C1819"/>
+      <stop offset="100%" stop-color="#0E0D0E"/>
+    </linearGradient>
+    <linearGradient id="neon_route" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8B2536"/>
+      <stop offset="50%" stop-color="#E6A9B4"/>
+      <stop offset="100%" stop-color="#F8F7EF"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#road_sky)"/>
+
+  <!-- Perspective Highway Vanishing Point -->
+  <!-- Ground -->
+  <path d="M0 580 L1920 580 L1920 1080 L0 1080 Z" fill="url(#road_surf)"/>
+  
+  <!-- Perspective Road -->
+  <polygon points="960,580 1010,580 1820,1080 100,1080" fill="#151314"/>
+  <polygon points="960,580 970,580 1560,1080 360,1080" fill="#181517"/>
+
+  <!-- Center dashed line perspective -->
+  <polygon points="958,580 962,580 965,630 955,630" fill="#E6A9B4" opacity="0.6"/>
+  <polygon points="956,660 964,660 968,730 952,730" fill="#E6A9B4" opacity="0.7"/>
+  <polygon points="953,770 967,770 973,860 947,860" fill="#E6A9B4" opacity="0.8"/>
+  <polygon points="948,910 972,910 980,1030 940,1030" fill="#E6A9B4"/>
+
+  <!-- Road Edges -->
+  <line x1="960" y1="580" x2="100" y2="1080" stroke="#8B2536" stroke-width="4"/>
+  <line x1="1010" y1="580" x2="1820" y2="1080" stroke="#8B2536" stroke-width="4"/>
+
+  <!-- Distance Waypoint Nodes on Route -->
+  <g opacity="0.65">
+    <ellipse cx="960" cy="580" rx="14" ry="6" fill="#8B2536"/>
+    <ellipse cx="960" cy="700" rx="26" ry="9" fill="none" stroke="#E6A9B4" stroke-width="2"/>
+    <ellipse cx="960" cy="850" rx="46" ry="14" fill="none" stroke="#E6A9B4" stroke-width="2.5" stroke-dasharray="8 6"/>
+  </g>
+
+  <!-- High-voltage Power Lines & Mileposts -->
+  <line x1="280" y1="420" x2="280" y2="760" stroke="#3D3035" stroke-width="3"/>
+  <line x1="240" y1="460" x2="320" y2="460" stroke="#3D3035" stroke-width="2"/>
+  <line x1="1640" y1="420" x2="1640" y2="760" stroke="#3D3035" stroke-width="3"/>
+  <line x1="1600" y1="460" x2="1680" y2="460" stroke="#3D3035" stroke-width="2"/>
+  <path d="M280 460 Q960 520 1640 460" fill="none" stroke="#3D3035" stroke-width="1.5" opacity="0.4"/>
+
+  <!-- Speed Trails / Light Streams -->
+  <path d="M960 580 Q740 760 220 1080" fill="none" stroke="#FF3355" stroke-width="4" opacity="0.45"/>
+  <path d="M970 580 Q1180 760 1700 1080" fill="none" stroke="#FFF0BA" stroke-width="5" opacity="0.45"/>
+
+  <!-- Navigation Grid HUD vector Overlay -->
+  <g opacity="0.12" stroke="#F8F7EF" stroke-width="1">
+    <line x1="960" y1="0" x2="960" y2="580"/>
+    <line x1="0" y1="580" x2="1920" y2="580"/>
+    <circle cx="960" cy="580" r="180" fill="none"/>
+    <circle cx="960" cy="580" r="320" fill="none"/>
+  </g>
+
+  <!-- Route Badge Indicator -->
+  <g transform="translate(1500, 100)">
+    <rect width="320" height="90" rx="12" fill="#1C1316" stroke="#4D202A" stroke-width="2"/>
+    <circle cx="36" cy="35" r="8" fill="#8B2536"/>
+    <circle cx="36" cy="35" r="4" fill="#F8F7EF"/>
+    <text x="60" y="39" fill="#F8F7EF" font-family="system-ui, sans-serif" font-size="14" font-weight="700">ТРАССЫ БЕЛАРУСИ</text>
+    <text x="60" y="63" fill="#E6A9B4" font-family="monospace" font-size="12">M-5 · M-1 · M-10 · M-8</text>
+  </g>
+</svg>

@@ -1,0 +1,60 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="fleet_sky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#191114"/>
+      <stop offset="50%" stop-color="#2C151D"/>
+      <stop offset="100%" stop-color="#130F11"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#fleet_sky)"/>
+
+  <!-- Partner Logistics Hub Terminal -->
+  <rect y="640" width="1920" height="440" fill="#131012"/>
+  <line x1="0" y1="640" x2="1920" y2="640" stroke="#3D2B32" stroke-width="3"/>
+  <line x1="0" y1="840" x2="1920" y2="840" stroke="#E6A9B4" stroke-width="2" stroke-dasharray="30 20" opacity="0.3"/>
+
+  <!-- Multiple Fleet Trucks in Terminal Bay (Partnership theme) -->
+  <!-- Truck 1 (Left, Refrigerator) -->
+  <g transform="translate(320, 480)">
+    <rect x="0" y="30" width="280" height="160" rx="4" fill="#2E3338" stroke="#4A525A" stroke-width="2"/>
+    <rect x="250" y="60" width="80" height="130" rx="4" fill="#3D454D"/>
+    <!-- Refrigeration unit on top -->
+    <rect x="20" y="8" width="60" height="22" rx="3" fill="#6B7885"/>
+    <circle cx="90" cy="205" r="20" fill="#121012" stroke="#3A3E45" stroke-width="4"/>
+    <circle cx="150" cy="205" r="20" fill="#121012" stroke="#3A3E45" stroke-width="4"/>
+    <circle cx="290" cy="205" r="20" fill="#121012" stroke="#3A3E45" stroke-width="4"/>
+    <text x="30" y="90" fill="#C5D0DC" font-family="sans-serif" font-size="13" font-weight="700">РЕФРИЖЕРАТОРЫ</text>
+  </g>
+
+  <!-- Truck 2 (Center, Hero ASMA Burgundy Curtain) -->
+  <g transform="translate(740, 440)">
+    <rect x="0" y="30" width="340" height="190" rx="4" fill="#24191C" stroke="#8B2536" stroke-width="2"/>
+    <rect x="25" y="60" width="290" height="60" rx="4" fill="#140E10" opacity="0.8"/>
+    <text x="40" y="100" fill="#F8F7EF" font-family="system-ui, sans-serif" font-size="24" font-weight="900" letter-spacing="4">ASMA PARTNER</text>
+    <path d="M345 80 L410 75 L445 105 L470 150 L470 220 L345 220 Z" fill="#8B2536" stroke="#B83A4E" stroke-width="2"/>
+    <circle cx="210" cy="235" r="22" fill="#121012" stroke="#423439" stroke-width="4"/>
+    <circle cx="270" cy="235" r="22" fill="#121012" stroke="#423439" stroke-width="4"/>
+    <circle cx="420" cy="235" r="22" fill="#121012" stroke="#423439" stroke-width="4"/>
+  </g>
+
+  <!-- Truck 3 (Right, Flatbed / Container Platform) -->
+  <g transform="translate(1320, 500)">
+    <rect x="0" y="90" width="260" height="20" rx="2" fill="#3D3538"/>
+    <rect x="15" y="20" width="230" height="70" rx="4" fill="#7A685D" stroke="#9E897D" stroke-width="1.5"/>
+    <rect x="250" y="50" width="70" height="80" rx="4" fill="#2B2628"/>
+    <circle cx="80" cy="125" r="18" fill="#121012" stroke="#3D3538" stroke-width="3"/>
+    <circle cx="140" cy="125" r="18" fill="#121012" stroke="#3D3538" stroke-width="3"/>
+    <circle cx="280" cy="125" r="18" fill="#121012" stroke="#3D3538" stroke-width="3"/>
+    <text x="30" y="55" fill="#F8F7EF" font-family="monospace" font-size="12" font-weight="700">КОНТЕЙНЕРОВОЗ</text>
+  </g>
+
+  <!-- Partner Badge -->
+  <g transform="translate(1500, 100)">
+    <rect width="320" height="90" rx="12" fill="#1C1316" stroke="#4D202A" stroke-width="2"/>
+    <circle cx="36" cy="35" r="8" fill="#8B2536"/>
+    <circle cx="36" cy="35" r="4" fill="#F8F7EF"/>
+    <text x="60" y="39" fill="#F8F7EF" font-family="system-ui, sans-serif" font-size="14" font-weight="700">ПАРТНЁРСКАЯ СЕТЬ</text>
+    <text x="60" y="63" fill="#E6A9B4" font-family="system-ui, sans-serif" font-size="12">Тенты · Рефрижераторы · Борта</text>
+  </g>
+</svg>

@@ -13,8 +13,8 @@
 <meta property="og:url" content="https://asmalines.by/calculator.html">
 <meta property="og:locale" content="ru_RU">
 <meta name="twitter:card" content="summary">
-<link rel="stylesheet" href="assets/style.css?v=20260913j">
-<link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css?v=20260913j">
+<link rel="stylesheet" href="assets/style.css?v=20260914b">
+<link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css?v=20260914b">
 </head>
 <body>
 <header class="site-header">
@@ -51,7 +51,7 @@
 
 <main>
   <section class="hero-photo hero-photo--inner">
-    <div class="hero-photo__bg" style="background-image:linear-gradient(120deg,#1a1210 0%,#3a1c1c 60%,#7a3a2e 100%), url('assets/img/calc-road.png')"></div>
+    <div class="hero-photo__bg" style="background-image:linear-gradient(120deg,#1a1210 0%,#3a1c1c 60%,#7a3a2e 100%), url('assets/img/calc-road.svg')"></div>
     <div class="hero-photo__overlay"></div>
     <div class="hero-photo__inner container">
       <div class="hero-photo__content">
@@ -65,7 +65,40 @@
     </div>
   </section>
 
+  <section class="section container" style="padding-bottom: 0;">
+    <div class="popular-routes">
+      <div class="popular-routes-title">Популярные направления из Гомеля (кликните для быстрой подстановки):</div>
+      <div class="popular-routes-grid" id="popular-routes-grid">
+        <button type="button" class="popular-route-pill" data-from="Гомель" data-to="Минск" data-km="310">
+          <span class="popular-route-name">Гомель → Минск</span>
+          <span class="popular-route-meta">310 км · от 590 р.</span>
+        </button>
+        <button type="button" class="popular-route-pill" data-from="Гомель" data-to="Брест" data-km="535">
+          <span class="popular-route-name">Гомель → Брест</span>
+          <span class="popular-route-meta">535 км · от 960 р.</span>
+        </button>
+        <button type="button" class="popular-route-pill" data-from="Гомель" data-to="Гродно" data-km="580">
+          <span class="popular-route-name">Гомель → Гродно</span>
+          <span class="popular-route-meta">580 км · от 1 040 р.</span>
+        </button>
+        <button type="button" class="popular-route-pill" data-from="Гомель" data-to="Могилёв" data-km="180">
+          <span class="popular-route-name">Гомель → Могилёв</span>
+          <span class="popular-route-meta">180 км · от 380 р.</span>
+        </button>
+        <button type="button" class="popular-route-pill" data-from="Гомель" data-to="Витебск" data-km="335">
+          <span class="popular-route-name">Гомель → Витебск</span>
+          <span class="popular-route-meta">335 км · от 630 р.</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
   <section class="section container calculator-layout">
+    <div class="print-header">
+      <div style="font-size:24px;font-weight:800;letter-spacing:2px;margin-bottom:4px;">ASMA LINES · ЛОГИСТИКА БЕЛАРУСЬ</div>
+      <div style="font-size:13px;color:#555;">Предварительный расчёт стоимости и коммерческое предложение</div>
+    </div>
+
     <form id="calculator" class="calculator">
       <div class="card-head">
         <h3 class="display-3">Параметры перевозки</h3>
@@ -80,12 +113,22 @@
       </label>
       <p class="muted" style="font-size:12px;margin:-8px 0 0">Поиск работает по любому населённому пункту Беларуси — вплоть до деревень.</p>
 
-      <label>Расстояние, км
+      <div class="distance-field-group">
+        <div class="distance-header">
+          <label for="calc-distance">Расстояние, км</label>
+          <button type="button" class="btn-reset-distance" id="btn-reset-distance" title="Вернуть расстояние, рассчитанное по маршруту" hidden>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+            <span>К маршруту: <strong id="reset-km-label">310 км</strong></span>
+          </button>
+        </div>
         <span class="range-row">
           <input name="distance" id="calc-distance" type="number" min="1" max="2000" inputmode="numeric" placeholder="Например, 310">
           <input name="distance-range" id="calc-distance-range" type="range" min="1" max="700" step="1" value="310" aria-label="Расстояние по ползунку">
         </span>
-      </label>
+      </div>
 
       <label>Вес груза, т
         <input name="weight" id="calc-weight" type="number" min="0.1" max="40" step="0.1" inputmode="decimal" placeholder="Например, 2.5">
@@ -130,12 +173,85 @@
       <p class="quote-multi" id="quote-multi" hidden></p>
 
       <p id="quote-note">Укажите параметры перевозки, чтобы увидеть предварительный ориентир по стоимости.</p>
-      <a id="quote-link" class="text-link hidden" href="contacts.html">Отправить заявку</a>
+      
+      <div class="quote-actions" id="quote-actions" hidden>
+        <button type="button" class="btn-calc-main" id="btn-quick-consult">Оформить заявку на этот маршрут</button>
+        <div class="quote-actions-row">
+          <button type="button" class="btn-calc-sec" id="btn-toggle-share" title="Отправить расчёт в мессенджер или на почту">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <span>В мессенджер / E-mail</span>
+          </button>
+          <button type="button" class="btn-calc-sec" id="btn-print-proposal" title="Открыть и распечатать коммерческое предложение (PDF)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            <span>КП / Печать (PDF)</span>
+          </button>
+        </div>
+
+        <!-- Popover options for Share / Messenger -->
+        <div class="quote-share-box" id="quote-share-box" hidden>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span class="quote-share-title">Отправить детали расчёта:</span>
+            <button type="button" id="close-share-box" style="font-size:16px;line-height:1;color:var(--on-ink-soft);padding:2px 6px;" aria-label="Скрыть">✕</button>
+          </div>
+          <div class="quote-share-links">
+            <a href="#" class="quote-share-btn" id="share-tg" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4L3 11l6 2m12-9l-4 17-8-6m12-11L9 13"/></svg>
+              <span>Telegram</span>
+            </a>
+            <a href="#" class="quote-share-btn" id="share-viber" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <span>Viber</span>
+            </a>
+            <a href="#" class="quote-share-btn" id="share-mail">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <span>E-mail</span>
+            </a>
+            <button type="button" class="quote-share-btn" id="share-copy">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span id="copy-btn-text">Скопировать</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <a id="quote-link" class="text-link hidden" href="contacts.html">Перейти на страницу контактов</a>
     </aside>
   </section>
 
+  <!-- Quick Consultation Modal -->
+  <div class="modal-backdrop" id="consult-modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <button type="button" class="modal-close" id="modal-close" aria-label="Закрыть окно">×</button>
+      <div class="card-head">
+        <p class="kicker" style="margin-bottom:6px;">Быстрая заявка</p>
+        <h3 class="display-3">Подтвердить маршрут</h3>
+        <p>Менеджер ASMA Lines свяжется с вами и согласует подачу транспорта.</p>
+      </div>
+
+      <div class="modal-route-preview" id="modal-route-preview">Маршрут не выбран</div>
+
+      <form id="consult-form" data-contact-form>
+        <input type="hidden" name="source" value="calculator_modal">
+        <input type="hidden" name="route_details" id="modal-hidden-route" value="">
+        <div style="display:grid;gap:14px;">
+          <label>Ваше имя / Компания
+            <input required name="name" placeholder="Например: Артём (ООО «Вектор»)" autocomplete="name">
+          </label>
+          <label>Телефон (Viber / Telegram)
+            <input required name="contact" type="tel" placeholder="+375 (29) 000-00-00" autocomplete="tel">
+          </label>
+          <label>Комментарий к грузу (необязательно)
+            <textarea name="message" rows="3" placeholder="Уточните желаемую дату погрузки, габариты или требования к машине"></textarea>
+          </label>
+          <button class="btn btn-primary" type="submit" style="width:100%;min-height:48px;">Отправить заявку диспетчеру</button>
+          <p class="form-status" aria-live="polite"></p>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <section class="container note">
-    <p><b>Важно:</b> расчёт даёт предварительный ориентир по стоимости на основе расстояния по дорогам между указанными точками. Финальная цена подтверждается менеджером после уточнения деталей перевозки — даты, типа транспорта и условий погрузки. Карта и поиск населённых пунктов используют открытые картографические данные OpenStreetMap.</p>
+    <p><b>Важно:</b> расчёт даёт предварительный ориентир по стоимости на основе протяжённости фактического автодорожного маршрута. Финальная цена фиксируется менеджером компании после уточнения деталей рейса — точного адреса подачи, типа подвижного состава и условий погрузочно-разгрузочных работ.</p>
   </section>
 </main>
 
@@ -166,9 +282,9 @@
     </div>
   </div>
 </footer>
-<script src="assets/vendor/leaflet/leaflet.js?v=20260913j"></script>
-<script src="assets/vehicles.js?v=20260913j"></script>
-<script src="assets/site.js?v=20260913j"></script>
-<script src="assets/calculator.js?v=20260913j"></script>
+<script src="assets/vendor/leaflet/leaflet.js?v=20260914b"></script>
+<script src="assets/vehicles.js?v=20260914b"></script>
+<script src="assets/site.js?v=20260914b"></script>
+<script src="assets/calculator.js?v=20260914b"></script>
 </body>
 </html>

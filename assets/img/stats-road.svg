@@ -1,0 +1,43 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="stat_sky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#181114"/>
+      <stop offset="50%" stop-color="#28141B"/>
+      <stop offset="100%" stop-color="#120E10"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#stat_sky)"/>
+
+  <!-- Analytical Chart Vectors & Progress Meters -->
+  <g opacity="0.16" stroke="#F8F7EF" stroke-width="1.5">
+    <!-- Grid -->
+    <line x1="200" y1="800" x2="1720" y2="800"/>
+    <line x1="200" y1="650" x2="1720" y2="650" stroke-dasharray="10 10"/>
+    <line x1="200" y1="500" x2="1720" y2="500" stroke-dasharray="10 10"/>
+    <line x1="200" y1="350" x2="1720" y2="350" stroke-dasharray="10 10"/>
+
+    <!-- Bar Growth Curves -->
+    <rect x="360" y="680" width="80" height="120" fill="#4A1E27"/>
+    <rect x="520" y="600" width="80" height="200" fill="#6A2230"/>
+    <rect x="680" y="520" width="80" height="280" fill="#8B2536"/>
+    <rect x="840" y="420" width="80" height="380" fill="#A33246"/>
+  </g>
+
+  <!-- Metric Trending Line -->
+  <path d="M 300 750 L 560 660 L 800 580 L 1100 420 L 1400 360 L 1700 240" fill="none" stroke="#E6A9B4" stroke-width="4" stroke-linecap="round"/>
+  <!-- Key Data Points -->
+  <circle cx="560" cy="660" r="8" fill="#8B2536" stroke="#F8F7EF" stroke-width="2"/>
+  <circle cx="800" cy="580" r="8" fill="#8B2536" stroke="#F8F7EF" stroke-width="2"/>
+  <circle cx="1100" cy="420" r="10" fill="#E6A9B4" stroke="#181114" stroke-width="3"/>
+  <circle cx="1400" cy="360" r="8" fill="#8B2536" stroke="#F8F7EF" stroke-width="2"/>
+  <circle cx="1700" cy="240" r="12" fill="#8B2536" stroke="#F8F7EF" stroke-width="3"/>
+
+  <g transform="translate(1500, 100)">
+    <rect width="320" height="90" rx="12" fill="#1C1316" stroke="#4D202A" stroke-width="2"/>
+    <circle cx="36" cy="35" r="8" fill="#8B2536"/>
+    <circle cx="36" cy="35" r="4" fill="#F8F7EF"/>
+    <text x="60" y="39" fill="#F8F7EF" font-family="system-ui, sans-serif" font-size="14" font-weight="700">ОПЕРАЦИОННЫЕ ДАННЫЕ</text>
+    <text x="60" y="63" fill="#E6A9B4" font-family="system-ui, sans-serif" font-size="12">Реальные цифры и открытость</text>
+  </g>
+</svg>

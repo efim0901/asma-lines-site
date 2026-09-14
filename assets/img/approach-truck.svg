@@ -1,0 +1,58 @@
+<svg width="1920" height="800" viewBox="0 0 1920 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="band_sky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#191113"/>
+      <stop offset="50%" stop-color="#2D151D"/>
+      <stop offset="100%" stop-color="#120E10"/>
+    </linearGradient>
+    <linearGradient id="truck_fill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B2536"/>
+      <stop offset="100%" stop-color="#4E121B"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1920" height="800" fill="url(#band_sky)"/>
+
+  <!-- Speed Graphic Lines -->
+  <g opacity="0.18" stroke="#E6A9B4" stroke-width="2">
+    <line x1="0" y1="200" x2="1920" y2="200"/>
+    <line x1="0" y1="360" x2="1920" y2="360" stroke-dasharray="30 20"/>
+    <line x1="0" y1="520" x2="1920" y2="520"/>
+    <line x1="0" y1="640" x2="1920" y2="640" stroke-dasharray="50 30"/>
+  </g>
+
+  <!-- Highway Surface -->
+  <rect y="480" width="1920" height="320" fill="#141113"/>
+  <line x1="0" y1="480" x2="1920" y2="480" stroke="#3D2930" stroke-width="3"/>
+  <line x1="0" y1="640" x2="1920" y2="640" stroke="#E6A9B4" stroke-width="4" stroke-dasharray="40 30" opacity="0.4"/>
+
+  <!-- Red & White light trails -->
+  <path d="M0 620 L1300 620" stroke="#FF2E50" stroke-width="6" opacity="0.6"/>
+  <path d="M0 628 L1100 628" stroke="#FF2E50" stroke-width="3" opacity="0.4"/>
+  <path d="M1400 560 L2100 560" stroke="#FFEAA7" stroke-width="8" opacity="0.5"/>
+
+  <!-- Truck Silhouette Moving Right -->
+  <g transform="translate(1080, 260)">
+    <!-- Shadow -->
+    <ellipse cx="260" cy="270" rx="340" ry="18" fill="#050304" opacity="0.7"/>
+
+    <!-- Trailer -->
+    <rect x="0" y="30" width="360" height="200" rx="6" fill="#242022" stroke="#423A3E" stroke-width="2"/>
+    <rect x="20" y="55" width="320" height="70" rx="4" fill="#151214" opacity="0.8"/>
+    <text x="35" y="100" fill="#F8F7EF" font-family="system-ui, sans-serif" font-size="28" font-weight="900" letter-spacing="5">ASMA LINES</text>
+    <text x="35" y="116" fill="#E6A9B4" font-family="system-ui, sans-serif" font-size="10" font-weight="600" letter-spacing="2">ИНДИВИДУАЛЬНЫЙ ПОДХОД</text>
+
+    <!-- Trailer Wheels -->
+    <circle cx="230" cy="245" r="22" fill="#110F10" stroke="#3D3539" stroke-width="4"/>
+    <circle cx="285" cy="245" r="22" fill="#110F10" stroke="#3D3539" stroke-width="4"/>
+    <circle cx="340" cy="245" r="22" fill="#110F10" stroke="#3D3539" stroke-width="4"/>
+
+    <!-- Tractor Cab -->
+    <path d="M365 80 L430 75 L465 105 L495 150 L500 220 L500 240 L365 240 Z" fill="url(#truck_fill)" stroke="#B83A4E" stroke-width="2"/>
+    <path d="M425 82 L460 106 L480 145 L425 145 Z" fill="#192026" stroke="#33404B" stroke-width="1.5"/>
+    <circle cx="485" cy="195" r="4" fill="#FFEAA7"/>
+    <!-- Cab Wheels -->
+    <circle cx="400" cy="245" r="22" fill="#110F10" stroke="#3D3539" stroke-width="4"/>
+    <circle cx="480" cy="245" r="22" fill="#110F10" stroke="#3D3539" stroke-width="4"/>
+  </g>
+</svg>
