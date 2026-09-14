@@ -9,7 +9,6 @@
     mapEl.classList.add('calc-leaflet-map--error');
     mapEl.textContent = 'Карта временно недоступна.';
     if (hintElFallback) hintElFallback.textContent = 'Карта не загрузилась (F12 → Console).';
-    console.error('[ASMA calculator] Leaflet did not load.');
     return;
   }
 
@@ -44,18 +43,24 @@
     attributionControl: false,
     scrollWheelZoom: false,
     minZoom: 6,
-    maxZoom: 20,
+    maxZoom: 16,
   }).setView(BY_CENTER, 7);
   map.setMaxBounds(BY_BOUNDS.pad(0.2));
 
   window.L.control.attribution({ prefix: false, position: 'bottomright' }).addTo(map);
 
-  window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    subdomains: 'abcd',
-    maxZoom: 20,
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors ' +
-      '&copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>',
+  map.createPane('labels');
+  map.getPane('labels').style.zIndex = 250;
+  map.getPane('labels').style.pointerEvents = 'none';
+
+  window.L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 16,
+    attribution: 'Tiles &copy; <a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a>',
+  }).addTo(map);
+
+  window.L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 16,
+    pane: 'labels',
   }).addTo(map);
 
   function pinIcon(isOrigin) {
@@ -200,11 +205,13 @@
       const lon = segStart[1] + (segEnd[1] - segStart[1]) * segT;
       vanMarker.setLatLng([lat, lon]);
 
-      const goingLeft = segEnd[1] < segStart[1];
       const node = vanMarker.getElement();
       if (node) {
         const inner = node.querySelector('svg');
-        if (inner) inner.style.transform = goingLeft ? 'scaleX(-1)' : 'scaleX(1)';
+        if (inner) {
+          const flip = fromPlace && toPlace && (toPlace.lon < fromPlace.lon);
+          inner.style.transform = flip ? 'scaleX(-1)' : 'scaleX(1)';
+        }
       }
       vanRaf = requestAnimationFrame(tick);
     }
