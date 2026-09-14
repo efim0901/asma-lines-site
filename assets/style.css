@@ -33,13 +33,16 @@
 
 body[data-theme='dark'] {
   --ink: #F8F7EF;
-  --ink-soft: #C9C5B9;
-  --ink-mute: #8F8B80;
+  --ink-soft: #D3CFC3;
+  --ink-mute: #A6A295;
   --paper: #131311;
   --surface: #1C1C1A;
   --line: rgba(248, 247, 239, .12);
-  --line-strong: rgba(248, 247, 239, .22);
-  --brand-soft: rgba(230, 169, 180, .12);
+  --line-strong: rgba(248, 247, 239, .26);
+  --brand-soft: rgba(230, 169, 180, .15);
+  --burgundy: #E6A9B4;
+  --burgundy-deep: #8B2536;
+  --burgundy-bright: #B5364A;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }

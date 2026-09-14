@@ -564,6 +564,12 @@
       els.shareBox.hidden = !els.shareBox.hidden;
     });
   }
+  const closeShareBox = document.getElementById('close-share-box');
+  if (closeShareBox) {
+    closeShareBox.addEventListener('click', () => {
+      if (els.shareBox) els.shareBox.hidden = true;
+    });
+  }
 
   // Copy details to clipboard
   if (els.shareCopy) {
@@ -590,7 +596,25 @@
   // Print Proposal (Commercial Offer)
   if (els.btnPrintProposal) {
     els.btnPrintProposal.addEventListener('click', () => {
-      window.print();
+      const fromTxt = els.from.value.trim() || 'Гомель';
+      const toTxt = els.to.value.trim() || 'Минск';
+      const km = els.distance.value || 310;
+      const weight = els.weight.value || 5;
+      const cargo = currentCargoType();
+      const loading = els.loading && els.loading.checked ? '1' : '0';
+      const totalRaw = parseInt(els.total.textContent.replace(/\D/g, ''), 10) || 0;
+      
+      const url = new URL('proposal.html', window.location.href);
+      url.searchParams.set('from', fromTxt);
+      url.searchParams.set('to', toTxt);
+      url.searchParams.set('km', km);
+      url.searchParams.set('weight', weight);
+      url.searchParams.set('cargo', cargo);
+      url.searchParams.set('loading', loading);
+      url.searchParams.set('total', totalRaw);
+      url.searchParams.set('autoprint', '1');
+      
+      window.open(url.toString(), '_blank');
     });
   }
 
