@@ -281,7 +281,10 @@ if (mapContainer) {
   });
 }
 async function submitLead(payload, statusNode, successMessage) {
-  if (statusNode) statusNode.textContent = 'Отправляем…';
+  if (statusNode) {
+    statusNode.textContent = 'Отправляем данные…';
+    statusNode.className = 'form-status form-status--loading';
+  }
   try {
     const response = await fetch('/api/lead', {
       method: 'POST',
@@ -289,47 +292,87 @@ async function submitLead(payload, statusNode, successMessage) {
       body: JSON.stringify(payload),
     });
     if (!response.ok) throw new Error('request_failed');
-    if (statusNode) statusNode.textContent = successMessage;
+    if (statusNode) {
+      statusNode.textContent = successMessage;
+      statusNode.className = 'form-status form-status--success';
+    }
     return true;
   } catch (error) {
-    if (statusNode) statusNode.textContent = 'Не удалось отправить заявку. Попробуйте ещё раз или свяжитесь с нами по телефону.';
+    if (statusNode) {
+      statusNode.textContent = 'Не удалось отправить заявку. Пожалуйста, позвоните нам или отправьте повторно.';
+      statusNode.className = 'form-status form-status--error';
+    }
     return false;
   }
 }
 
-/* Interactive calculator now lives in assets/calculator.js
-   (loaded only on calculator.html) to keep this file page-agnostic. */
-
-/* contact form */
-const contact = document.querySelector('[data-contact-form]');
-if (contact) {
-  contact.addEventListener('submit', async (event) => {
+/* contact & lead forms */
+document.querySelectorAll('[data-contact-form]').forEach((formElem) => {
+  formElem.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const data = new FormData(contact);
+    const data = new FormData(formElem);
+    const btn = formElem.querySelector('button[type="submit"]');
+    const origText = btn ? btn.textContent : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Отправка…';
+    }
+    const statusNode = formElem.querySelector('.form-status');
     const ok = await submitLead({
-      name: data.get('name'),
-      contact: data.get('contact'),
-      message: data.get('message'),
-      source: 'website_contacts',
-    }, contact.querySelector('.form-status'), 'Заявка отправлена. Мы свяжемся с вами в течение рабочего дня.');
-    if (ok) contact.reset();
+      name: data.get('name') || '',
+      contact: data.get('contact') || '',
+      message: data.get('message') || '',
+      route_details: data.get('route_details') || undefined,
+      source: data.get('source') || 'website_contacts',
+    }, statusNode, 'Заявка принята! Диспетчер свяжется с вами в течение 15 минут.');
+    
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
+    if (ok) {
+      formElem.reset();
+      const modal = formElem.closest('.modal-backdrop');
+      if (modal) {
+        setTimeout(() => {
+          modal.classList.remove('is-open');
+          modal.setAttribute('aria-hidden', 'true');
+          document.body.style.overflow = '';
+          if (statusNode) {
+            statusNode.textContent = '';
+            statusNode.className = 'form-status';
+          }
+        }, 2200);
+      }
+    }
   });
-}
+});
 
 /* partners form */
-const partnersForm = document.querySelector('[data-partners-form]');
-if (partnersForm) {
+document.querySelectorAll('[data-partners-form]').forEach((partnersForm) => {
   partnersForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(partnersForm);
+    const btn = partnersForm.querySelector('button[type="submit"]');
+    const origText = btn ? btn.textContent : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Отправка…';
+    }
+    const statusNode = partnersForm.querySelector('.form-status');
     const ok = await submitLead({
-      company: data.get('company'),
-      contact_name: data.get('contact_name'),
-      contact: data.get('contact'),
-      direction: data.get('direction'),
-      message: data.get('message'),
+      company: data.get('company') || '',
+      contact_name: data.get('contact_name') || '',
+      contact: data.get('contact') || '',
+      direction: data.get('direction') || '',
+      message: data.get('message') || '',
       source: 'website_partners',
-    }, partnersForm.querySelector('.form-status'), 'Спасибо! Мы свяжемся с вами для обсуждения сотрудничества.');
+    }, statusNode, 'Спасибо! Мы свяжемся с вами для обсуждения взаимовыгодного сотрудничества.');
+    
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
     if (ok) partnersForm.reset();
   });
-}
+});
