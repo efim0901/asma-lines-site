@@ -183,17 +183,23 @@ if (mapContainer) {
     'zhitkovichi': { name: 'Житковичи', region: 'Гомельская обл.', desc: 'Транзитный узел на трассе М-10', km: '235', time: '3 ч' }
   };
 
-  const svgElem = mapContainer.querySelector('svg.belarus-master-map');
+  const svgElem = mapContainer.querySelector('svg.asma-master-vector-map') || mapContainer.querySelector('svg.belarus-master-map') || mapContainer.querySelector('svg');
   const cityNodes = mapContainer.querySelectorAll('.map-city-node');
 
   function showTooltip(id, evt) {
-    const data = CITIES_DATA[id];
-    if (!data || !tooltip) return;
+    const data = CITIES_DATA[id] || {
+      name: (id.charAt(0).toUpperCase() + id.slice(1)).replace(/_/g, ' '),
+      region: 'Республика Беларусь',
+      desc: 'Логистическое направление ASMA Lines',
+      km: '—',
+      time: 'По расписанию'
+    };
+    if (!tooltip) return;
 
     tTitle.textContent = data.name;
     tRegion.textContent = data.region;
     tDesc.textContent = data.desc;
-    tDistance.textContent = data.km === '0' ? 'База' : `${data.km} км`;
+    tDistance.textContent = data.km === '0' ? 'База' : (data.km === '—' ? 'Уточняется' : `${data.km} км`);
     tTime.textContent = data.time;
     tLink.href = `calculator.html?from=Гомель&to=${encodeURIComponent(data.name)}`;
 
@@ -208,7 +214,7 @@ if (mapContainer) {
     }
 
     const x = Math.max(120, Math.min(rect.width - 120, clientX - rect.left));
-    const y = Math.max(160, clientY - rect.top - 12);
+    const y = Math.max(140, clientY - rect.top - 12);
 
     tooltip.style.left = `${x}px`;
     tooltip.style.top = `${y}px`;
@@ -238,7 +244,7 @@ if (mapContainer) {
 
   // Corridor Filter Buttons
   const corridorBtns = document.querySelectorAll('.corridor-btn');
-  const highwaysGroup = svgElem ? svgElem.querySelector('.highways-layer') : null;
+  const highwaysGroup = svgElem ? (svgElem.querySelector('.highways-layer') || svgElem.querySelector('.asma-arteries-layer') || svgElem) : null;
 
   corridorBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -246,21 +252,28 @@ if (mapContainer) {
       btn.classList.add('active');
       const corridor = btn.getAttribute('data-corridor');
 
-      // Highlight logic on SVG paths
       if (highwaysGroup) {
-        const paths = highwaysGroup.querySelectorAll('path');
+        const paths = highwaysGroup.querySelectorAll('path, line');
         paths.forEach(p => {
           p.style.transition = 'opacity 0.3s ease, stroke-width 0.3s ease';
+          const pCorridor = p.getAttribute('data-corridor') || '';
+          const pClass = p.getAttribute('class') || '';
+          const d = p.getAttribute('d') || '';
+
           if (corridor === 'all') {
             p.style.opacity = '';
           } else if (corridor === 'm5') {
-            p.style.opacity = p.getAttribute('d').includes('1301') || p.getAttribute('d').includes('1260') ? '1' : '0.15';
+            const isMatch = pCorridor === 'm5' || pClass.includes('m5') || d.includes('1301') || d.includes('1260') || (d.includes('1267') && d.includes('794'));
+            p.style.opacity = isMatch ? '1' : '0.12';
           } else if (corridor === 'm1') {
-            p.style.opacity = p.getAttribute('d').includes('135.8') && p.getAttribute('d').includes('826') ? '1' : '0.15';
+            const isMatch = pCorridor === 'm1' || pClass.includes('m1') || (d.includes('135.8') && d.includes('826')) || (d.includes('136') && d.includes('794'));
+            p.style.opacity = isMatch ? '1' : '0.12';
           } else if (corridor === 'm8') {
-            p.style.opacity = p.getAttribute('d').includes('1177') && p.getAttribute('d').includes('1301') ? '1' : '0.15';
+            const isMatch = pCorridor === 'm8' || pClass.includes('m8') || (d.includes('1177') && d.includes('1301')) || (d.includes('1177') && d.includes('1267'));
+            p.style.opacity = isMatch ? '1' : '0.12';
           } else if (corridor === 'm10') {
-            p.style.opacity = p.getAttribute('d').includes('516.9') || p.getAttribute('d').includes('1356') ? '1' : '0.15';
+            const isMatch = pCorridor === 'm10' || pClass.includes('m10') || d.includes('516.9') || d.includes('1356') || (d.includes('136') && d.includes('1267'));
+            p.style.opacity = isMatch ? '1' : '0.12';
           }
         });
       }

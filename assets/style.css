@@ -452,7 +452,9 @@ h1, h2, h3 { margin: 0; font-weight: 700; letter-spacing: -.024em; }
   box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(139, 37, 54, 0.45);
   background: #0E0609;
 }
-.route-map svg.belarus-master-map {
+.route-map svg.belarus-master-map,
+.route-map svg.asma-master-vector-map,
+.route-map svg {
   width: 100%;
   height: auto;
   display: block;
