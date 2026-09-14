@@ -64,22 +64,22 @@
   }).setView(BY_CENTER, 7);
   map.setMaxBounds(BY_BOUNDS.pad(0.2));
 
-  // Multi-tier resilient tile layer configuration (100% compatible with Cloudflare & static CDN deployment)
+  // High-reliability public tile layers (100% free, no API keys, zero watermark, Cloudflare compatible)
   const TILE_SOURCES = [
     {
-      url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      subdomains: 'abcd',
-      maxZoom: 19,
-    },
-    {
-      url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      subdomains: 'abcd',
+      url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      subdomains: 'abc',
       maxZoom: 19,
     },
     {
       url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       subdomains: 'abc',
       maxZoom: 19,
+    },
+    {
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+      subdomains: '',
+      maxZoom: 16,
     }
   ];
 
