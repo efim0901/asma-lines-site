@@ -14,13 +14,20 @@
 <meta property="og:locale" content="ru_RU">
 <meta name="twitter:card" content="summary">
 <link rel="icon" type="image/svg+xml" href="assets/brand/asma-mark.svg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"></noscript>
+<link rel="preload" as="image" href="assets/img/about-road.svg?v=20260914h" fetchpriority="high">
 <link rel="stylesheet" href="assets/style.css?v=20260914h">
 </head>
 <body>
 <header class="site-header">
   <div class="container nav-inner">
     <a class="brand" href="index.html" aria-label="ASMA Lines — на главную">
-      <img class="brand-logo" src="assets/brand/asma-mark.svg" alt="" width="34" height="34">
+      <img class="brand-logo" src="assets/brand/asma-mark.svg" alt="ASMA Lines" width="34" height="34">
       <span>ASMA</span>
     </a>
     <nav id="main-nav">
@@ -32,7 +39,7 @@
         <button class="nav-link" type="button" aria-haspopup="true" aria-expanded="false">
           Информация <span class="caret">▾</span>
         </button>
-        <div class="nav-dropdown-menu" role="menu">
+        <div class="nav-dropdown-menu">
           <a href="statistics.html">ASMA в цифрах</a>
           <a href="faq.html">Частые вопросы</a>
           <a href="privacy.html">Политика конфиденциальности</a>
@@ -155,6 +162,6 @@
     </div>
   </div>
 </footer>
-<script src="assets/site.js?v=20260914h"></script>
+<script src="assets/site.js?v=20260914h" defer></script>
 </body>
 </html>
