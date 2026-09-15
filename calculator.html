@@ -110,21 +110,34 @@
 
     <form id="calculator" class="calculator">
       <div class="card-head">
-        <h3 class="display-3">Параметры перевозки</h3>
-        <p>Расчёт обновляется автоматически — кнопка не нужна</p>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
+          <span class="panel-badge">Точный калькулятор</span>
+          <span class="panel-badge secondary">Автоматический расчёт</span>
+        </div>
+        <h3 class="display-3" style="font-size:clamp(20px, 2.4vw, 24px);margin:0;">Параметры перевозки</h3>
+        <p style="margin-top:4px;">Расчёт обновляется в реальном времени при вводе любых параметров</p>
       </div>
 
-      <label>Маршрут — откуда
-        <input name="from" id="calc-from" placeholder="Город, посёлок или деревня" autocomplete="off" minlength="2">
-      </label>
-      <label>Маршрут — куда
-        <input name="to" id="calc-to" placeholder="Город, посёлок или деревня" autocomplete="off" minlength="2">
-      </label>
-      <p class="muted" style="font-size:12px;margin:-8px 0 0">Поиск работает по любому населённому пункту Беларуси — вплоть до деревень.</p>
+      <div class="route-input-group">
+        <label for="calc-from" class="route-input-label">
+          <span class="route-dot origin"></span>
+          <span>Пункт отправления (откуда)</span>
+        </label>
+        <input name="from" id="calc-from" placeholder="Например: Гомель, Мозырь, Жлобин или деревня" autocomplete="off" minlength="2">
+      </div>
+
+      <div class="route-input-group">
+        <label for="calc-to" class="route-input-label">
+          <span class="route-dot dest"></span>
+          <span>Пункт назначения (куда)</span>
+        </label>
+        <input name="to" id="calc-to" placeholder="Например: Минск, Брест, Гродно или любой посёлок" autocomplete="off" minlength="2">
+      </div>
+      <p class="muted" style="font-size:12px;margin:-4px 0 6px;color:rgba(248, 247, 239, 0.6);">Поиск работает по любому населённому пункту Беларуси — вплоть до деревень.</p>
 
       <div class="distance-field-group">
-        <div class="distance-header">
-          <label for="calc-distance">Расстояние, км</label>
+        <div class="distance-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <label for="calc-distance">Расстояние по дорогам, км</label>
           <button type="button" class="btn-reset-distance" id="btn-reset-distance" title="Вернуть расстояние, рассчитанное по маршруту" hidden>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
@@ -139,24 +152,27 @@
         </span>
       </div>
 
-      <label>Вес груза, т
+      <div class="weight-field-group">
+        <label for="calc-weight" class="weight-label">Вес груза, тонн</label>
         <input name="weight" id="calc-weight" type="number" min="0.1" max="40" step="0.1" inputmode="decimal" placeholder="Например, 2.5">
-      </label>
-      <div class="weight-chips" role="group" aria-label="Быстрый выбор веса">
-        <button type="button" data-weight="0.5">0,5 т</button>
-        <button type="button" data-weight="1">1 т</button>
-        <button type="button" data-weight="2.5">2,5 т</button>
-        <button type="button" data-weight="5">5 т</button>
-        <button type="button" data-weight="10">10 т</button>
-        <button type="button" data-weight="20">20 т</button>
+        <div class="weight-chips" role="group" aria-label="Быстрый выбор веса">
+          <button type="button" data-weight="0.5">0,5 т</button>
+          <button type="button" data-weight="1">1 т</button>
+          <button type="button" data-weight="2.5">2,5 т</button>
+          <button type="button" data-weight="5">5 т</button>
+          <button type="button" data-weight="10">10 т</button>
+          <button type="button" data-weight="20">20 т</button>
+        </div>
       </div>
 
-      <fieldset class="cargo-chips">
-        <legend>Тип груза</legend>
-        <label><input type="radio" name="cargo" value="standard" checked><span>Стандартный</span></label>
-        <label><input type="radio" name="cargo" value="fragile"><span>Хрупкий</span></label>
-        <label><input type="radio" name="cargo" value="temperature"><span>Температурный</span></label>
-      </fieldset>
+      <div class="cargo-chips-group">
+        <fieldset class="cargo-chips">
+          <legend>Характер и условия перевозки</legend>
+          <label><input type="radio" name="cargo" value="standard" checked><span>Стандартный</span></label>
+          <label><input type="radio" name="cargo" value="fragile"><span>Хрупкий</span></label>
+          <label><input type="radio" name="cargo" value="temperature"><span>Температурный</span></label>
+        </fieldset>
+      </div>
 
       <label class="check-label"><input name="loading" id="calc-loading" type="checkbox"> Нужна помощь с погрузкой / разгрузкой</label>
 
@@ -164,7 +180,10 @@
     </form>
 
     <aside class="quote" aria-live="polite">
-      <p class="kicker">Ваш ориентир</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(139, 37, 54, 0.25);">
+        <span class="panel-badge">Ориентир стоимости</span>
+        <span style="font-size:11.5px;color:#E5C39E;background:rgba(14,6,9,0.65);border:1px solid rgba(229,195,158,0.3);padding:3px 8px;border-radius:6px;font-weight:600;">Беларусь · Экспресс</span>
+      </div>
 
       <div class="calc-map" id="calc-map-wrap">
         <div id="calc-leaflet-map" class="calc-leaflet-map" role="img" aria-label="Карта Беларуси с отмеченным маршрутом"></div>

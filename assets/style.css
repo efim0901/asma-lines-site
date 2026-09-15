@@ -1810,9 +1810,12 @@ a.contact-tile .contact-tile-value { color: var(--burgundy); }
     position: static;
     margin-top: 18px;
     display: inline-flex;
-    align-self: flex-start;
-    font-size: 11px;
-    padding: 7px 12px;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 11.5px;
+    padding: 8px 16px;
+    border-radius: 99px;
+    align-self: center;
   }
   .hero-photo .actions {
     display: flex;
@@ -1850,8 +1853,11 @@ a.contact-tile .contact-tile-value { color: var(--burgundy); }
   .theme-toggle, .menu-toggle { width: 38px; height: 38px; }
   .hero-photo__badge {
     margin-top: 14px;
-    padding: 6px 10px;
-    font-size: 10.5px;
+    padding: 7px 14px;
+    font-size: 11px;
+    margin-left: auto;
+    margin-right: auto;
+    align-self: center;
   }
   .popular-routes-grid {
     grid-template-columns: 1fr;
@@ -2452,4 +2458,348 @@ input[type='range']::-moz-range-thumb {
   }
 }
 .print-header { display: none; }
+
+/* ------------------------------------------------------------
+   Accurate Calculator Redesign (matching Fast Route-Builder Panel)
+   ------------------------------------------------------------ */
+.calculator-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 960px) {
+  .calculator-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+/* Base panel styling for Accurate Calculator form & quote */
+#calculator.calculator,
+.calculator-layout .quote {
+  background: rgba(20, 9, 13, 0.82);
+  border: 1px solid rgba(139, 37, 54, 0.35);
+  box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  border-radius: var(--r-lg);
+  padding: clamp(20px, 3vw, 32px);
+  color: #FFFFFF;
+}
+
+/* In light mode or dark mode, keep the rich burgundy glass aesthetic */
+body:not([data-theme='dark']) #calculator.calculator,
+body:not([data-theme='dark']) .calculator-layout .quote {
+  background: rgba(26, 12, 18, 0.94);
+  border: 1px solid rgba(139, 37, 54, 0.45);
+  box-shadow: 0 16px 36px -8px rgba(92, 27, 39, 0.22), 0 0 0 1px rgba(139, 37, 54, 0.2);
+  color: #FFFFFF;
+}
+
+#calculator .card-head {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(139, 37, 54, 0.25);
+}
+#calculator .card-head .display-3 {
+  color: #FFFFFF;
+  margin-bottom: 4px;
+}
+#calculator .card-head p {
+  color: rgba(248, 247, 239, 0.65);
+  font-size: 13px;
+}
+
+/* Route input fields inside accurate calculator */
+#calculator .route-input-group {
+  background: rgba(30, 14, 20, 0.7);
+  border: 1px solid rgba(139, 37, 54, 0.4);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  margin-bottom: 12px;
+}
+#calculator .route-input-group:focus-within {
+  border-color: #D92546;
+  box-shadow: 0 0 0 2px rgba(217, 37, 70, 0.25);
+}
+#calculator .route-input-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(248, 247, 239, 0.85);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+#calculator input[type='text'],
+#calculator input[type='number'],
+#calculator input:not([type='range']):not([type='checkbox']):not([type='radio']) {
+  width: 100%;
+  background: rgba(14, 6, 9, 0.9);
+  color: #FFFFFF;
+  border: 1px solid rgba(139, 37, 54, 0.4);
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-size: 15px;
+  font-weight: 600;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+#calculator input:not([type='range']):not([type='checkbox']):not([type='radio']):focus {
+  border-color: #D92546;
+  box-shadow: 0 0 0 3px rgba(217, 37, 70, 0.25);
+}
+#calculator input::placeholder {
+  color: rgba(248, 247, 239, 0.35);
+  font-weight: 400;
+}
+
+#calculator .distance-field-group {
+  background: rgba(30, 14, 20, 0.7);
+  border: 1px solid rgba(139, 37, 54, 0.4);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+#calculator .distance-header label {
+  color: rgba(248, 247, 239, 0.85);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+#calculator .weight-field-group {
+  background: rgba(30, 14, 20, 0.7);
+  border: 1px solid rgba(139, 37, 54, 0.4);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+#calculator .weight-field-group .weight-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(248, 247, 239, 0.85);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+#calculator .weight-chips {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+#calculator .weight-chips button {
+  background: rgba(14, 6, 9, 0.6);
+  border: 1px solid rgba(139, 37, 54, 0.35);
+  color: rgba(248, 247, 239, 0.85);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+#calculator .weight-chips button:hover {
+  background: rgba(139, 37, 54, 0.5);
+  color: #FFF;
+  border-color: #D92546;
+}
+#calculator .weight-chips button.is-active {
+  background: var(--burgundy-primary, #5C1B27);
+  border-color: #FFD382;
+  color: #FFD382;
+  box-shadow: 0 0 10px rgba(255, 211, 130, 0.25);
+}
+
+#calculator .cargo-chips-group {
+  background: rgba(30, 14, 20, 0.7);
+  border: 1px solid rgba(139, 37, 54, 0.4);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+#calculator .cargo-chips legend {
+  color: rgba(248, 247, 239, 0.85);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+#calculator .cargo-chips span {
+  background: rgba(14, 6, 9, 0.6);
+  border: 1px solid rgba(139, 37, 54, 0.35);
+  color: rgba(248, 247, 239, 0.85);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 8px;
+}
+#calculator .cargo-chips span:hover {
+  border-color: #D92546;
+  color: #FFF;
+}
+#calculator .cargo-chips input:checked + span {
+  background: var(--burgundy-primary, #5C1B27);
+  border-color: #FFD382;
+  color: #FFD382;
+  box-shadow: 0 0 10px rgba(255, 211, 130, 0.25);
+}
+
+#calculator .check-label {
+  color: rgba(248, 247, 239, 0.9);
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 8px 4px;
+}
+
+/* Quote Sidebar styled identically to Route-Summary-Card */
+.calculator-layout .quote {
+  display: flex;
+  flex-direction: column;
+}
+.calculator-layout .quote .kicker {
+  color: #FFD382;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.calculator-layout .quote .calc-map {
+  border: 1.5px solid rgba(139, 37, 54, 0.5);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.calculator-layout .quote .quote-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(248, 247, 239, 0.9);
+  margin-bottom: 4px;
+}
+.calculator-layout .quote strong#quote-total {
+  font-size: clamp(32px, 4vw, 42px);
+  font-weight: 800;
+  color: #FFD382;
+  letter-spacing: -0.02em;
+  margin: 10px 0 16px;
+  text-shadow: 0 2px 14px rgba(255, 211, 130, 0.2);
+}
+.calculator-layout .quote .quote-breakdown {
+  background: rgba(14, 6, 9, 0.6);
+  border: 1px solid rgba(139, 37, 54, 0.35);
+  border-radius: var(--r-md);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.calculator-layout .quote .qd-row {
+  color: rgba(248, 247, 239, 0.7);
+}
+.calculator-layout .quote .qd-row b {
+  color: #FFD382;
+}
+.calculator-layout .quote .qd-bar {
+  background: rgba(255, 255, 255, 0.1);
+}
+.calculator-layout .quote .qd-bar i {
+  background: linear-gradient(90deg, #D92546, #FFD382);
+}
+.calculator-layout .quote .quote-multi {
+  color: #FFD382;
+  background: rgba(139, 37, 54, 0.25);
+  border: 1px solid rgba(255, 211, 130, 0.25);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.calculator-layout .quote p#quote-note {
+  color: rgba(248, 247, 239, 0.6);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* Quote action buttons */
+.calculator-layout .btn-calc-main {
+  background: linear-gradient(135deg, #D92546 0%, #8B2536 100%);
+  color: #FFFFFF;
+  border-radius: var(--r-md);
+  font-weight: 700;
+  font-size: 15px;
+  box-shadow: 0 4px 14px rgba(217, 37, 70, 0.4);
+  transition: all 0.2s ease;
+  min-height: 48px;
+}
+.calculator-layout .btn-calc-main:hover {
+  background: linear-gradient(135deg, #FF3B5C 0%, #A32E41 100%);
+  box-shadow: 0 6px 20px rgba(217, 37, 70, 0.55);
+  transform: translateY(-1px);
+}
+.calculator-layout .btn-calc-sec {
+  background: rgba(14, 6, 9, 0.7);
+  border: 1px solid rgba(139, 37, 54, 0.45);
+  color: #E5C39E;
+  border-radius: var(--r-md);
+  font-weight: 600;
+  min-height: 44px;
+}
+.calculator-layout .btn-calc-sec:hover {
+  background: rgba(139, 37, 54, 0.4);
+  border-color: #D92546;
+  color: #FFFFFF;
+}
+.calculator-layout .quote-share-box {
+  background: rgba(14, 6, 9, 0.85);
+  border: 1px solid rgba(139, 37, 54, 0.5);
+  border-radius: var(--r-md);
+}
+.calculator-layout .quote-share-title {
+  color: #FFD382;
+}
+.calculator-layout .quote-share-btn {
+  background: rgba(38, 17, 25, 0.8);
+  border: 1px solid rgba(139, 37, 54, 0.4);
+  color: rgba(248, 247, 239, 0.9);
+}
+.calculator-layout .quote-share-btn:hover {
+  background: var(--burgundy-primary, #5C1B27);
+  border-color: #FFD382;
+  color: #FFD382;
+}
+
+/* Popular Routes Section in Calculator */
+.popular-routes {
+  background: rgba(20, 9, 13, 0.65);
+  border: 1px solid rgba(139, 37, 54, 0.3);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+  margin: 16px 0 24px;
+}
+.popular-routes-title {
+  color: rgba(248, 247, 239, 0.75);
+}
+.popular-route-pill {
+  background: rgba(30, 14, 20, 0.7);
+  border: 1px solid rgba(139, 37, 54, 0.35);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+}
+.popular-route-pill:hover {
+  background: rgba(45, 20, 28, 0.85);
+  border-color: #D92546;
+}
+.popular-route-name {
+  color: #FFFFFF;
+}
+.popular-route-meta {
+  color: #FFD382;
+}
+
 
