@@ -585,7 +585,8 @@ h1, h2, h3 { margin: 0; font-weight: 700; letter-spacing: -.024em; }
 }
 
 /* Map Interactive Nodes */
-.map-city-node {
+.map-city-node,
+.map-hub-target {
   cursor: pointer;
   outline: none;
 }
@@ -599,8 +600,43 @@ h1, h2, h3 { margin: 0; font-weight: 700; letter-spacing: -.024em; }
   opacity: 1;
   filter: drop-shadow(0 0 4px rgba(217, 37, 70, 0.6));
 }
-.map-major-node {
+.map-major-node,
+.map-hub-target {
   cursor: pointer;
+}
+.map-hub-target .hub-aura {
+  transition: r 0.25s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.25s ease, opacity 0.25s ease, stroke-width 0.25s ease;
+}
+.map-hub-target .hub-badge {
+  transition: fill 0.25s ease, stroke 0.25s ease, transform 0.25s ease;
+}
+.map-hub-target .hub-center-dot {
+  transition: fill 0.25s ease, r 0.25s ease;
+}
+.map-hub-target .hub-title-label {
+  transition: fill 0.25s ease, transform 0.25s ease;
+  user-select: none;
+}
+.map-hub-target:hover .hub-aura,
+.map-hub-target:focus .hub-aura {
+  r: 28px;
+  stroke: #D92546;
+  stroke-width: 2px;
+  opacity: 0.85;
+}
+.map-hub-target:hover .hub-badge,
+.map-hub-target:focus .hub-badge {
+  fill: #FFFFFF;
+  stroke: #D92546;
+}
+.map-hub-target:hover .hub-center-dot,
+.map-hub-target:focus .hub-center-dot {
+  fill: #D92546;
+  r: 5px;
+}
+.map-hub-target:hover .hub-title-label,
+.map-hub-target:focus .hub-title-label {
+  fill: #8B2536;
 }
 .map-major-node circle {
   transition: stroke 0.2s ease, stroke-width 0.2s ease, fill 0.2s ease, opacity 0.2s ease;

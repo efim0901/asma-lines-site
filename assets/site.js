@@ -183,7 +183,7 @@ if (mapContainer) {
     'zhitkovichi': { name: 'Житковичи', region: 'Гомельская обл.', desc: 'Транзитный узел на трассе М-10', status: 'Активно', time: 'Ежедневно' }
   };
 
-  const cityNodes = mapContainer.querySelectorAll('.map-city-node');
+  const cityNodes = mapContainer.querySelectorAll('.map-city-node, .map-hub-target');
 
   function showTooltip(id, evt) {
     const nodeName = evt.currentTarget ? (evt.currentTarget.getAttribute('data-name') || '') : '';
