@@ -28,26 +28,50 @@ if (header) {
 }
 
 /* theme */
-const themeButton = document.querySelector('.theme-toggle');
+const themeButtons = document.querySelectorAll('.theme-toggle');
 let savedTheme = null;
 try { savedTheme = localStorage.getItem('asma-theme'); } catch (error) { /* storage unavailable */ }
 
-function setTheme(dark) {
+if (!savedTheme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  savedTheme = 'dark';
+}
+
+function setTheme(dark, animate = false) {
+  if (animate) {
+    document.documentElement.classList.add('is-theme-transitioning');
+    document.body.classList.add('is-theme-transitioning');
+    setTimeout(() => {
+      document.documentElement.classList.remove('is-theme-transitioning');
+      document.body.classList.remove('is-theme-transitioning');
+    }, 400);
+  }
+  const theme = dark ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+  document.body.setAttribute('data-theme', theme);
   if (dark) {
+    document.documentElement.classList.add('theme-dark');
     document.body.dataset.theme = 'dark';
   } else {
+    document.documentElement.classList.remove('theme-dark');
     delete document.body.dataset.theme;
   }
-  try { localStorage.setItem('asma-theme', dark ? 'dark' : 'light'); } catch (error) { /* ignore */ }
-  if (themeButton) {
-    themeButton.textContent = dark ? '☀' : '◐';
-    themeButton.setAttribute('aria-label', dark ? 'Включить светлую тему' : 'Включить тёмную тему');
-  }
+  try { localStorage.setItem('asma-theme', theme); } catch (error) { /* ignore */ }
+  themeButtons.forEach((btn) => {
+    btn.textContent = dark ? '☀' : '◐';
+    btn.setAttribute('aria-label', dark ? 'Включить светлую тему' : 'Включить тёмную тему');
+    btn.setAttribute('title', dark ? 'Светлая тема' : 'Тёмная тема');
+  });
+  window.dispatchEvent(new CustomEvent('themechange', { detail: { theme, dark } }));
 }
-setTheme(savedTheme === 'dark');
-if (themeButton) {
-  themeButton.addEventListener('click', () => setTheme(document.body.dataset.theme !== 'dark'));
-}
+
+setTheme(savedTheme === 'dark', false);
+
+themeButtons.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark' || document.body.dataset.theme === 'dark';
+    setTheme(!isDark, true);
+  });
+});
 
 /* year */
 document.querySelectorAll('[data-year]').forEach((node) => { node.textContent = new Date().getFullYear(); });
@@ -725,6 +749,21 @@ document.querySelectorAll('[data-contact-form]').forEach((formElem) => {
 
 /* partners form */
 document.querySelectorAll('[data-partners-form]').forEach((partnersForm) => {
+  const chips = partnersForm.querySelectorAll('.partner-fleet-chip');
+  const input = partnersForm.querySelector('#partnerTransportInput');
+
+  chips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      chips.forEach((c) => c.classList.remove('is-active'));
+      chip.classList.add('is-active');
+      const val = chip.getAttribute('data-fleet');
+      if (input && val) {
+        input.value = val;
+        input.focus();
+      }
+    });
+  });
+
   partnersForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(partnersForm);
@@ -748,6 +787,9 @@ document.querySelectorAll('[data-partners-form]').forEach((partnersForm) => {
       btn.disabled = false;
       btn.textContent = origText;
     }
-    if (ok) partnersForm.reset();
+    if (ok) {
+      partnersForm.reset();
+      chips.forEach((c) => c.classList.remove('is-active'));
+    }
   });
 });

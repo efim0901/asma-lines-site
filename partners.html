@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="ru">
 <head>
+<script>
+  (function(){try{var t=localStorage.getItem('asma-theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('theme-dark')}else{document.documentElement.setAttribute('data-theme','light');document.documentElement.classList.remove('theme-dark')}}catch(e){}})();
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="ASMA Lines ищет перевозчиков и экспедиторов. Партнёрство по автомобильным грузоперевозкам в Беларуси.">
@@ -64,66 +67,202 @@
     <div class="hero-photo__overlay"></div>
     <div class="hero-photo__inner container">
       <div class="hero-photo__content">
-        <p class="kicker">Партнёрам</p>
-        <h1 class="display-1">Ищем перевозчиков по Беларуси</h1>
-        <p class="lede">ASMA Lines формирует сеть надёжных партнёров для выполнения грузовых перевозок и логистических задач.</p>
+        <div class="hero-badge-pill">
+          <span class="hero-badge-dot" aria-hidden="true"></span>
+          <span>Партнёрская сеть</span>
+          <span class="sep">·</span>
+          <span>Гомель &amp; вся Беларусь</span>
+        </div>
+        <h1 class="display-1">Выгодная загрузка для владельцев автотранспорта</h1>
+        <p class="lede">Формируем постоянный пул надёжных перевозчиков и экспедиторов. Обеспечиваем стабильный поток рейсов, прозрачные тарифы и своевременную оплату без задержек.</p>
+        <div class="partner-hero-stats">
+          <span class="partner-hero-stat-pill"><strong>⚡ Оплата</strong> без задержек</span>
+          <span class="partner-hero-stat-pill"><strong>🛣 Рейсы</strong> по всей Беларуси</span>
+          <span class="partner-hero-stat-pill"><strong>📞 Диспетчер</strong> на связи 24/7</span>
+        </div>
       </div>
     </div>
   </section>
 
+  <!-- Key Pillars for Carriers -->
   <section class="section container">
     <div class="section-head">
-      <p class="kicker">Нам интересно</p>
-      <h2 class="display-2">Что мы ищем у партнёров</h2>
+      <p class="kicker">Почему с нами выгодно</p>
+      <h2 class="display-2">4 принципа работы с перевозчиками</h2>
+      <p class="section-sub">Мы строим долгосрочные партнёрские отношения на основе взаимного уважения и прозрачных расчётов.</p>
     </div>
-    <div class="grid three">
-      <article class="card" data-reveal>
-        <span class="step">01</span>
-        <h3>Тентованный и рефрижераторный транспорт</h3>
-        <p>Свободные машины для внутренних рейсов по Беларуси.</p>
+    <div class="partner-pillars-grid">
+      <article class="partner-pillar-card" data-reveal>
+        <div class="partner-pillar-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><circle cx="6" cy="15" r="1"/></svg>
+        </div>
+        <h3>Гарантия оплаты в срок</h3>
+        <p>Безналичный расчёт строго по согласованному договору. Быстрое подписание актов и отсутствие скрытых удержаний.</p>
       </article>
-      <article class="card" data-reveal>
-        <span class="step">02</span>
-        <h3>Регулярные направления</h3>
-        <p>Постоянные маршруты между городами и регионами.</p>
+
+      <article class="partner-pillar-card" data-reveal>
+        <div class="partner-pillar-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        </div>
+        <h3>Постоянный поток рейсов</h3>
+        <p>Ежедневные заявки из Гомеля, Минска, Бреста, Гродно, Витебска, Могилёва и райцентров. Минимизируем холостые пробеги.</p>
       </article>
-      <article class="card" data-reveal>
-        <span class="step">03</span>
-        <h3>Экспедиторов и логистических партнёров</h3>
-        <p>Взаимный обмен заявками и субподряд по сложным маршрутам.</p>
+
+      <article class="partner-pillar-card" data-reveal>
+        <div class="partner-pillar-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </div>
+        <h3>Персональный диспетчер 24/7</h3>
+        <p>Прямой контакт с логистом без посредников. Оперативная координация погрузки, выгрузки и решение нестандартных ситуаций.</p>
+      </article>
+
+      <article class="partner-pillar-card" data-reveal>
+        <div class="partner-pillar-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+        </div>
+        <h3>Уважение к водителю</h3>
+        <p>Оплачиваем простой в случае задержек на объектах заказчика. Чёткие инструкции и точные адреса точек маршрута.</p>
       </article>
     </div>
   </section>
 
-  <section class="section container split">
+  <!-- Fleet Demands Section -->
+  <section class="section container" style="padding-top: 0;">
     <div class="section-head">
-      <p class="kicker">Что важно</p>
-      <h2 class="display-2">Основа партнёрства — предсказуемость</h2>
+      <p class="kicker">Автопарк</p>
+      <h2 class="display-2">Какой транспорт наиболее востребован</h2>
+      <p class="section-sub">Принимаем как отдельные автомобили индивидуальных предпринимателей, так и автоколонны транспортных компаний.</p>
     </div>
-    <ul class="checks">
-      <li>Понятное согласование условий до рейса</li>
-      <li>Оперативная связь по статусу перевозки</li>
-      <li>Аккуратная работа с документами</li>
-      <li>Уважение к срокам и договорённостям</li>
-      <li>Готовность к регулярному сотрудничеству</li>
-    </ul>
+    <div class="partner-fleet-grid">
+      <div class="partner-fleet-card" data-reveal>
+        <span class="partner-fleet-badge">Основной объём</span>
+        <h4>Тенты 20 тонн / 86–120 м³</h4>
+        <p>Еврофуры и сцепки для регулярных межрегиональных доставок сырья, готовой продукции и стройматериалов.</p>
+      </div>
+
+      <div class="partner-fleet-card" data-reveal>
+        <span class="partner-fleet-badge">Температурный режим</span>
+        <h4>Рефрижераторы и изотермы</h4>
+        <p>Перевозка продуктов питания, напитков и товаров с контролируемой температурой (+2...+6°C / -18°C).</p>
+      </div>
+
+      <div class="partner-fleet-card" data-reveal>
+        <span class="partner-fleet-badge">Экспресс-рейсы</span>
+        <h4>Малотоннажный транспорт (1.5 – 5 т)</h4>
+        <p>Микроавтобусы, гидроборты и тентованные «Газели» для срочных отгрузок и распределительной логистики.</p>
+      </div>
+
+      <div class="partner-fleet-card" data-reveal>
+        <span class="partner-fleet-badge">Спецтранспорт</span>
+        <h4>Бортовые платформы и открытые авто</h4>
+        <p>Перевозка длинномерных металлоконструкций, ЖБИ, пиломатериалов и негабаритных элементов.</p>
+      </div>
+    </div>
   </section>
 
-  <section class="section-tight container" id="partner-form">
-    <form class="contact-form" data-partners-form style="max-width:680px;margin:0 auto">
-      <div class="card-head">
-        <h3 class="display-3">Предложить сотрудничество</h3>
-        <p>Расскажите о компании и транспорте — свяжемся для обсуждения условий.</p>
+  <!-- Partner Form & Direct Contacts Section -->
+  <section class="section container" id="partner-form" style="padding-top: 10px;">
+    <div class="partner-section-layout">
+      <!-- Form Panel -->
+      <div class="partner-form-card" data-reveal>
+        <div class="card-head">
+          <h3 class="display-3">Предложить сотрудничество</h3>
+          <p>Заполните краткую анкету перевозчика — дежурный логист свяжется с вами в течение 15 минут.</p>
+        </div>
+
+        <form data-partners-form>
+          <!-- Quick Fleet Selector Chips -->
+          <div class="partner-fleet-chips-wrap">
+            <span class="partner-chips-label">Тип вашего транспорта:</span>
+            <div class="partner-fleet-chips" id="partnerFleetChips">
+              <button type="button" class="partner-fleet-chip" data-fleet="Тент 20 т (86-92 м³)">Тент 20 т</button>
+              <button type="button" class="partner-fleet-chip" data-fleet="Рефрижератор 20 т">Рефрижератор</button>
+              <button type="button" class="partner-fleet-chip" data-fleet="Тент 5–10 т">Тент 5–10 т</button>
+              <button type="button" class="partner-fleet-chip" data-fleet="Бус / до 3.5 т">Бус (до 3.5 т)</button>
+              <button type="button" class="partner-fleet-chip" data-fleet="Изотермический фургон">Изотерма</button>
+              <button type="button" class="partner-fleet-chip" data-fleet="Открытый борт / Площадка">Борт / Площадка</button>
+            </div>
+          </div>
+
+          <div class="partner-form-grid">
+            <label>
+              Компания или ИП *
+              <input required name="company" autocomplete="organization" placeholder="ООО Логистик / ИП Иванов">
+            </label>
+            <label>
+              Контактное лицо *
+              <input required name="contact_name" autocomplete="name" placeholder="Иван Петров">
+            </label>
+          </div>
+
+          <div class="partner-form-grid">
+            <label>
+              Телефон / Telegram *
+              <input required name="contact" autocomplete="tel" placeholder="+375 (29) 000-00-00">
+            </label>
+            <label>
+              Транспорт и базирование
+              <input id="partnerTransportInput" name="direction" placeholder="Например: Тент 20т, базирование в Гомеле">
+            </label>
+          </div>
+
+          <label>
+            Дополнительно (маршруты, регулярность, условия)
+            <textarea name="message" rows="3" placeholder="Укажите приоритетные направления (например: Гомель — Минск — Брест), количество свободных машин или пожелания по рейсам"></textarea>
+          </label>
+
+          <input type="hidden" name="source" value="website_partners">
+
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-top: 8px;">
+            <button class="btn btn-primary" type="submit" style="min-height: 48px; padding: 12px 28px; font-weight: 700;">
+              Отправить анкету перевозчика
+            </button>
+            <span style="font-size: 12px; color: rgba(248,247,239,0.5);">
+              🔒 Конфиденциальность гарантирована
+            </span>
+          </div>
+
+          <p class="form-status" aria-live="polite" style="margin-top: 14px;"></p>
+        </form>
       </div>
-      <label>Компания<input required name="company" autocomplete="organization"></label>
-      <label>Контактное лицо<input required name="contact_name" autocomplete="name"></label>
-      <label>Телефон или e-mail<input required name="contact" autocomplete="tel"></label>
-      <label>Транспорт / направление<input name="direction" placeholder="Например: тент 20 т, Гомель — Минск"></label>
-      <label>Сообщение<textarea name="message" rows="4" placeholder="Кратко о доступности, направлениях и условиях"></textarea></label>
-      <input type="hidden" name="source" value="website_partners">
-      <button class="btn btn-primary" type="submit">Отправить</button>
-      <p class="form-status" aria-live="polite"></p>
-    </form>
+
+      <!-- Direct Contacts & FAQ Sidebar -->
+      <aside class="partner-contacts-sidebar" data-reveal>
+        <div class="partner-contacts-card">
+          <h4>Прямой контакт с отделом логистики</h4>
+          <p>Хотите обсудить рейс прямо сейчас или согласовать спецзаявку?</p>
+
+          <a class="partner-direct-link" href="tel:+375296000000">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span>+375 (29) 600-00-00</span>
+          </a>
+
+          <a class="partner-direct-link" href="https://t.me/" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4L3 11l6 2m12-9l-4 17-8-6m12-11L9 13"/></svg>
+            <span>Telegram: @asmalines_logistics</span>
+          </a>
+
+          <a class="partner-direct-link" href="mailto:partners@asmalines.by">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <span>partners@asmalines.by</span>
+          </a>
+        </div>
+
+        <div class="partner-faq-card">
+          <h4>Условия сотрудничества</h4>
+          <div class="partner-faq-list">
+            <div class="partner-faq-item">
+              <strong>Какие документы нужны?</strong>
+              <p>Свидетельство о госрегистрации (ИП или юрлицо), техпаспорт на транспорт и водительское удостоверение.</p>
+            </div>
+            <div class="partner-faq-item">
+              <strong>Как быстро даём загрузку?</strong>
+              <p>После проверки данных добавляем машину в диспетчерскую базу — заявки начинаем предлагать в тот же день.</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
   </section>
 </main>
 

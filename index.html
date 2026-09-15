@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="ru">
 <head>
+<script>
+  (function(){try{var t=localStorage.getItem('asma-theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('theme-dark')}else{document.documentElement.setAttribute('data-theme','light');document.documentElement.classList.remove('theme-dark')}}catch(e){}})();
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="ASMA Lines — белорусская логистическая компания из Гомеля. Организация автомобильных грузоперевозок по Беларуси без лишних звеньев.">
@@ -64,17 +67,19 @@
     <div class="hero-photo__overlay"></div>
     <div class="hero-photo__inner container">
       <div class="hero-photo__content">
-        <p class="kicker">Белорусская логистическая компания из Гомеля</p>
-        <h1 class="display-1">Логистика по Беларуси без лишних звеньев.</h1>
-        <p class="lede">Организуем автомобильные грузоперевозки для малого и среднего бизнеса. Подбираем транспорт и перевозчика под конкретный груз, маршрут и сроки.</p>
+        <div class="hero-badge-pill">
+          <span class="hero-badge-dot" aria-hidden="true"></span>
+          <span>Гомель</span>
+          <span class="sep">→</span>
+          <span>Вся Беларусь</span>
+        </div>
+        <h1 class="display-1">Логистика по Беларуси без лишних звеньев</h1>
+        <p class="lede">Организуем автомобильные грузоперевозки для малого и среднего бизнеса. Подбираем надежный транспорт под ваш груз, маршрут и сроки.</p>
         <div class="actions">
           <a class="btn btn-primary" href="calculator.html">Рассчитать перевозку</a>
           <a class="btn btn-outline-light" href="contacts.html">Обсудить маршрут</a>
         </div>
       </div>
-    </div>
-    <div class="hero-photo__badge">
-      <span>Гомель</span><span class="sep">→</span><span>Беларусь</span>
     </div>
   </section>
 
@@ -127,10 +132,10 @@
     </ol>
   </section>
 
-        <section class="dark-section" id="geography-network-section">
-      <div class="dark-section__bg"></div>
-      <div class="dark-section__overlay"></div>
-      <div class="dark-section__inner container">
+  <section class="network-section" id="geography-network-section">
+    <div class="network-section__bg"></div>
+    <div class="network-section__overlay"></div>
+    <div class="network-section__inner container">
         <div class="network-header text-center">
           <p class="kicker">География перевозок</p>
           <h2 class="display-2">Грузоперевозки по всей Беларуси</h2>

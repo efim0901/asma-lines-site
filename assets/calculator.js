@@ -64,32 +64,59 @@
   }).setView(BY_CENTER, 7);
   map.setMaxBounds(BY_BOUNDS.pad(0.2));
 
-  // High-reliability public tile layers (100% free, no API keys, zero watermark, Cloudflare compatible)
-  const TILE_SOURCES = [
-    {
-      url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-      subdomains: 'abc',
-      maxZoom: 19,
-    },
-    {
-      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      subdomains: 'abc',
-      maxZoom: 19,
-    },
-    {
-      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-      subdomains: '',
-      maxZoom: 16,
+  // High-reliability public tile layers for dark and light themes (free of watermarks)
+  function getTileSources(isDark) {
+    if (isDark) {
+      return [
+        {
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+          subdomains: '',
+          maxZoom: 16,
+        },
+        {
+          url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          subdomains: 'abc',
+          maxZoom: 19,
+        },
+        {
+          url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          subdomains: 'abc',
+          maxZoom: 19,
+        }
+      ];
     }
-  ];
+    return [
+      {
+        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        subdomains: 'abc',
+        maxZoom: 19,
+      },
+      {
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        subdomains: 'abc',
+        maxZoom: 19,
+      },
+      {
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+        subdomains: '',
+        maxZoom: 18,
+      }
+    ];
+  }
+
+  function isDarkTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' || document.body.dataset.theme === 'dark';
+  }
 
   let currentTileLayer = null;
   function setupTiles(sourceIndex = 0) {
-    if (sourceIndex >= TILE_SOURCES.length) return;
+    const isDark = isDarkTheme();
+    const tileSources = getTileSources(isDark);
+    if (sourceIndex >= tileSources.length) return;
     if (currentTileLayer) {
       try { map.removeLayer(currentTileLayer); } catch (_) {}
     }
-    const cfg = TILE_SOURCES[sourceIndex];
+    const cfg = tileSources[sourceIndex];
     currentTileLayer = window.L.tileLayer(cfg.url, {
       subdomains: cfg.subdomains,
       maxZoom: cfg.maxZoom,
@@ -100,7 +127,7 @@
     let failedTileCount = 0;
     currentTileLayer.on('tileerror', () => {
       failedTileCount++;
-      if (failedTileCount > 4 && sourceIndex + 1 < TILE_SOURCES.length) {
+      if (failedTileCount > 4 && sourceIndex + 1 < tileSources.length) {
         setupTiles(sourceIndex + 1);
       }
     });
@@ -109,6 +136,16 @@
   }
 
   setupTiles(0);
+
+  window.addEventListener('themechange', () => {
+    setupTiles(0);
+    if (routeLine) {
+      const isDark = isDarkTheme();
+      routeLine.setStyle({
+        color: isDark ? '#FFD382' : '#8B2536',
+      });
+    }
+  });
 
   // Invalidate map size on multiple stages to guarantee full rendering in all viewports / Cloudflare environments
   function triggerInvalidate() {
