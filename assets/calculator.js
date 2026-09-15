@@ -840,5 +840,29 @@
   if (els.range) {
     els.range.style.setProperty('--fill', `${(Number(els.range.value) / Number(els.range.max)) * 100}%`);
   }
+  // Handle URL Query Params (e.g. ?from=Гомель&to=Минск or ?to=Витебск from homepage constructor)
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlFrom = urlParams.get('from');
+    const urlTo = urlParams.get('to');
+    let hasUrlCities = false;
+
+    if (urlFrom && els.from) {
+      els.from.value = urlFrom;
+      hasUrlCities = true;
+    }
+    if (urlTo && els.to) {
+      els.to.value = urlTo;
+      hasUrlCities = true;
+    }
+
+    if (hasUrlCities) {
+      setTimeout(() => {
+        if (urlFrom) handleCityInput('from');
+        if (urlTo) handleCityInput('to');
+      }, 120);
+    }
+  } catch (_) {}
+
   recalc();
 })();

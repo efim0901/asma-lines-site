@@ -128,122 +128,533 @@ if (reducedMotion || !('IntersectionObserver' in window)) {
 }
 
 /* ------------------------------------------------------------
-   Interactive Belarus Vector Map Tooltips
+   Route Constructor & Network Coverage Component (Variants 3 + 4)
    ------------------------------------------------------------ */
-const mapContainer = document.getElementById('belarus-interactive-map');
-if (mapContainer) {
-  const tooltip = document.getElementById('mapCityTooltip');
-  const tTitle = document.getElementById('tooltipCityName');
-  const tRegion = document.getElementById('tooltipCityRegion');
-  const tDesc = document.getElementById('tooltipCityDesc');
-  const tDistance = document.getElementById('tooltipDistance');
-  const tTime = document.getElementById('tooltipTime');
-  const tLink = document.getElementById('tooltipCalcLink');
+function initRouteConstructorAndNetwork() {
+  const panel = document.getElementById("geography-network-section");
+  if (!panel) return;
 
-  const CITIES_DATA = {
-    'gomel': { name: 'Гомель', region: 'Гомельская обл.', desc: 'Регулярные ежедневные рейсы и подбор автотранспорта', status: 'Активно', time: 'Ежедневно' },
-    'minsk': { name: 'Минск', region: 'Минская обл.', desc: 'Столичный логистический узел · Экспресс-доставка', status: 'Активно', time: 'Ежедневно' },
-    'brest': { name: 'Брест', region: 'Брестская обл.', desc: 'Западный пограничный хаб · Таможенный транзит', status: 'Активно', time: 'Ежедневно' },
-    'grodno': { name: 'Гродно', region: 'Гродненская обл.', desc: 'Северо-западный узел · Обслуживание предприятий', status: 'Активно', time: 'Ежедневно' },
-    'vitebsk': { name: 'Витебск', region: 'Витебская обл.', desc: 'Северный логистический хаб · Прямые рейсы', status: 'Активно', time: 'Ежедневно' },
-    'mogilev': { name: 'Могилёв', region: 'Могилёвская обл.', desc: 'Восточный промышленный кластер · Регулярные рейсы', status: 'Активно', time: 'Ежедневно' },
-    'baranovichi': { name: 'Барановичи', region: 'Брестская обл.', desc: 'Крупный транспортный перекрёсток на магистрали М-1', status: 'Активно', time: 'Ежедневно' },
-    'bobruisk': { name: 'Бобруйск', region: 'Могилёвская обл.', desc: 'Ключевой промышленный узел и распределительный центр', status: 'Активно', time: 'Ежедневно' },
-    'zhlobin': { name: 'Жлобин', region: 'Гомельская обл.', desc: 'Металлургический и логистический центр', status: 'Активно', time: 'Ежедневно' },
-    'mozyr': { name: 'Мозырь', region: 'Гомельская обл.', desc: 'Нефтеперерабатывающий и промышленный узел Полесья', status: 'Активно', time: 'Ежедневно' },
-    'kalinkovichi': { name: 'Калинковичи', region: 'Гомельская обл.', desc: 'Узловой транспортный перекрёсток Полесья', status: 'Активно', time: 'Ежедневно' },
-    'rechitsa': { name: 'Речица', region: 'Гомельская обл.', desc: 'Промышленный и производственный узел', status: 'Активно', time: 'Ежедневно' },
-    'svetlogorsk': { name: 'Светлогорск', region: 'Гомельская обл.', desc: 'Химическая и целлюлозная промышленность', status: 'Активно', time: 'Ежедневно' },
-    'rogachev': { name: 'Рогачёв', region: 'Гомельская обл.', desc: 'Пищевой промышленный комплекс', status: 'Активно', time: 'Ежедневно' },
-    'pinsk': { name: 'Пинск', region: 'Брестская обл.', desc: 'Центральный хаб Припятского Полесья', status: 'Активно', time: 'Ежедневно' },
-    'orsha': { name: 'Орша', region: 'Витебская обл.', desc: 'Ключевой интермодальный транспортный перекрёсток', status: 'Активно', time: 'Ежедневно' },
-    'polotsk': { name: 'Полоцк', region: 'Витебская обл.', desc: 'Северный промышленный узел и нефтехимия', status: 'Активно', time: 'Ежедневно' },
-    'novopolotsk': { name: 'Новополоцк', region: 'Витебская обл.', desc: 'Крупнейший нефтехимический комплекс', status: 'Активно', time: 'Ежедневно' },
-    'lida': { name: 'Лида', region: 'Гродненская обл.', desc: 'Логистический центр на магистрали М-6', status: 'Активно', time: 'Ежедневно' },
-    'borisov': { name: 'Борисов', region: 'Минская обл.', desc: 'Машиностроение и фармацевтика на М-1', status: 'Активно', time: 'Ежедневно' },
-    'soligorsk': { name: 'Солигорск', region: 'Минская обл.', desc: 'Горнодобывающий и производственный центр', status: 'Активно', time: 'Ежедневно' },
-    'slutsk': { name: 'Слуцк', region: 'Минская обл.', desc: 'Агропромышленный комплекс', status: 'Активно', time: 'Ежедневно' },
-    'zhodino': { name: 'Жодино', region: 'Минская обл.', desc: 'Машиностроительный промышленный центр', status: 'Активно', time: 'Ежедневно' },
-    'kobrin': { name: 'Кобрин', region: 'Брестская обл.', desc: 'Перекрёсток магистралей М-1 и М-10', status: 'Активно', time: 'Ежедневно' },
-    'slonim': { name: 'Слоним', region: 'Гродненская обл.', desc: 'Промышленный пункт юго-востока Гродненщины', status: 'Активно', time: 'Ежедневно' },
-    'volkovysk': { name: 'Волковыск', region: 'Гродненская обл.', desc: 'Строительный и пищевой кластер', status: 'Активно', time: 'Ежедневно' },
-    'smorgon': { name: 'Сморгонь', region: 'Гродненская обл.', desc: 'Деревообрабатывающий кластер', status: 'Активно', time: 'Ежедневно' },
-    'gorki': { name: 'Горки', region: 'Могилёвская обл.', desc: 'Северо-восток Могилёвской области', status: 'Активно', time: 'Ежедневно' },
-    'osipovichi': { name: 'Осиповичи', region: 'Могилёвская обл.', desc: 'Транспортный и вагоностроительный хаб', status: 'Активно', time: 'Ежедневно' },
-    'bereza': { name: 'Берёза', region: 'Брестская обл.', desc: 'Транзитный пункт на магистрали М-1', status: 'Активно', time: 'Ежедневно' },
-    'ivatsevichi': { name: 'Ивацевичи', region: 'Брестская обл.', desc: 'Деревообрабатывающий кластер на М-1', status: 'Активно', time: 'Ежедневно' },
-    'dzerzhinsk': { name: 'Дзержинск', region: 'Минская обл.', desc: 'Логистический узел к юго-западу от Минска', status: 'Активно', time: 'Ежедневно' },
-    'vileyka': { name: 'Вилейка', region: 'Минская обл.', desc: 'Северо-запад Минской области', status: 'Активно', time: 'Ежедневно' },
-    'luninets': { name: 'Лунинец', region: 'Брестская обл.', desc: 'Узел на коридоре Полесья', status: 'Активно', time: 'Ежедневно' },
-    'maryina_gorka': { name: 'Марьина Горка', region: 'Минская обл.', desc: 'Узел на трассе М-5', status: 'Активно', time: 'Ежедневно' },
-    'dobrush': { name: 'Добруш', region: 'Гомельская обл.', desc: 'Восточный промышленный пункт', status: 'Активно', time: 'Ежедневно' },
-    'lepel': { name: 'Лепель', region: 'Витебская обл.', desc: 'Узел на магистрали М-3', status: 'Активно', time: 'Ежедневно' },
-    'krichev': { name: 'Кричев', region: 'Могилёвская обл.', desc: 'Цементная и строительная индустрия', status: 'Активно', time: 'Ежедневно' },
-    'braslav': { name: 'Браслав', region: 'Витебская обл.', desc: 'Северо-западный туристический и логистический сервис', status: 'Активно', time: 'Ежедневно' },
-    'zhitkovichi': { name: 'Житковичи', region: 'Гомельская обл.', desc: 'Транзитный узел на трассе М-10', status: 'Активно', time: 'Ежедневно' }
+  const CITIES_MASTER = [
+    // Гомельская область
+    { name: "Гомель", region: "Гомельская" },
+    { name: "Мозырь", region: "Гомельская" },
+    { name: "Жлобин", region: "Гомельская" },
+    { name: "Светлогорск", region: "Гомельская" },
+    { name: "Речица", region: "Гомельская" },
+    { name: "Калинковичи", region: "Гомельская" },
+    { name: "Рогачёв", region: "Гомельская" },
+    { name: "Добруш", region: "Гомельская" },
+    { name: "Житковичи", region: "Гомельская" },
+    { name: "Хойники", region: "Гомельская" },
+    { name: "Петриков", region: "Гомельская" },
+    { name: "Ельск", region: "Гомельская" },
+    { name: "Буда-Кошелёво", region: "Гомельская" },
+    { name: "Ветка", region: "Гомельская" },
+    { name: "Чечерск", region: "Гомельская" },
+    { name: "Лельчицы", region: "Гомельская" },
+    { name: "Наровля", region: "Гомельская" },
+    { name: "Лоев", region: "Гомельская" },
+    { name: "Корма", region: "Гомельская" },
+
+    // Минская область
+    { name: "Минск", region: "Минская" },
+    { name: "Борисов", region: "Минская" },
+    { name: "Солигорск", region: "Минская" },
+    { name: "Молодечно", region: "Минская" },
+    { name: "Жодино", region: "Минская" },
+    { name: "Слуцк", region: "Минская" },
+    { name: "Дзержинск", region: "Минская" },
+    { name: "Вилейка", region: "Минская" },
+    { name: "Марьина Горка", region: "Минская" },
+    { name: "Столбцы", region: "Минская" },
+    { name: "Смолевичи", region: "Минская" },
+    { name: "Несвиж", region: "Минская" },
+    { name: "Фаниполь", region: "Минская" },
+    { name: "Заславль", region: "Минская" },
+    { name: "Любань", region: "Минская" },
+    { name: "Крупки", region: "Минская" },
+    { name: "Клецк", region: "Минская" },
+    { name: "Логойск", region: "Минская" },
+    { name: "Березино", region: "Минская" },
+    { name: "Червень", region: "Минская" },
+
+    // Брестская область
+    { name: "Брест", region: "Брестская" },
+    { name: "Барановичи", region: "Брестская" },
+    { name: "Пинск", region: "Брестская" },
+    { name: "Кобрин", region: "Брестская" },
+    { name: "Берёза", region: "Брестская" },
+    { name: "Лунинец", region: "Брестская" },
+    { name: "Ивацевичи", region: "Брестская" },
+    { name: "Пружаны", region: "Брестская" },
+    { name: "Иваново", region: "Брестская" },
+    { name: "Дрогичин", region: "Брестская" },
+    { name: "Ганцевичи", region: "Брестская" },
+    { name: "Жабинка", region: "Брестская" },
+    { name: "Столин", region: "Брестская" },
+    { name: "Микашевичи", region: "Брестская" },
+    { name: "Белоозёрск", region: "Брестская" },
+    { name: "Каменец", region: "Брестская" },
+    { name: "Малорита", region: "Брестская" },
+    { name: "Ляховичи", region: "Брестская" },
+
+    // Гродненская область
+    { name: "Гродно", region: "Гродненская" },
+    { name: "Лида", region: "Гродненская" },
+    { name: "Слоним", region: "Гродненская" },
+    { name: "Волковыск", region: "Гродненская" },
+    { name: "Сморгонь", region: "Гродненская" },
+    { name: "Новогрудок", region: "Гродненская" },
+    { name: "Мосты", region: "Гродненская" },
+    { name: "Щучин", region: "Гродненская" },
+    { name: "Ошмяны", region: "Гродненская" },
+    { name: "Скидель", region: "Гродненская" },
+    { name: "Островец", region: "Гродненская" },
+    { name: "Дятлово", region: "Гродненская" },
+    { name: "Ивье", region: "Гродненская" },
+    { name: "Зельва", region: "Гродненская" },
+    { name: "Кореличи", region: "Гродненская" },
+    { name: "Свислочь", region: "Гродненская" },
+
+    // Витебская область
+    { name: "Витебск", region: "Витебская" },
+    { name: "Орша", region: "Витебская" },
+    { name: "Новополоцк", region: "Витебская" },
+    { name: "Полоцк", region: "Витебская" },
+    { name: "Поставы", region: "Витебская" },
+    { name: "Глубокое", region: "Витебская" },
+    { name: "Лепель", region: "Витебская" },
+    { name: "Городок", region: "Витебская" },
+    { name: "Браслав", region: "Витебская" },
+    { name: "Толочин", region: "Витебская" },
+    { name: "Чашники", region: "Витебская" },
+    { name: "Миоры", region: "Витебская" },
+    { name: "Сенно", region: "Витебская" },
+    { name: "Верхнедвинск", region: "Витебская" },
+    { name: "Дубровно", region: "Витебская" },
+
+    // Могилёвская область
+    { name: "Могилёв", region: "Могилёвская" },
+    { name: "Бобруйск", region: "Могилёвская" },
+    { name: "Горки", region: "Могилёвская" },
+    { name: "Осиповичи", region: "Могилёвская" },
+    { name: "Кричев", region: "Могилёвская" },
+    { name: "Быхов", region: "Могилёвская" },
+    { name: "Климовичи", region: "Могилёвская" },
+    { name: "Шклов", region: "Могилёвская" },
+    { name: "Костюковичи", region: "Могилёвская" },
+    { name: "Мстиславль", region: "Могилёвская" },
+    { name: "Чаусы", region: "Могилёвская" },
+    { name: "Белыничи", region: "Могилёвская" },
+    { name: "Кировск", region: "Могилёвская" },
+    { name: "Чериков", region: "Могилёвская" },
+    { name: "Славгород", region: "Могилёвская" },
+    { name: "Круглое", region: "Могилёвская" },
+    { name: "Кличев", region: "Могилёвская" }
+  ];
+
+  // Verified road route distances, times, and highways
+  const ROUTE_MATRIX = {
+    "Гомель-Минск": { km: 310, time: "~3.5 – 4.5 ч", corridor: "Магистраль М-5 · Экспресс", lead: "от 2 ч", baseCost: 595 },
+    "Минск-Гомель": { km: 310, time: "~3.5 – 4.5 ч", corridor: "Магистраль М-5 · Экспресс", lead: "от 2 ч", baseCost: 595 },
+    "Гомель-Брест": { km: 530, time: "~6.5 – 7.5 ч", corridor: "Магистраль М-10 Полесье", lead: "от 2.5 ч", baseCost: 950 },
+    "Брест-Гомель": { km: 530, time: "~6.5 – 7.5 ч", corridor: "Магистраль М-10 Полесье", lead: "от 2.5 ч", baseCost: 950 },
+    "Гомель-Гродно": { km: 580, time: "~7.0 – 8.0 ч", corridor: "Магистрали М-5 / М-6", lead: "от 3 ч", baseCost: 1030 },
+    "Гродно-Гомель": { km: 580, time: "~7.0 – 8.0 ч", corridor: "Магистрали М-6 / М-5", lead: "от 3 ч", baseCost: 1030 },
+    "Гомель-Витебск": { km: 330, time: "~4.0 – 4.5 ч", corridor: "Магистраль М-8 Север–Юг", lead: "от 2 ч", baseCost: 625 },
+    "Витебск-Гомель": { km: 330, time: "~4.0 – 4.5 ч", corridor: "Магистраль М-8 Север–Юг", lead: "от 2 ч", baseCost: 625 },
+    "Гомель-Могилёв": { km: 180, time: "~2.0 – 2.5 ч", corridor: "Магистраль М-8 Прямой", lead: "от 1.5 ч", baseCost: 380 },
+    "Могилёв-Гомель": { km: 180, time: "~2.0 – 2.5 ч", corridor: "Магистраль М-8 Прямой", lead: "от 1.5 ч", baseCost: 380 },
+    "Минск-Брест": { km: 350, time: "~4.0 – 4.5 ч", corridor: "Магистраль М-1 Олимпийка", lead: "от 2 ч", baseCost: 660 },
+    "Брест-Минск": { km: 350, time: "~4.0 – 4.5 ч", corridor: "Магистраль М-1 Олимпийка", lead: "от 2 ч", baseCost: 660 },
+    "Минск-Гродно": { km: 290, time: "~3.5 – 4.0 ч", corridor: "Магистраль М-6 Скоростной", lead: "от 2 ч", baseCost: 560 },
+    "Гродно-Минск": { km: 290, time: "~3.5 – 4.0 ч", corridor: "Магистраль М-6 Скоростной", lead: "от 2 ч", baseCost: 560 },
+    "Минск-Витебск": { km: 290, time: "~3.5 – 4.0 ч", corridor: "Магистраль М-3 Север", lead: "от 2 ч", baseCost: 560 },
+    "Витебск-Минск": { km: 290, time: "~3.5 – 4.0 ч", corridor: "Магистраль М-3 Север", lead: "от 2 ч", baseCost: 560 },
+    "Минск-Могилёв": { km: 200, time: "~2.2 – 2.8 ч", corridor: "Магистраль М-4 Восток", lead: "от 2 ч", baseCost: 410 },
+    "Могилёв-Минск": { km: 200, time: "~2.2 – 2.8 ч", corridor: "Магистраль М-4 Восток", lead: "от 2 ч", baseCost: 410 },
+    "Гомель-Мозырь": { km: 135, time: "~1.5 – 2.0 ч", corridor: "Трасса Р-31 / М-10", lead: "от 1 ч", baseCost: 310 },
+    "Мозырь-Гомель": { km: 135, time: "~1.5 – 2.0 ч", corridor: "Трасса Р-31 / М-10", lead: "от 1 ч", baseCost: 310 },
+    "Гомель-Жлобин": { km: 90, time: "~1.0 – 1.3 ч", corridor: "Магистраль М-5 Прямой", lead: "от 1 ч", baseCost: 235 },
+    "Жлобин-Гомель": { km: 90, time: "~1.0 – 1.3 ч", corridor: "Магистраль М-5 Прямой", lead: "от 1 ч", baseCost: 235 },
+    "Гомель-Речица": { km: 45, time: "~40 – 50 мин", corridor: "Магистраль М-10 Экспресс", lead: "от 45 мин", baseCost: 160 },
+    "Речица-Гомель": { km: 45, time: "~40 – 50 мин", corridor: "Магистраль М-10 Экспресс", lead: "от 45 мин", baseCost: 160 },
+    "Минск-Барановичи": { km: 145, time: "~1.8 – 2.2 ч", corridor: "Магистраль М-1 Юго-Запад", lead: "от 2 ч", baseCost: 325 },
+    "Барановичи-Минск": { km: 145, time: "~1.8 – 2.2 ч", corridor: "Магистраль М-1 Юго-Запад", lead: "от 2 ч", baseCost: 325 },
+    "Минск-Бобруйск": { km: 150, time: "~1.8 – 2.2 ч", corridor: "Магистраль М-5 Юго-Восток", lead: "от 2 ч", baseCost: 330 },
+    "Бобруйск-Минск": { km: 150, time: "~1.8 – 2.2 ч", corridor: "Магистраль М-5 Юго-Восток", lead: "от 2 ч", baseCost: 330 },
+    "Минск-Пинск": { km: 300, time: "~3.5 – 4.2 ч", corridor: "Р-6 / М-1 Южное Полесье", lead: "от 2.5 ч", baseCost: 580 },
+    "Пинск-Минск": { km: 300, time: "~3.5 – 4.2 ч", corridor: "Р-6 / М-1 Южное Полесье", lead: "от 2.5 ч", baseCost: 580 },
+    "Минск-Полоцк": { km: 250, time: "~3.2 – 3.8 ч", corridor: "Р-46 / М-3 Северо-Восток", lead: "от 2.5 ч", baseCost: 490 },
+    "Полоцк-Минск": { km: 250, time: "~3.2 – 3.8 ч", corridor: "Р-46 / М-3 Северо-Восток", lead: "от 2.5 ч", baseCost: 490 },
+    "Минск-Орша": { km: 220, time: "~2.5 – 3.0 ч", corridor: "Магистраль М-1 Восток", lead: "от 2 ч", baseCost: 440 },
+    "Орша-Минск": { km: 220, time: "~2.5 – 3.0 ч", corridor: "Магистраль М-1 Восток", lead: "от 2 ч", baseCost: 440 },
+    "Минск-Борисов": { km: 75, time: "~1.0 ч", corridor: "Магистраль М-1 Пригород", lead: "от 1.5 ч", baseCost: 210 },
+    "Борисов-Минск": { km: 75, time: "~1.0 ч", corridor: "Магистраль М-1 Пригород", lead: "от 1.5 ч", baseCost: 210 },
+    "Минск-Солигорск": { km: 135, time: "~1.8 – 2.2 ч", corridor: "Трасса Р-23 Юг", lead: "от 2 ч", baseCost: 310 },
+    "Солигорск-Минск": { km: 135, time: "~1.8 – 2.2 ч", corridor: "Трасса Р-23 Юг", lead: "от 2 ч", baseCost: 310 },
+    "Минск-Лида": { km: 170, time: "~2.0 – 2.4 ч", corridor: "Магистраль М-6 Запад", lead: "от 2 ч", baseCost: 360 },
+    "Лида-Минск": { km: 170, time: "~2.0 – 2.4 ч", corridor: "Магистраль М-6 Запад", lead: "от 2 ч", baseCost: 360 },
+    "Брест-Пинск": { km: 180, time: "~2.2 – 2.6 ч", corridor: "Магистраль М-10 Полесье", lead: "от 2 ч", baseCost: 380 },
+    "Пинск-Брест": { km: 180, time: "~2.2 – 2.6 ч", corridor: "Магистраль М-10 Полесье", lead: "от 2 ч", baseCost: 380 },
+    "Гродно-Лида": { km: 110, time: "~1.2 – 1.5 ч", corridor: "Магистраль М-6 Восток", lead: "от 2 ч", baseCost: 265 },
+    "Лида-Гродно": { km: 110, time: "~1.2 – 1.5 ч", corridor: "Магистраль М-6 Восток", lead: "от 2 ч", baseCost: 265 },
+    "Витебск-Полоцк": { km: 105, time: "~1.2 – 1.5 ч", corridor: "Трасса Р-20 Двина", lead: "от 2 ч", baseCost: 260 },
+    "Полоцк-Витебск": { km: 105, time: "~1.2 – 1.5 ч", corridor: "Трасса Р-20 Двина", lead: "от 2 ч", baseCost: 260 }
   };
 
-  const cityNodes = mapContainer.querySelectorAll('.map-city-node, .map-hub-target');
+  // City Coordinates for fallback Haversine distance
+  const CITY_COORDS = {
+    "Гомель": [52.4345, 30.9754],
+    "Минск": [53.9006, 27.5590],
+    "Брест": [52.0976, 23.7341],
+    "Гродно": [53.6884, 23.8258],
+    "Витебск": [55.1904, 30.2049],
+    "Могилёв": [53.8981, 30.3325],
+    "Барановичи": [53.1327, 26.0139],
+    "Бобруйск": [53.1384, 29.2214],
+    "Пинск": [52.1153, 26.0954],
+    "Мозырь": [52.0495, 29.2456],
+    "Полоцк": [55.4856, 28.7684],
+    "Орша": [54.5085, 30.4285],
+    "Лида": [53.8833, 25.3000],
+    "Борисов": [54.2276, 28.5050],
+    "Солигорск": [52.7876, 27.5415],
+    "Жлобин": [52.8926, 30.0367],
+    "Светлогорск": [52.6333, 29.7333],
+    "Речица": [52.3667, 30.4000],
+    "Сморгонь": [54.4833, 26.4000],
+    "Кобрин": [52.2139, 24.3564],
+    "Слоним": [53.0869, 25.3183],
+    "Осиповичи": [53.3000, 28.6333],
+    "Берёза": [52.5333, 24.9833],
+    "Ивацевичи": [52.7167, 25.3333],
+    "Дзержинск": [53.6833, 27.1333],
+    "Вилейка": [54.5000, 26.9167],
+    "Кричев": [53.7167, 31.7167],
+    "Горки": [54.2833, 30.9833],
+    "Добруш": [52.4167, 31.3000],
+    "Житковичи": [52.2167, 27.8500],
+    "Калинковичи": [52.1333, 29.3333],
+    "Рогачёв": [53.0833, 30.0500]
+  };
 
-  function showTooltip(id, evt) {
-    const nodeName = evt.currentTarget ? (evt.currentTarget.getAttribute('data-name') || '') : '';
-    const nodeRegion = evt.currentTarget ? (evt.currentTarget.getAttribute('data-region') || '') : '';
+  function calcFallbackKm(fromCity, toCity) {
+    const c1 = CITY_COORDS[fromCity];
+    const c2 = CITY_COORDS[toCity];
+    if (!c1 || !c2) return 200;
+    const R = 6371;
+    const dLat = (c2[0] - c1[0]) * Math.PI / 180;
+    const dLon = (c2[1] - c1[1]) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(c1[0] * Math.PI / 180) * Math.cos(c2[0] * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+    const d = 2 * R * Math.asin(Math.sqrt(a));
+    return Math.round(d * 1.25); // Road winding coefficient
+  }
 
-    const data = CITIES_DATA[id] || {
-      name: nodeName || (id.charAt(0).toUpperCase() + id.slice(1)).replace(/_/g, ' '),
-      region: nodeRegion || 'Республика Беларусь',
-      desc: 'Регулярные рейсы ASMA Lines · Доставка от двери до двери',
-      status: 'Активно',
-      time: 'Ежедневно'
-    };
-    if (!tooltip) return;
+  // DOM Elements
+  const originSelect = document.getElementById("routeOriginSelect");
+  const destSelect = document.getElementById("routeDestSelect");
+  const btnSwap = document.getElementById("btnSwapRoute");
+  
+  const originBadge = document.getElementById("routeOriginBadge");
+  const destBadge = document.getElementById("routeDestBadge");
+  const corridorTag = document.getElementById("routeCorridorTag");
+  const distVal = document.getElementById("summaryDistanceVal");
+  const timeVal = document.getElementById("summaryTimeVal");
+  const leadVal = document.getElementById("summaryLeadVal");
+  const costVal = document.getElementById("summaryCostVal");
+  const calcLink = document.getElementById("routeCalcDirectLink");
+  
+  const originHubsWrap = document.getElementById("originQuickHubs");
+  const destHubsWrap = document.getElementById("destQuickHubs");
+  
+  const searchInput = document.getElementById("networkCitySearch");
+  const clearSearch = document.getElementById("clearSearchBtn");
+  const searchResult = document.getElementById("searchResultCard");
+  const srcName = document.getElementById("srcCityName");
+  const srcRegion = document.getElementById("srcCityRegion");
+  const srcDesc = document.getElementById("srcCityDesc");
+  const srcBtn = document.getElementById("srcSelectBtn");
+  
+  const regionTabs = panel.querySelectorAll(".region-tab");
+  const citiesGrid = document.getElementById("networkCitiesGrid");
+  const corridorsList = document.getElementById("popularCorridorsList");
 
-    tTitle.textContent = data.name;
-    tRegion.textContent = data.region;
-    tDesc.textContent = data.desc;
-    if (tDistance) tDistance.textContent = data.status || 'Активно';
-    if (tTime) tTime.textContent = data.time || 'Ежедневно';
-    if (tLink) tLink.href = `calculator.html?to=${encodeURIComponent(data.name)}`;
+  let activeRegion = "all";
+  let activeSearchQuery = "";
+  let selectedSearchCity = null;
 
-    const rect = mapContainer.getBoundingClientRect();
-    let clientX, clientY;
-    if (evt.touches && evt.touches[0]) {
-      clientX = evt.touches[0].clientX;
-      clientY = evt.touches[0].clientY;
-    } else {
-      clientX = evt.clientX;
-      clientY = evt.clientY;
+  // Render City Chips in Column 2
+  function renderCityChips() {
+    if (!citiesGrid) return;
+    citiesGrid.innerHTML = "";
+
+    const currentDest = destSelect ? destSelect.value : "";
+    const filtered = CITIES_MASTER.filter(c => {
+      const matchRegion = activeRegion === "all" || c.region === activeRegion;
+      const matchSearch = !activeSearchQuery || c.name.toLowerCase().includes(activeSearchQuery) || c.region.toLowerCase().includes(activeSearchQuery);
+      return matchRegion && matchSearch;
+    });
+
+    if (filtered.length === 0) {
+      citiesGrid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px 10px; color:rgba(248,247,239,0.5); font-size:13px;">Город не найден в фильтре. ASMA Lines выполняет доставку в любой населённый пункт РБ — свяжитесь с диспетчером.</div>`;
+      return;
     }
 
-    const x = Math.max(120, Math.min(rect.width - 120, clientX - rect.left));
-    const y = Math.max(140, clientY - rect.top - 12);
+    filtered.forEach(city => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = `city-catalog-chip ${city.name === currentDest ? "is-selected" : ""}`;
+      chip.setAttribute("data-city", city.name);
+      chip.setAttribute("title", `Выбрать город ${city.name}`);
+      chip.innerHTML = `<span class="chip-name">${city.name}</span>`;
 
-    tooltip.style.left = `${x}px`;
-    tooltip.style.top = `${y}px`;
-    tooltip.classList.add('is-active');
-    tooltip.setAttribute('aria-hidden', 'false');
+      chip.addEventListener("click", () => {
+        if (destSelect) {
+          ensureOptionExists(destSelect, city.name);
+          destSelect.value = city.name;
+          updateRoute();
+          highlightCityChip(city.name);
+          scrollGentlyToConstructor();
+        }
+      });
+
+      citiesGrid.appendChild(chip);
+    });
   }
 
-  function hideTooltip() {
-    if (!tooltip) return;
-    tooltip.classList.remove('is-active');
-    tooltip.setAttribute('aria-hidden', 'true');
+  function ensureOptionExists(selectEl, cityName) {
+    let exists = false;
+    for (let i = 0; i < selectEl.options.length; i++) {
+      if (selectEl.options[i].value === cityName) {
+        exists = true;
+        break;
+      }
+    }
+    if (!exists) {
+      const opt = document.createElement("option");
+      opt.value = cityName;
+      opt.textContent = cityName;
+      selectEl.appendChild(opt);
+    }
   }
 
-  cityNodes.forEach(node => {
-    const id = node.getAttribute('data-id');
-    node.addEventListener('mouseenter', (e) => showTooltip(id, e));
-    node.addEventListener('mouseleave', hideTooltip);
-    node.addEventListener('click', (e) => {
-      e.stopPropagation();
-      showTooltip(id, e);
+  function highlightCityChip(cityName) {
+    const chips = citiesGrid ? citiesGrid.querySelectorAll(".city-catalog-chip") : [];
+    chips.forEach(c => {
+      if (c.getAttribute("data-city") === cityName) {
+        c.classList.add("is-selected");
+      } else {
+        c.classList.remove("is-selected");
+      }
+    });
+  }
+
+  function scrollGentlyToConstructor() {
+    if (window.innerWidth <= 900) {
+      const summaryCard = document.getElementById("routeSummaryCard");
+      const box = document.getElementById("routeBuilderPanel");
+      const target = summaryCard || box;
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+  }
+
+  // Update Route Info
+  function updateRoute() {
+    if (!originSelect || !destSelect) return;
+    let from = originSelect.value.trim();
+    let to = destSelect.value.trim();
+
+    if (from === to) {
+      if (from === "Гомель") to = "Минск";
+      else to = "Гомель";
+      ensureOptionExists(destSelect, to);
+      destSelect.value = to;
+    }
+
+    if (originBadge) originBadge.textContent = from;
+    if (destBadge) destBadge.textContent = to;
+
+    const pairKey = `${from}-${to}`;
+    const pairKeyRev = `${to}-${from}`;
+    const known = ROUTE_MATRIX[pairKey] || ROUTE_MATRIX[pairKeyRev];
+
+    let km = 200, time = "~2.5 – 3.5 ч", corridor = "Автодорожная сеть РБ", lead = "от 2 ч", cost = 420;
+
+    if (known) {
+      km = known.km;
+      time = known.time;
+      corridor = known.corridor;
+      lead = known.lead;
+      cost = known.baseCost;
+    } else {
+      km = calcFallbackKm(from, to);
+      const hours = (km / 72).toFixed(1);
+      time = `~${Math.max(1, (Number(hours) - 0.5)).toFixed(1)} – ${(Number(hours) + 0.6).toFixed(1)} ч`;
+      corridor = `Прямой маршрут · ${km} км`;
+      lead = "от 2.5 ч";
+      cost = Math.round(90 + km * 1.65 + 5 * 10);
+    }
+
+    if (distVal) distVal.textContent = `${km} км`;
+    if (timeVal) timeVal.textContent = time;
+    if (leadVal) leadVal.textContent = lead;
+    if (costVal) costVal.textContent = `от ${cost.toLocaleString("ru-RU")} BYN`;
+    if (corridorTag) corridorTag.textContent = corridor;
+
+    if (calcLink) {
+      calcLink.href = `calculator.html?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+    }
+
+    // Update quick buttons states
+    if (originHubsWrap) {
+      originHubsWrap.querySelectorAll(".quick-hub-btn").forEach(btn => {
+        btn.classList.toggle("is-active", btn.dataset.city === from);
+      });
+    }
+    if (destHubsWrap) {
+      destHubsWrap.querySelectorAll(".quick-hub-btn").forEach(btn => {
+        btn.classList.toggle("is-active", btn.dataset.city === to);
+      });
+    }
+
+    highlightCityChip(to);
+  }
+
+  // Swap Direction
+  if (btnSwap) {
+    btnSwap.addEventListener("click", () => {
+      const from = originSelect.value;
+      const to = destSelect.value;
+      ensureOptionExists(originSelect, to);
+      ensureOptionExists(destSelect, from);
+      originSelect.value = to;
+      destSelect.value = from;
+      updateRoute();
+    });
+  }
+
+  if (originSelect) originSelect.addEventListener("change", updateRoute);
+  if (destSelect) destSelect.addEventListener("change", updateRoute);
+
+  // Quick Hub buttons inside inputs
+  if (originHubsWrap) {
+    originHubsWrap.addEventListener("click", (e) => {
+      const btn = e.target.closest(".quick-hub-btn");
+      if (!btn) return;
+      originSelect.value = btn.dataset.city;
+      updateRoute();
+    });
+  }
+  if (destHubsWrap) {
+    destHubsWrap.addEventListener("click", (e) => {
+      const btn = e.target.closest(".quick-hub-btn");
+      if (!btn) return;
+      destSelect.value = btn.dataset.city;
+      updateRoute();
+    });
+  }
+
+  // Regional Filter Tabs
+  regionTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      regionTabs.forEach(t => {
+        t.classList.remove("is-active");
+        t.setAttribute("aria-selected", "false");
+      });
+      tab.classList.add("is-active");
+      tab.setAttribute("aria-selected", "true");
+      activeRegion = tab.dataset.region || "all";
+      renderCityChips();
     });
   });
 
-  document.addEventListener('click', (e) => {
-    if (!mapContainer.contains(e.target)) hideTooltip();
-  });
+  // Search Input in Column 2
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      activeSearchQuery = q;
+      if (clearSearch) clearSearch.hidden = !q;
+
+      // Find best single match for direct card
+      if (q.length >= 2) {
+        const found = CITIES_MASTER.find(c => c.name.toLowerCase().startsWith(q) || c.name.toLowerCase().includes(q));
+        if (found) {
+          selectedSearchCity = found;
+          if (searchResult) {
+            searchResult.hidden = false;
+            if (srcName) srcName.textContent = found.name;
+            if (srcRegion) srcRegion.textContent = `${found.region} обл.`;
+          }
+        } else {
+          if (searchResult) searchResult.hidden = true;
+          selectedSearchCity = null;
+        }
+      } else {
+        if (searchResult) searchResult.hidden = true;
+        selectedSearchCity = null;
+      }
+
+      renderCityChips();
+    });
+  }
+
+  if (clearSearch) {
+    clearSearch.addEventListener("click", () => {
+      if (searchInput) {
+        searchInput.value = "";
+        activeSearchQuery = "";
+        clearSearch.hidden = true;
+        if (searchResult) searchResult.hidden = true;
+        renderCityChips();
+        searchInput.focus();
+      }
+    });
+  }
+
+  if (srcBtn) {
+    srcBtn.addEventListener("click", () => {
+      if (selectedSearchCity && destSelect) {
+        ensureOptionExists(destSelect, selectedSearchCity.name);
+        destSelect.value = selectedSearchCity.name;
+        updateRoute();
+        scrollGentlyToConstructor();
+      }
+    });
+  }
+
+  // Popular Corridors Click
+  if (corridorsList) {
+    corridorsList.addEventListener("click", (e) => {
+      const btn = e.target.closest(".corridor-pill");
+      if (!btn) return;
+      const f = btn.dataset.from;
+      const t = btn.dataset.to;
+      if (f && t) {
+        ensureOptionExists(originSelect, f);
+        ensureOptionExists(destSelect, t);
+        originSelect.value = f;
+        destSelect.value = t;
+        updateRoute();
+        scrollGentlyToConstructor();
+      }
+    });
+  }
+
+  // Initial populate & setup
+  renderCityChips();
+  updateRoute();
 }
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initRouteConstructorAndNetwork);
+} else {
+  initRouteConstructorAndNetwork();
+}
+
+
 async function submitLead(payload, statusNode, successMessage) {
   if (statusNode) {
     statusNode.textContent = 'Отправляем данные…';
