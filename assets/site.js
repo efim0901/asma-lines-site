@@ -128,7 +128,7 @@ if (reducedMotion || !('IntersectionObserver' in window)) {
 }
 
 /* ------------------------------------------------------------
-   Interactive Belarus Vector Map Tooltips & Corridor Filters
+   Interactive Belarus Vector Map Tooltips
    ------------------------------------------------------------ */
 const mapContainer = document.getElementById('belarus-interactive-map');
 if (mapContainer) {
@@ -141,67 +141,69 @@ if (mapContainer) {
   const tLink = document.getElementById('tooltipCalcLink');
 
   const CITIES_DATA = {
-    'gomel': { name: 'Гомель', region: 'Гомельская обл.', desc: 'Центральный хаб ASMA Lines · 24/7 диспетчерская · собственный автопарк', km: '0', time: 'База компании' },
-    'minsk': { name: 'Минск', region: 'Минская обл.', desc: 'Столичный логистический узел · Ежедневные экспресс-рейсы по М-5', km: '310', time: '3.5-4 ч' },
-    'brest': { name: 'Брест', region: 'Брестская обл.', desc: 'Западный пограничный хаб · Таможенный транзит и терминалы', km: '530', time: '6-7 ч' },
-    'grodno': { name: 'Гродно', region: 'Гродненская обл.', desc: 'Северо-западный узел · Обслуживание предприятий и кластеров', km: '580', time: '7 ч' },
-    'vitebsk': { name: 'Витебск', region: 'Витебская обл.', desc: 'Северный хаб · Прямой коридор М-8 через Оршу и Могилёв', km: '330', time: '4 ч' },
-    'mogilev': { name: 'Могилёв', region: 'Могилёвская обл.', desc: 'Восточный промышленный кластер · Скоростная линия по М-8', km: '180', time: '2.5 ч' },
-    'baranovichi': { name: 'Барановичи', region: 'Брестская обл.', desc: 'Крупнейший транспортный перекрёсток на магистрали М-1', km: '410', time: '5 ч' },
-    'bobruisk': { name: 'Бобруйск', region: 'Могилёвская обл.', desc: 'Ключевой пункт на магистрали М-5 Гомель ⇄ Минск', km: '140', time: '1.8 ч' },
-    'zhlobin': { name: 'Жлобин', region: 'Гомельская обл.', desc: 'Металлургический и логистический центр на М-5', km: '88', time: '1 ч' },
-    'mozyr': { name: 'Мозырь', region: 'Гомельская обл.', desc: 'Нефтеперерабатывающий и логистический хаб Полесья', km: '135', time: '1.8 ч' },
-    'kalinkovichi': { name: 'Калинковичи', region: 'Гомельская обл.', desc: 'Узловой транспортный перекрёсток Полесья', km: '125', time: '1.6 ч' },
-    'rechitsa': { name: 'Речица', region: 'Гомельская обл.', desc: 'Промышленный узел на скоростной трассе М-10', km: '48', time: '40 мин' },
-    'svetlogorsk': { name: 'Светлогорск', region: 'Гомельская обл.', desc: 'Химическая и целлюлозная промышленность', km: '110', time: '1.4 ч' },
-    'rogachev': { name: 'Рогачёв', region: 'Гомельская обл.', desc: 'Пищевой промышленный узел на магистрали М-8', km: '115', time: '1.5 ч' },
-    'pinsk': { name: 'Пинск', region: 'Брестская обл.', desc: 'Центральный хаб Припятского Полесья на М-10', km: '360', time: '4.5 ч' },
-    'orsha': { name: 'Орша', region: 'Витебская обл.', desc: 'Ключевой интермодальный перекрёсток М-1 и М-8', km: '240', time: '3 ч' },
-    'polotsk': { name: 'Полоцк', region: 'Витебская обл.', desc: 'Северный промышленный узел и нефтехимия', km: '420', time: '5.2 ч' },
-    'novopolotsk': { name: 'Новополоцк', region: 'Витебская обл.', desc: 'Крупнейший нефтехимический комплекс Беларуси', km: '425', time: '5.3 ч' },
-    'lida': { name: 'Лида', region: 'Гродненская обл.', desc: 'Логистический центр на магистрали М-6 Минск–Гродно', km: '480', time: '6 ч' },
-    'borisov': { name: 'Борисов', region: 'Минская обл.', desc: 'Машиностроение и фармацевтика на М-1', km: '320', time: '4 ч' },
-    'soligorsk': { name: 'Солигорск', region: 'Минская обл.', desc: 'Калийный горнодобывающий гигант Беларуси', km: '270', time: '3.5 ч' },
-    'slutsk': { name: 'Слуцк', region: 'Минская обл.', desc: 'Агропромышленный центр Минской области', km: '280', time: '3.6 ч' },
-    'zhodino': { name: 'Жодино', region: 'Минская обл.', desc: 'Родина карьерных самосвалов БЕЛАЗ', km: '335', time: '4.2 ч' },
-    'kobrin': { name: 'Кобрин', region: 'Брестская обл.', desc: 'Перекрёсток магистралей М-1 и М-10', km: '485', time: '6 ч' },
-    'slonim': { name: 'Слоним', region: 'Гродненская обл.', desc: 'Промышленный пункт юго-востока Гродненщины', km: '440', time: '5.5 ч' },
-    'volkovysk': { name: 'Волковыск', region: 'Гродненская обл.', desc: 'Строительный и пищевой кластер', km: '490', time: '6.2 ч' },
-    'smorgon': { name: 'Сморгонь', region: 'Гродненская обл.', desc: 'Деревообрабатывающий кластер (Kronospan)', km: '430', time: '5.4 ч' },
-    'gorki': { name: 'Горки', region: 'Могилёвская обл.', desc: 'Северо-восток Могилёвской области', km: '230', time: '3 ч' },
-    'osipovichi': { name: 'Осиповичи', region: 'Могилёвская обл.', desc: 'Транспортный хаб и вагоностроение на М-5', km: '190', time: '2.4 ч' },
-    'bereza': { name: 'Берёза', region: 'Брестская обл.', desc: 'Транзитный пункт на магистрали М-1', km: '445', time: '5.5 ч' },
-    'ivatsevichi': { name: 'Ивацевичи', region: 'Брестская обл.', desc: 'Деревообрабатывающий кластер на М-1', km: '420', time: '5.2 ч' },
-    'dzerzhinsk': { name: 'Дзержинск', region: 'Минская обл.', desc: 'Логистический узел к юго-западу от Минска', km: '340', time: '4.2 ч' },
-    'vileyka': { name: 'Вилейка', region: 'Минская обл.', desc: 'Северо-запад Минской области', km: '410', time: '5 ч' },
-    'luninets': { name: 'Лунинец', region: 'Брестская обл.', desc: 'Узел на коридоре М-10', km: '310', time: '4 ч' },
-    'maryina_gorka': { name: 'Марьина Горка', region: 'Минская обл.', desc: 'Узел на М-5 между Бобруйском и Минском', km: '235', time: '2.8 ч' },
-    'dobrush': { name: 'Добруш', region: 'Гомельская обл.', desc: 'Восточный промышленный пункт на трассе М-10', km: '28', time: '25 мин' },
-    'lepel': { name: 'Лепель', region: 'Витебская обл.', desc: 'Узел на магистрали М-3 Минск ⇄ Витебск', km: '360', time: '4.5 ч' },
-    'krichev': { name: 'Кричев', region: 'Могилёвская обл.', desc: 'Цементная и строительная индустрия', km: '240', time: '3.2 ч' },
-    'braslav': { name: 'Браслав', region: 'Витебская обл.', desc: 'Озёрный край, туристический и грузовой сервис', km: '510', time: '6.5 ч' },
-    'zhitkovichi': { name: 'Житковичи', region: 'Гомельская обл.', desc: 'Транзитный узел на трассе М-10', km: '235', time: '3 ч' }
+    'gomel': { name: 'Гомель', region: 'Гомельская обл.', desc: 'Регулярные ежедневные рейсы и подбор автотранспорта', status: 'Активно', time: 'Ежедневно' },
+    'minsk': { name: 'Минск', region: 'Минская обл.', desc: 'Столичный логистический узел · Экспресс-доставка', status: 'Активно', time: 'Ежедневно' },
+    'brest': { name: 'Брест', region: 'Брестская обл.', desc: 'Западный пограничный хаб · Таможенный транзит', status: 'Активно', time: 'Ежедневно' },
+    'grodno': { name: 'Гродно', region: 'Гродненская обл.', desc: 'Северо-западный узел · Обслуживание предприятий', status: 'Активно', time: 'Ежедневно' },
+    'vitebsk': { name: 'Витебск', region: 'Витебская обл.', desc: 'Северный логистический хаб · Прямые рейсы', status: 'Активно', time: 'Ежедневно' },
+    'mogilev': { name: 'Могилёв', region: 'Могилёвская обл.', desc: 'Восточный промышленный кластер · Регулярные рейсы', status: 'Активно', time: 'Ежедневно' },
+    'baranovichi': { name: 'Барановичи', region: 'Брестская обл.', desc: 'Крупный транспортный перекрёсток на магистрали М-1', status: 'Активно', time: 'Ежедневно' },
+    'bobruisk': { name: 'Бобруйск', region: 'Могилёвская обл.', desc: 'Ключевой промышленный узел и распределительный центр', status: 'Активно', time: 'Ежедневно' },
+    'zhlobin': { name: 'Жлобин', region: 'Гомельская обл.', desc: 'Металлургический и логистический центр', status: 'Активно', time: 'Ежедневно' },
+    'mozyr': { name: 'Мозырь', region: 'Гомельская обл.', desc: 'Нефтеперерабатывающий и промышленный узел Полесья', status: 'Активно', time: 'Ежедневно' },
+    'kalinkovichi': { name: 'Калинковичи', region: 'Гомельская обл.', desc: 'Узловой транспортный перекрёсток Полесья', status: 'Активно', time: 'Ежедневно' },
+    'rechitsa': { name: 'Речица', region: 'Гомельская обл.', desc: 'Промышленный и производственный узел', status: 'Активно', time: 'Ежедневно' },
+    'svetlogorsk': { name: 'Светлогорск', region: 'Гомельская обл.', desc: 'Химическая и целлюлозная промышленность', status: 'Активно', time: 'Ежедневно' },
+    'rogachev': { name: 'Рогачёв', region: 'Гомельская обл.', desc: 'Пищевой промышленный комплекс', status: 'Активно', time: 'Ежедневно' },
+    'pinsk': { name: 'Пинск', region: 'Брестская обл.', desc: 'Центральный хаб Припятского Полесья', status: 'Активно', time: 'Ежедневно' },
+    'orsha': { name: 'Орша', region: 'Витебская обл.', desc: 'Ключевой интермодальный транспортный перекрёсток', status: 'Активно', time: 'Ежедневно' },
+    'polotsk': { name: 'Полоцк', region: 'Витебская обл.', desc: 'Северный промышленный узел и нефтехимия', status: 'Активно', time: 'Ежедневно' },
+    'novopolotsk': { name: 'Новополоцк', region: 'Витебская обл.', desc: 'Крупнейший нефтехимический комплекс', status: 'Активно', time: 'Ежедневно' },
+    'lida': { name: 'Лида', region: 'Гродненская обл.', desc: 'Логистический центр на магистрали М-6', status: 'Активно', time: 'Ежедневно' },
+    'borisov': { name: 'Борисов', region: 'Минская обл.', desc: 'Машиностроение и фармацевтика на М-1', status: 'Активно', time: 'Ежедневно' },
+    'soligorsk': { name: 'Солигорск', region: 'Минская обл.', desc: 'Горнодобывающий и производственный центр', status: 'Активно', time: 'Ежедневно' },
+    'slutsk': { name: 'Слуцк', region: 'Минская обл.', desc: 'Агропромышленный комплекс', status: 'Активно', time: 'Ежедневно' },
+    'zhodino': { name: 'Жодино', region: 'Минская обл.', desc: 'Машиностроительный промышленный центр', status: 'Активно', time: 'Ежедневно' },
+    'kobrin': { name: 'Кобрин', region: 'Брестская обл.', desc: 'Перекрёсток магистралей М-1 и М-10', status: 'Активно', time: 'Ежедневно' },
+    'slonim': { name: 'Слоним', region: 'Гродненская обл.', desc: 'Промышленный пункт юго-востока Гродненщины', status: 'Активно', time: 'Ежедневно' },
+    'volkovysk': { name: 'Волковыск', region: 'Гродненская обл.', desc: 'Строительный и пищевой кластер', status: 'Активно', time: 'Ежедневно' },
+    'smorgon': { name: 'Сморгонь', region: 'Гродненская обл.', desc: 'Деревообрабатывающий кластер', status: 'Активно', time: 'Ежедневно' },
+    'gorki': { name: 'Горки', region: 'Могилёвская обл.', desc: 'Северо-восток Могилёвской области', status: 'Активно', time: 'Ежедневно' },
+    'osipovichi': { name: 'Осиповичи', region: 'Могилёвская обл.', desc: 'Транспортный и вагоностроительный хаб', status: 'Активно', time: 'Ежедневно' },
+    'bereza': { name: 'Берёза', region: 'Брестская обл.', desc: 'Транзитный пункт на магистрали М-1', status: 'Активно', time: 'Ежедневно' },
+    'ivatsevichi': { name: 'Ивацевичи', region: 'Брестская обл.', desc: 'Деревообрабатывающий кластер на М-1', status: 'Активно', time: 'Ежедневно' },
+    'dzerzhinsk': { name: 'Дзержинск', region: 'Минская обл.', desc: 'Логистический узел к юго-западу от Минска', status: 'Активно', time: 'Ежедневно' },
+    'vileyka': { name: 'Вилейка', region: 'Минская обл.', desc: 'Северо-запад Минской области', status: 'Активно', time: 'Ежедневно' },
+    'luninets': { name: 'Лунинец', region: 'Брестская обл.', desc: 'Узел на коридоре Полесья', status: 'Активно', time: 'Ежедневно' },
+    'maryina_gorka': { name: 'Марьина Горка', region: 'Минская обл.', desc: 'Узел на трассе М-5', status: 'Активно', time: 'Ежедневно' },
+    'dobrush': { name: 'Добруш', region: 'Гомельская обл.', desc: 'Восточный промышленный пункт', status: 'Активно', time: 'Ежедневно' },
+    'lepel': { name: 'Лепель', region: 'Витебская обл.', desc: 'Узел на магистрали М-3', status: 'Активно', time: 'Ежедневно' },
+    'krichev': { name: 'Кричев', region: 'Могилёвская обл.', desc: 'Цементная и строительная индустрия', status: 'Активно', time: 'Ежедневно' },
+    'braslav': { name: 'Браслав', region: 'Витебская обл.', desc: 'Северо-западный туристический и логистический сервис', status: 'Активно', time: 'Ежедневно' },
+    'zhitkovichi': { name: 'Житковичи', region: 'Гомельская обл.', desc: 'Транзитный узел на трассе М-10', status: 'Активно', time: 'Ежедневно' }
   };
 
-  const svgElem = mapContainer.querySelector('svg.asma-master-vector-map') || mapContainer.querySelector('svg.belarus-master-map') || mapContainer.querySelector('svg');
   const cityNodes = mapContainer.querySelectorAll('.map-city-node');
 
   function showTooltip(id, evt) {
+    const nodeName = evt.currentTarget ? (evt.currentTarget.getAttribute('data-name') || '') : '';
+    const nodeRegion = evt.currentTarget ? (evt.currentTarget.getAttribute('data-region') || '') : '';
+
     const data = CITIES_DATA[id] || {
-      name: (id.charAt(0).toUpperCase() + id.slice(1)).replace(/_/g, ' '),
-      region: 'Республика Беларусь',
-      desc: 'Логистическое направление ASMA Lines',
-      km: '—',
-      time: 'По расписанию'
+      name: nodeName || (id.charAt(0).toUpperCase() + id.slice(1)).replace(/_/g, ' '),
+      region: nodeRegion || 'Республика Беларусь',
+      desc: 'Регулярные рейсы ASMA Lines · Доставка от двери до двери',
+      status: 'Активно',
+      time: 'Ежедневно'
     };
     if (!tooltip) return;
 
     tTitle.textContent = data.name;
     tRegion.textContent = data.region;
     tDesc.textContent = data.desc;
-    tDistance.textContent = data.km === '0' ? 'База' : (data.km === '—' ? 'Уточняется' : `${data.km} км`);
-    tTime.textContent = data.time;
-    tLink.href = `calculator.html?from=Гомель&to=${encodeURIComponent(data.name)}`;
+    if (tDistance) tDistance.textContent = data.status || 'Активно';
+    if (tTime) tTime.textContent = data.time || 'Ежедневно';
+    if (tLink) tLink.href = `calculator.html?to=${encodeURIComponent(data.name)}`;
 
     const rect = mapContainer.getBoundingClientRect();
     let clientX, clientY;
@@ -240,44 +242,6 @@ if (mapContainer) {
 
   document.addEventListener('click', (e) => {
     if (!mapContainer.contains(e.target)) hideTooltip();
-  });
-
-  // Corridor Filter Buttons
-  const corridorBtns = document.querySelectorAll('.corridor-btn');
-  const highwaysGroup = svgElem ? (svgElem.querySelector('.highways-layer') || svgElem.querySelector('.asma-arteries-layer') || svgElem) : null;
-
-  corridorBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      corridorBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const corridor = btn.getAttribute('data-corridor');
-
-      if (highwaysGroup) {
-        const paths = highwaysGroup.querySelectorAll('path, line');
-        paths.forEach(p => {
-          p.style.transition = 'opacity 0.3s ease, stroke-width 0.3s ease';
-          const pCorridor = p.getAttribute('data-corridor') || '';
-          const pClass = p.getAttribute('class') || '';
-          const d = p.getAttribute('d') || '';
-
-          if (corridor === 'all') {
-            p.style.opacity = '';
-          } else if (corridor === 'm5') {
-            const isMatch = pCorridor === 'm5' || pClass.includes('m5') || d.includes('1301') || d.includes('1260') || (d.includes('1267') && d.includes('794'));
-            p.style.opacity = isMatch ? '1' : '0.12';
-          } else if (corridor === 'm1') {
-            const isMatch = pCorridor === 'm1' || pClass.includes('m1') || (d.includes('135.8') && d.includes('826')) || (d.includes('136') && d.includes('794'));
-            p.style.opacity = isMatch ? '1' : '0.12';
-          } else if (corridor === 'm8') {
-            const isMatch = pCorridor === 'm8' || pClass.includes('m8') || (d.includes('1177') && d.includes('1301')) || (d.includes('1177') && d.includes('1267'));
-            p.style.opacity = isMatch ? '1' : '0.12';
-          } else if (corridor === 'm10') {
-            const isMatch = pCorridor === 'm10' || pClass.includes('m10') || d.includes('516.9') || d.includes('1356') || (d.includes('136') && d.includes('1267'));
-            p.style.opacity = isMatch ? '1' : '0.12';
-          }
-        });
-      }
-    });
   });
 }
 async function submitLead(payload, statusNode, successMessage) {

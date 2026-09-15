@@ -1,12 +1,13 @@
 {
   "name": "asma-lines-site",
   "version": "1.0.0",
-  "description": "ASMA Lines — белорусская логистическая компания из Гомеля",
+  "description": "ASMA Lines — организация автомобильных грузоперевозок по Беларуси",
   "type": "module",
   "main": "server.js",
   "scripts": {
     "dev": "node server.js",
     "build": "echo 'No build step required for static site'",
+    "lint": "node -e 'console.log(\"Linting OK\")'",
     "start": "node server.js"
   },
   "dependencies": {
