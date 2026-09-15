@@ -53,63 +53,52 @@
     consultForm: document.querySelector('#consult-form'),
   };
 
-  const BY_CENTER = [53.55, 28.0];
-  const BY_BOUNDS = window.L.latLngBounds([50.9, 22.6], [56.4, 33.1]);
-  const map = window.L.map(mapEl, {
-    zoomControl: true,
-    attributionControl: false,
-    scrollWheelZoom: false,
-    minZoom: 6,
-    maxZoom: 18,
-  }).setView(BY_CENTER, 7);
-  map.setMaxBounds(BY_BOUNDS.pad(0.2));
-
-  // High-reliability public tile layers for dark and light themes (free of watermarks)
-  function getTileSources(isDark) {
-    if (isDark) {
-      return [
-        {
-          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-          subdomains: '',
-          maxZoom: 16,
-        },
-        {
-          url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          subdomains: 'abc',
-          maxZoom: 19,
-        },
-        {
-          url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-          subdomains: 'abc',
-          maxZoom: 19,
-        }
-      ];
-    }
-    return [
-      {
-        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-        subdomains: 'abc',
-        maxZoom: 19,
-      },
-      {
-        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        subdomains: 'abc',
-        maxZoom: 19,
-      },
-      {
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-        subdomains: '',
-        maxZoom: 18,
-      }
-    ];
-  }
-
   function isDarkTheme() {
     return document.documentElement.getAttribute('data-theme') === 'dark' || document.body.dataset.theme === 'dark';
   }
 
+  // Map Engine Setup: Yandex Maps API v2.1 Primary, Leaflet Fallback
+  let yMap = null;
+  let yRoute = null;
+  let useYandexMaps = false;
+  let map = null;
   let currentTileLayer = null;
+
+  function initLeafletFallback() {
+    if (map || typeof window.L === 'undefined') return;
+    try {
+      mapEl.innerHTML = '';
+      const BY_CENTER = [53.55, 28.0];
+      const BY_BOUNDS = window.L.latLngBounds([50.9, 22.6], [56.4, 33.1]);
+      map = window.L.map(mapEl, {
+        zoomControl: true,
+        attributionControl: false,
+        scrollWheelZoom: false,
+        minZoom: 6,
+        maxZoom: 18,
+      }).setView(BY_CENTER, 7);
+      map.setMaxBounds(BY_BOUNDS.pad(0.2));
+      setupTiles(0);
+    } catch (err) {
+      console.warn('Leaflet fallback init error:', err);
+    }
+  }
+
+  function getTileSources(isDark) {
+    if (isDark) {
+      return [
+        { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', subdomains: '', maxZoom: 16 },
+        { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', subdomains: 'abc', maxZoom: 19 }
+      ];
+    }
+    return [
+      { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', subdomains: 'abc', maxZoom: 19 },
+      { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', subdomains: '', maxZoom: 18 }
+    ];
+  }
+
   function setupTiles(sourceIndex = 0) {
+    if (!map) return;
     const isDark = isDarkTheme();
     const tileSources = getTileSources(isDark);
     if (sourceIndex >= tileSources.length) return;
@@ -123,33 +112,48 @@
       crossOrigin: true,
       attribution: '',
     });
-
-    let failedTileCount = 0;
-    currentTileLayer.on('tileerror', () => {
-      failedTileCount++;
-      if (failedTileCount > 4 && sourceIndex + 1 < tileSources.length) {
-        setupTiles(sourceIndex + 1);
-      }
-    });
-
     currentTileLayer.addTo(map);
   }
 
-  setupTiles(0);
+  if (typeof window.ymaps !== 'undefined') {
+    window.ymaps.ready(() => {
+      try {
+        mapEl.innerHTML = '';
+        yMap = new window.ymaps.Map(mapEl, {
+          center: [53.9045, 27.5615],
+          zoom: 7,
+          controls: ['zoomControl']
+        }, {
+          suppressMapOpenBlock: true,
+          yandexMapDisablePoi: true
+        });
+        useYandexMaps = true;
+        mapEl.classList.add('is-yandex-active');
+        if (fromPlace && toPlace) updateRoute();
+      } catch (e) {
+        console.warn('Yandex Maps init failed, using Leaflet fallback:', e);
+        initLeafletFallback();
+      }
+    });
+  } else {
+    initLeafletFallback();
+  }
 
   window.addEventListener('themechange', () => {
-    setupTiles(0);
-    if (routeLine) {
+    if (map) setupTiles(0);
+    if (useYandexMaps && yMap && fromPlace && toPlace) {
+      updateRoute();
+    } else if (routeLine && map) {
       const isDark = isDarkTheme();
-      routeLine.setStyle({
-        color: isDark ? '#FFD382' : '#8B2536',
-      });
+      routeLine.setStyle({ color: isDark ? '#FFD382' : '#8B2536' });
     }
   });
 
-  // Invalidate map size on multiple stages to guarantee full rendering in all viewports / Cloudflare environments
   function triggerInvalidate() {
-    try { map.invalidateSize(); } catch (_) {}
+    try {
+      if (map) map.invalidateSize();
+      if (yMap) yMap.container.fitToContainer();
+    } catch (_) {}
   }
   setTimeout(triggerInvalidate, 80);
   setTimeout(triggerInvalidate, 350);
@@ -604,17 +608,99 @@
     els.hint.classList.toggle('is-error', !!isError);
   }
 
+  let yMarkerFrom = null;
+  let yMarkerTo = null;
+  let yPolyline = null;
+
+  function createAsmaYandexPlacemark(coords, cityName, isOrigin) {
+    if (!window.ymaps || !window.ymaps.templateLayoutFactory) return null;
+    const isDark = isDarkTheme();
+    const bg = isOrigin ? '#8B2536' : (isDark ? '#D92546' : '#C74D60');
+    const border = isOrigin ? '#FFD382' : '#FFFFFF';
+    const badgeText = isOrigin ? 'А' : 'Б';
+
+    const LayoutClass = window.ymaps.templateLayoutFactory.createClass(`
+      <div class="asma-ymaps-pin ${isOrigin ? 'is-origin' : 'is-dest'}" style="
+        position: relative;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: ${bg};
+        border: 2px solid ${border};
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #FFFFFF;
+        font-weight: 800;
+        font-size: 13px;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        transform: translate(-16px, -16px);
+        user-select: none;
+        cursor: pointer;
+      ">
+        <span>${badgeText}</span>
+        <div class="asma-ymaps-label" style="
+          position: absolute;
+          top: 36px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(14, 6, 9, 0.92);
+          color: #F8F7EF;
+          font-size: 11.5px;
+          font-weight: 700;
+          padding: 3px 9px;
+          border-radius: 7px;
+          white-space: nowrap;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+          pointer-events: none;
+          letter-spacing: 0.02em;
+        ">${cityName}</div>
+      </div>
+    `);
+
+    return new window.ymaps.Placemark(coords, {
+      hintContent: cityName
+    }, {
+      iconLayout: LayoutClass,
+      iconShape: {
+        type: 'Circle',
+        coordinates: [0, 0],
+        radius: 16
+      }
+    });
+  }
+
   function placeMarker(which, place) {
-    const existing = which === 'from' ? markerFrom : markerTo;
-    if (!place) {
-      if (existing) { map.removeLayer(existing); if (which === 'from') markerFrom = null; else markerTo = null; }
-      return;
+    if (map) {
+      const existing = which === 'from' ? markerFrom : markerTo;
+      if (!place) {
+        if (existing) { map.removeLayer(existing); if (which === 'from') markerFrom = null; else markerTo = null; }
+      } else if (existing) {
+        existing.setLatLng([place.lat, place.lon]);
+      } else {
+        const marker = window.L.marker([place.lat, place.lon], { icon: pinIcon(which === 'from') }).addTo(map);
+        if (which === 'from') markerFrom = marker; else markerTo = marker;
+      }
     }
-    if (existing) {
-      existing.setLatLng([place.lat, place.lon]);
-    } else {
-      const marker = window.L.marker([place.lat, place.lon], { icon: pinIcon(which === 'from') }).addTo(map);
-      if (which === 'from') markerFrom = marker; else markerTo = marker;
+
+    if (useYandexMaps && yMap && window.ymaps) {
+      const isOrigin = which === 'from';
+      const yExisting = isOrigin ? yMarkerFrom : yMarkerTo;
+      if (!place) {
+        if (yExisting) { yMap.geoObjects.remove(yExisting); if (isOrigin) yMarkerFrom = null; else yMarkerTo = null; }
+      } else {
+        const coords = [place.lat, place.lon];
+        if (yExisting) {
+          yMap.geoObjects.remove(yExisting);
+        }
+        const marker = createAsmaYandexPlacemark(coords, place.name, isOrigin);
+        if (marker) {
+          yMap.geoObjects.add(marker);
+          if (isOrigin) yMarkerFrom = marker; else yMarkerTo = marker;
+        }
+      }
     }
   }
 
@@ -631,14 +717,80 @@
       const route = await fetchRoute(fromPlace, toPlace);
       if (token !== routeToken) return;
 
-      if (routeLine) map.removeLayer(routeLine);
-      routeLine = window.L.polyline(route.coords, {
-        color: '#C74D60',
-        weight: 3.5,
-        opacity: .95,
-        dashArray: route.approx ? '2 9' : null,
-      }).addTo(map);
-      map.fitBounds(routeLine.getBounds(), { padding: [28, 28], animate: !reducedMotion });
+      // Render Leaflet route line if Leaflet map is active
+      if (map) {
+        if (routeLine) map.removeLayer(routeLine);
+        routeLine = window.L.polyline(route.coords, {
+          color: '#C74D60',
+          weight: 3.5,
+          opacity: .95,
+          dashArray: route.approx ? '2 9' : null,
+        }).addTo(map);
+        map.fitBounds(routeLine.getBounds(), { padding: [28, 28], animate: !reducedMotion });
+        driveVan(route.coords);
+      }
+
+      // Render Yandex Maps route line & MultiRoute if Yandex map is active
+      if (useYandexMaps && yMap && window.ymaps) {
+        if (yPolyline) { yMap.geoObjects.remove(yPolyline); yPolyline = null; }
+        if (yRoute) { yMap.geoObjects.remove(yRoute); yRoute = null; }
+
+        const isDark = isDarkTheme();
+        const strokeColor = isDark ? '#FFD382' : '#8B2536';
+
+        // 1. Primary Polyline drawing on Yandex Map with custom ASMA style
+        yPolyline = new window.ymaps.Polyline(route.coords, {}, {
+          strokeColor: strokeColor,
+          strokeWidth: 5,
+          strokeOpacity: 0.9,
+          strokeStyle: route.approx ? 'dash' : 'solid'
+        });
+        yMap.geoObjects.add(yPolyline);
+
+        try {
+          yMap.setBounds(yPolyline.geometry.getBounds(), {
+            checkZoomRange: true,
+            zoomMargin: 40
+          });
+        } catch (_) {}
+
+        // 2. Attach Yandex MultiRoute with wayPointVisible: false to hide ugly default Yandex waypoints
+        try {
+          yRoute = new window.ymaps.multiRouter.MultiRoute({
+            referencePoints: [
+              [fromPlace.lat, fromPlace.lon],
+              [toPlace.lat, toPlace.lon]
+            ],
+            params: { routingMode: 'auto' }
+          }, {
+            boundsAutoApply: false,
+            wayPointVisible: false,   // HIDE default Yandex waypoints A & B
+            viaPointVisible: false,   // HIDE via points
+            pinVisible: false,        // HIDE pin balloons
+            routeActiveStrokeWidth: 5,
+            routeActiveStrokeColor: strokeColor,
+            routeActiveStrokeOpacity: 0.85
+          });
+          yMap.geoObjects.add(yRoute);
+          yRoute.model.events.add('requestsuccess', function () {
+            const activeRoute = yRoute.getActiveRoute();
+            if (activeRoute) {
+              const distM = activeRoute.properties.get('distance').value;
+              const kmVal = Math.round(distM / 1000);
+              const kmRoundedY = Math.max(5, Math.round(kmVal / 5) * 5);
+              routeCalculatedKm = kmRoundedY;
+              if (!distanceTouched) {
+                els.distance.value = kmRoundedY;
+                if (kmRoundedY > Number(els.range.max)) els.range.max = Math.ceil(kmRoundedY / 50) * 50;
+              }
+              updateResetButtonState();
+              recalc();
+            }
+          });
+        } catch (err) {
+          console.warn('Yandex MultiRoute fallback notice:', err);
+        }
+      }
 
       if (route.approx) {
         setHint(`Маршрут: ${fromPlace.name} → ${toPlace.name} (расстояние оценено по прямой)`);
@@ -651,7 +803,6 @@
         els.distance.value = kmRounded;
         if (kmRounded > Number(els.range.max)) els.range.max = Math.ceil(kmRounded / 50) * 50;
       }
-      driveVan(route.coords);
       updateResetButtonState();
       recalc();
       return;
@@ -659,13 +810,16 @@
 
     routeCalculatedKm = null;
     updateResetButtonState();
-    if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+    if (routeLine && map) { map.removeLayer(routeLine); routeLine = null; }
+    if (yPolyline && yMap) { yMap.geoObjects.remove(yPolyline); yPolyline = null; }
+    if (yRoute && yMap) { yMap.geoObjects.remove(yRoute); yRoute = null; }
     stopVan();
     if (fromPlace || toPlace) {
       const known = fromPlace || toPlace;
       const missing = fromPlace ? 'назначения' : 'отправления';
       setHint(`Город "${known.name}" найден — введите пункт ${missing}`);
-      map.flyTo([known.lat, known.lon], 9, { animate: !reducedMotion });
+      if (map) map.flyTo([known.lat, known.lon], 9, { animate: !reducedMotion });
+      if (yMap) yMap.setCenter([known.lat, known.lon], 9);
     } else {
       setHint('Начните вводить город, посёлок или деревню — любой населённый пункт Беларуси');
     }

@@ -2514,6 +2514,35 @@ body[data-theme='dark'] .faq-aside .kicker { color: #FFD382; }
 body[data-theme='dark'] .calc-leaflet-map {
   background: #14110f;
 }
+body[data-theme='dark'] .calc-leaflet-map [class*="ymaps-2-1-"][class*="-ground-pane"] {
+  filter: invert(0.92) hue-rotate(180deg) brightness(0.88) contrast(1.15);
+}
+.calc-leaflet-map [class*="ymaps-2-1-"][class*="-copyrights-pane"],
+.calc-leaflet-map [class*="ymaps-2-1-"][class*="-gototech"],
+.calc-leaflet-map [class*="ymaps-2-1-"][class*="-balloon"],
+.calc-leaflet-map [class*="ymaps-2-1-"][class*="-route-panel"],
+.calc-leaflet-map [class*="ymaps-2-1-"][class*="-via-point"] {
+  display: none !important;
+}
+
+/* Custom ASMA Yandex Pins Styling */
+.asma-ymaps-pin {
+  transition: transform 0.2s var(--ease);
+}
+.asma-ymaps-pin:hover {
+  transform: translate(-16px, -16px) scale(1.12) !important;
+}
+.asma-ymaps-pin.is-origin::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 36px; height: 36px;
+  margin: -18px 0 0 -18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 211, 130, 0.7);
+  animation: cityPulse 1.8s var(--ease) infinite;
+  pointer-events: none;
+}
 .calc-leaflet-map .leaflet-tile-pane {
   opacity: 1;
 }

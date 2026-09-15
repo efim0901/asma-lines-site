@@ -50,7 +50,9 @@ app.get('/api/tile/:z/:x/:y.png', async (req, res) => {
   }
 });
 
-// Geocoding endpoint
+// Geocoding endpoint with Yandex Geocoder API
+const YANDEX_GEOCODER_KEY = '2b03b76a-d572-4352-a42a-ccbee8ea4dfd';
+
 app.get('/api/geocode', async (req, res) => {
   const q = (req.query.q || '').trim();
   if (!q) return res.status(400).json({ error: 'Missing query' });
@@ -58,6 +60,30 @@ app.get('/api/geocode', async (req, res) => {
   if (geocodeCache.has(key)) {
     return res.json(geocodeCache.get(key));
   }
+  
+  // 1. Try Yandex Geocoder API
+  try {
+    const yandexUrl = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_GEOCODER_KEY}&geocode=${encodeURIComponent(q + ', Беларусь')}&format=json&results=1`;
+    const response = await fetch(yandexUrl);
+    if (response.ok) {
+      const data = await response.json();
+      const feature = data?.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject;
+      if (feature && feature.Point && feature.Point.pos) {
+        const [lonStr, latStr] = feature.Point.pos.split(' ');
+        const place = {
+          lat: parseFloat(latStr),
+          lon: parseFloat(lonStr),
+          name: feature.name || q.split(',')[0].trim()
+        };
+        geocodeCache.set(key, place);
+        return res.json(place);
+      }
+    }
+  } catch (err) {
+    console.warn('Yandex Geocode API fetch failed, falling back to OSM:', err.message);
+  }
+
+  // 2. Fallback to OpenStreetMap Nominatim
   try {
     const fetchUrl = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=by&accept-language=ru&q=${encodeURIComponent(q)}`;
     const response = await fetch(fetchUrl, {
