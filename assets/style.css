@@ -1589,12 +1589,19 @@ a.contact-tile .contact-tile-value { color: var(--burgundy); }
 }
 
 @media (max-width: 768px) {
-  /* Prevent iOS Safari from zooming on input focus */
+  /* Prevent iOS Safari from zooming on input focus and ensure robust box model */
   input, select, textarea,
   .route-select, .network-search-input {
     font-size: 16px !important;
+    max-width: 100%;
   }
   
+  /* Prevent any element horizontal overflow on phones */
+  body, main, .container, .dark-section, .hero-photo {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
   /* Touch action optimization for mobile */
   button, .btn, a.btn, .region-tab, .quick-hub-btn, .popular-route-pill, .corridor-pill, .city-catalog-chip {
     touch-action: manipulation;
@@ -1603,46 +1610,77 @@ a.contact-tile .contact-tile-value { color: var(--burgundy); }
   /* Geography / Network section mobile adaptation */
   .network-header {
     margin-bottom: 22px;
+    padding: 0 4px;
   }
+  .network-header .display-2 {
+    font-size: clamp(22px, 5.5vw, 28px);
+    line-height: 1.2;
+  }
+  .network-header .lede {
+    font-size: 14.5px;
+    line-height: 1.55;
+  }
+
   .network-stats-bar {
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    margin-top: 20px;
+    gap: 8px;
+    margin-top: 18px;
   }
   .network-stat-card {
-    padding: 12px 10px;
+    padding: 12px 8px;
+    border-radius: var(--r-sm);
   }
   .network-stat-val {
-    font-size: 22px;
+    font-size: 20px;
+  }
+  .network-stat-lbl {
+    font-size: 12px;
+  }
+  .network-stat-sub {
+    font-size: 10px;
   }
   
   .network-main-grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
+    grid-template-columns: 100%;
+    gap: 16px;
     margin-bottom: 24px;
+    width: 100%;
   }
 
   .route-builder-panel,
   .network-catalog-panel {
-    padding: 18px 14px;
+    padding: 16px 12px;
     border-radius: var(--r-md);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+  .panel-hint {
+    font-size: 11.5px;
   }
 
   .route-input-group {
-    padding: 12px;
+    padding: 12px 10px;
   }
   .route-select {
     min-height: 48px;
     padding: 11px 36px 11px 12px;
+    font-size: 16px;
   }
   .route-quick-hubs {
-    gap: 5px;
-    margin-top: 8px;
+    gap: 6px;
+    margin-top: 10px;
   }
   .quick-hub-btn {
     min-height: 34px;
-    padding: 6px 11px;
-    font-size: 12px;
+    padding: 6px 10px;
+    font-size: 12.5px;
   }
   .route-swap-container {
     margin: -4px 0;
@@ -1664,6 +1702,7 @@ a.contact-tile .contact-tile-value { color: var(--burgundy); }
   }
   .summary-route-name {
     font-size: 16px;
+    flex-wrap: wrap;
   }
   .summary-metrics-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1680,7 +1719,7 @@ a.contact-tile .contact-tile-value { color: var(--burgundy); }
     font-size: 14px;
   }
   .summary-actions {
-    grid-template-columns: 1fr;
+    grid-template-columns: 100%;
     gap: 8px;
   }
   .summary-actions .btn {
@@ -1690,11 +1729,13 @@ a.contact-tile .contact-tile-value { color: var(--burgundy); }
     width: 100%;
     justify-content: center;
     text-align: center;
+    box-sizing: border-box;
   }
 
   .network-search-input {
     min-height: 48px;
     padding: 12px 36px 12px 38px;
+    font-size: 16px;
   }
   .network-region-tabs {
     scrollbar-width: none;
@@ -1707,19 +1748,19 @@ a.contact-tile .contact-tile-value { color: var(--burgundy); }
   }
   .region-tab {
     flex-shrink: 0;
-    min-height: 34px;
-    padding: 6px 12px;
-    font-size: 12px;
+    min-height: 36px;
+    padding: 7px 13px;
+    font-size: 12.5px;
   }
 
   .network-cities-grid {
-    grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
     gap: 6px;
-    max-height: 220px;
+    max-height: 240px;
   }
   .city-catalog-chip {
     padding: 7px 6px;
-    min-height: 36px;
+    min-height: 38px;
   }
   .chip-name {
     font-size: 12px;
@@ -1733,10 +1774,15 @@ a.contact-tile .contact-tile-value { color: var(--burgundy); }
     padding: 8px 8px;
     min-height: 42px;
   }
+
+  .popular-routes-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
 }
 
 @media (max-width: 640px) {
-  :root { --gutter: 18px; }
+  :root { --gutter: 16px; }
   .step-cards, .principles { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .footer-bottom { flex-direction: column; align-items: flex-start; gap: 8px; }
@@ -1752,46 +1798,64 @@ a.contact-tile .contact-tile-value { color: var(--burgundy); }
   .photo-band__bg { background-position: center bottom; background-size: cover; }
   .hero-photo { min-height: 460px; }
   .hero-photo--inner { min-height: 340px; }
-  .hero-photo__inner { padding-top: 48px; padding-bottom: 60px; }
+  .hero-photo__inner { padding-top: 48px; padding-bottom: 54px; }
+  .hero-photo__bg {
+    background-position: 70% bottom;
+    background-size: cover;
+  }
+  .hero-photo__overlay {
+    background: linear-gradient(180deg, rgba(16,10,13,.88) 0%, rgba(16,10,13,.65) 50%, rgba(16,10,13,.92) 100%);
+  }
   .hero-photo__badge {
     position: static;
-    margin-top: 20px;
+    margin-top: 18px;
     display: inline-flex;
     align-self: flex-start;
     font-size: 11px;
-    padding: 8px 14px;
+    padding: 7px 12px;
   }
   .hero-photo .actions {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-top: 24px;
+    gap: 10px;
+    margin-top: 22px;
+    width: 100%;
   }
   .hero-photo .actions .btn {
     width: 100%;
     min-height: 48px;
     text-align: center;
     justify-content: center;
+    box-sizing: border-box;
   }
   .service-thumb { aspect-ratio: 16 / 9; }
+  .popular-routes-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .corridors-pills-list {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
 }
+
 @media (max-width: 480px) {
-  :root { --gutter: 15px; }
-  .display-1 { font-size: clamp(26px, 7.5vw, 32px); line-height: 1.15; }
-  .display-2 { font-size: clamp(21px, 6vw, 26px); line-height: 1.2; }
-  .calculator, .contact-form, .quote { padding: 22px 16px; }
-  .nav-inner { min-height: 58px; gap: 10px; }
-  .brand { font-size: 17px; gap: 8px; }
-  .brand-logo { width: 30px; height: 30px; }
+  :root { --gutter: 14px; }
+  .display-1 { font-size: clamp(25px, 7.2vw, 30px); line-height: 1.15; }
+  .display-2 { font-size: clamp(20px, 5.8vw, 24px); line-height: 1.2; }
+  .calculator, .contact-form, .quote { padding: 18px 12px; }
+  .nav-inner { min-height: 56px; gap: 8px; }
+  .brand { font-size: 16px; gap: 8px; }
+  .brand-logo { width: 28px; height: 28px; }
   .theme-toggle, .menu-toggle { width: 38px; height: 38px; }
   .hero-photo__badge {
-    margin-top: 16px;
-    padding: 6px 12px;
+    margin-top: 14px;
+    padding: 6px 10px;
     font-size: 10.5px;
   }
   .popular-routes-grid {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 6px;
   }
   .popular-routes-title {
     font-size: 11px;
@@ -1801,15 +1865,17 @@ a.contact-tile .contact-tile-value { color: var(--burgundy); }
     gap: 5px;
   }
   .city-catalog-chip {
-    padding: 6px 4px;
-    min-height: 35px;
+    padding: 6px 3px;
+    min-height: 36px;
     border-radius: 6px;
   }
   .chip-name {
-    font-size: 11.5px;
+    font-size: 11px;
+    word-break: break-word;
   }
   .corridors-pills-list {
     grid-template-columns: 1fr;
+    gap: 6px;
   }
   .network-stats-bar {
     grid-template-columns: repeat(2, 1fr);
@@ -1819,13 +1885,37 @@ a.contact-tile .contact-tile-value { color: var(--burgundy); }
     padding: 10px 6px;
   }
   .network-stat-val {
-    font-size: 20px;
+    font-size: 18px;
   }
   .network-stat-lbl {
-    font-size: 11.5px;
+    font-size: 11px;
   }
   .network-stat-sub {
-    font-size: 9.5px;
+    font-size: 9px;
+  }
+  .route-builder-panel,
+  .network-catalog-panel {
+    padding: 14px 10px;
+  }
+  .quick-hub-btn {
+    font-size: 11.5px;
+    padding: 5px 8px;
+  }
+  .summary-metrics-grid {
+    gap: 5px;
+  }
+  .summary-metric {
+    padding: 7px 4px;
+  }
+  .summary-metric .sm-value {
+    font-size: 13.5px;
+  }
+  .fleet-tags-row {
+    gap: 4px;
+  }
+  .fleet-tag {
+    font-size: 11px;
+    padding: 3px 6px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

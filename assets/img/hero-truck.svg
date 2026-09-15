@@ -77,8 +77,8 @@
   <path d="M-50 822 L720 822" stroke="url(#neon_red)" stroke-width="4"/>
   <path d="M1380 770 L2100 780" stroke="url(#light_beam)" stroke-width="22" opacity="0.85"/>
 
-  <!-- Heavy Duty Semi-Truck (Centered at x=640..1320 for perfect mobile cropping) -->
-  <g transform="translate(620, 470)">
+  <!-- Heavy Duty Semi-Truck (Positioned on the right so mobile text on left has completely clean dark background) -->
+  <g transform="translate(1050, 470)">
     <!-- Headlight volumetric cone on asphalt -->
     <polygon points="680,240 1340,160 1340,360 680,290" fill="url(#light_beam)" opacity="0.65"/>
 
@@ -93,12 +93,6 @@
     <line x1="192" y1="35" x2="192" y2="265" stroke="#32282E" stroke-width="2"/>
     <line x1="288" y1="35" x2="288" y2="265" stroke="#32282E" stroke-width="2"/>
     <line x1="384" y1="35" x2="384" y2="265" stroke="#32282E" stroke-width="2"/>
-
-    <!-- ASMA Lines High-Contrast Branding Plate -->
-    <rect x="25" y="65" width="430" height="90" rx="6" fill="#130D10" stroke="#8B2536" stroke-width="2.5"/>
-    <text x="48" y="122" fill="#F8F7EF" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="900" letter-spacing="6">ASMA</text>
-    <text x="210" y="122" fill="#FF4D6D" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="800" letter-spacing="4">LINES</text>
-    <text x="50" y="144" fill="#E6A9B4" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" letter-spacing="3">НАДЁЖНЫЙ ОПЕРАТОР · БЕЛАРУСЬ</text>
 
     <!-- Trailer Underrun Frame & Triple Axles -->
     <rect x="60" y="265" width="220" height="24" rx="2" fill="#161214" stroke="#362B31" stroke-width="2"/>
