@@ -720,9 +720,9 @@ async function submitLead(payload, statusNode, successMessage) {
         (payload.weight ? `📦 <b>Вес:</b> ${escapeHtml(payload.weight)}\n` : '') +
         (payload.price ? `💰 <b>Расчёт:</b> ${escapeHtml(payload.price)}\n` : '') +
         (payload.message ? `💬 <b>Комментарий:</b> ${escapeHtml(payload.message)}\n` : '') +
-        `🌐 <b>Источник:</b> Cloudflare Workers (${escapeHtml(payload.source || 'website')})`;
+        `🌐 <b>Источник:</b> Cloudflare (${escapeHtml(payload.source || 'website')})`;
 
-      const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      const tgPromise = fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -732,6 +732,17 @@ async function submitLead(payload, statusNode, successMessage) {
         })
       });
 
+      // If PlanFix Webhook URL is set globally on window (e.g. window.PLANFIX_WEBHOOK_URL), post to PlanFix as well
+      const planfixWebhook = window.PLANFIX_WEBHOOK_URL || window.PLANFIX_FORM_URL;
+      if (planfixWebhook) {
+        fetch(planfixWebhook, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(e => console.error('PlanFix client webhook error:', e));
+      }
+
+      const tgRes = await tgPromise;
       const tgData = await tgRes.json();
       if (tgData && tgData.ok) {
         sent = true;
