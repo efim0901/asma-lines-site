@@ -721,6 +721,13 @@ document.querySelectorAll('[data-contact-form]').forEach((formElem) => {
       name: data.get('name') || '',
       contact: data.get('contact') || '',
       message: data.get('message') || '',
+      fromCity: data.get('fromCity') || undefined,
+      toCity: data.get('toCity') || undefined,
+      distance: data.get('distance') || undefined,
+      vehicle: data.get('vehicle') || undefined,
+      weight: data.get('weight') || undefined,
+      volume: data.get('volume') || undefined,
+      price: data.get('price') || undefined,
       route_details: data.get('route_details') || undefined,
       source: data.get('source') || 'website_contacts',
     }, statusNode, 'Заявка принята! Диспетчер свяжется с вами в течение 15 минут.');

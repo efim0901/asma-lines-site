@@ -139,53 +139,101 @@ app.get('/api/route', async (req, res) => {
 // API route for lead submissions from contact/partner/calculator forms
 app.post('/api/lead', async (req, res) => {
   const { name, phone, email, contact, fromCity, toCity, distance, vehicle, weight, volume, price, comment, message, route_details, source } = req.body;
+  
+  // Parse fallback details from route_details string if provided (e.g. "Гомель -> Витебск, 335km, 10t, est 818 BYN")
+  let parsedDist = distance;
+  let parsedWeight = weight;
+  let parsedPrice = price;
+
+  if (route_details && typeof route_details === 'string') {
+    const kmMatch = route_details.match(/(\d+)\s*km/i);
+    const tMatch = route_details.match(/(\d+)\s*t/i);
+    const priceMatch = route_details.match(/est\s*(\d+)\s*BYN/i);
+    if (!parsedDist && kmMatch) parsedDist = kmMatch[1];
+    if (!parsedWeight && tMatch) parsedWeight = tMatch[1];
+    if (!parsedPrice && priceMatch) parsedPrice = priceMatch[1];
+  }
+
   const leadData = {
     name: name || 'Не указано',
     contact: phone || contact || 'Не указан',
     email: email || '',
     route: (fromCity && toCity) ? `${fromCity} → ${toCity}` : (route_details || 'Маршрут по запросу'),
-    distance: distance ? `${distance} км` : '',
+    distance: parsedDist ? (String(parsedDist).includes('км') ? parsedDist : `${parsedDist} км`) : '',
     vehicle: vehicle || '',
-    weight: weight ? `${weight} т` : '',
-    volume: volume ? `${volume} м³` : '',
-    price: price ? `${price} BYN` : '',
+    weight: parsedWeight ? (String(parsedWeight).includes('т') ? parsedWeight : `${parsedWeight} т`) : '',
+    volume: volume ? (String(volume).includes('м³') ? volume : `${volume} м³`) : '',
+    price: parsedPrice ? (String(parsedPrice).includes('BYN') ? parsedPrice : `${parsedPrice} BYN`) : '',
     comment: comment || message || '—',
     source: source || 'Форма сайта'
   };
 
   console.log('Lead submission received:', leadData);
 
-  // Send Telegram notification if BOT_TOKEN and CHAT_ID are set
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  // Send Telegram notification
+  const defaultBotToken = '8808722578:AAEiNdtl3ut-oYBIrCFOFZYPy1vnYVd9VMY';
+  const defaultChatId = '-5230752915';
+  const botToken = process.env.TELEGRAM_BOT_TOKEN || defaultBotToken;
+  let chatId = process.env.TELEGRAM_CHAT_ID || global.lastTelegramChatId || defaultChatId;
+
+  // Auto-detect chat_id if not explicitly set
+  if (botToken && !chatId) {
+    try {
+      const updatesRes = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates`);
+      const updatesData = await updatesRes.json();
+      if (updatesData.ok && updatesData.result && updatesData.result.length > 0) {
+        const lastUpdate = updatesData.result[updatesData.result.length - 1];
+        const detectedChat = lastUpdate.channel_post?.chat || lastUpdate.message?.chat || lastUpdate.my_chat_member?.chat;
+        if (detectedChat && detectedChat.id) {
+          chatId = detectedChat.id;
+          global.lastTelegramChatId = chatId;
+          console.log('Auto-detected Telegram Chat ID:', chatId);
+        }
+      }
+    } catch (e) {
+      console.warn('Telegram chat_id auto-detection failed:', e.message);
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
 
   if (botToken && chatId) {
     try {
-      const text = `🚛 *Новая заявка с сайта ASMA Lines*\n\n` +
-        `👤 *Клиент:* ${leadData.name}\n` +
-        `📞 *Контакты:* ${leadData.contact}\n` +
-        (leadData.email ? `📧 *Email:* ${leadData.email}\n` : '') +
-        `📍 *Маршрут:* ${leadData.route}\n` +
-        (leadData.distance ? `📏 *Расстояние:* ${leadData.distance}\n` : '') +
-        (leadData.vehicle ? `🚚 *Транспорт:* ${leadData.vehicle}\n` : '') +
-        (leadData.weight ? `📦 *Вес:* ${leadData.weight}\n` : '') +
-        (leadData.volume ? `📦 *Объём:* ${leadData.volume}\n` : '') +
-        (leadData.price ? `💰 *Расчёт:* ${leadData.price}\n` : '') +
-        `💬 *Комментарий:* ${leadData.comment}\n` +
-        `🌐 *Источник:* ${leadData.source}`;
+      const text = `🚛 <b>Новая заявка с сайта ASMA Lines</b>\n\n` +
+        `👤 <b>Клиент:</b> ${escapeHtml(leadData.name)}\n` +
+        `📞 <b>Контакты:</b> ${escapeHtml(leadData.contact)}\n` +
+        (leadData.email ? `📧 <b>Email:</b> ${escapeHtml(leadData.email)}\n` : '') +
+        `📍 <b>Маршрут:</b> ${escapeHtml(leadData.route)}\n` +
+        (leadData.distance ? `📏 <b>Расстояние:</b> ${escapeHtml(leadData.distance)}\n` : '') +
+        (leadData.vehicle ? `🚚 <b>Транспорт:</b> ${escapeHtml(leadData.vehicle)}\n` : '') +
+        (leadData.weight ? `📦 <b>Вес:</b> ${escapeHtml(leadData.weight)}\n` : '') +
+        (leadData.volume ? `📦 <b>Объём:</b> ${escapeHtml(leadData.volume)}\n` : '') +
+        (leadData.price ? `💰 <b>Расчёт:</b> ${escapeHtml(leadData.price)}\n` : '') +
+        `💬 <b>Комментарий:</b> ${escapeHtml(leadData.comment)}\n` +
+        `🌐 <b>Источник:</b> ${escapeHtml(leadData.source)}`;
 
-      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: chatId,
           text: text,
-          parse_mode: 'Markdown'
+          parse_mode: 'HTML'
         })
       });
+      const tgData = await tgRes.json();
+      console.log('Telegram lead notification result:', tgData);
     } catch (err) {
       console.error('Telegram notification error:', err.message);
     }
+  } else {
+    console.log('Telegram bot active, waiting for bot to be added to channel/chat to obtain Chat ID');
   }
 
   // Send PlanFix Webhook if PLANFIX_WEBHOOK_URL is set
@@ -224,13 +272,13 @@ app.post('/api/lead', async (req, res) => {
       const emailBody = `Новая заявка с сайта ASMA Lines:\n\n` +
         `Имя: ${leadData.name}\n` +
         `Телефон/Контакты: ${leadData.contact}\n` +
-        `Email: ${leadData.email || 'Не указан'}\n` +
+        (leadData.email ? `Email: ${leadData.email}\n` : '') +
         `Маршрут: ${leadData.route}\n` +
-        `Расстояние: ${leadData.distance}\n` +
-        `Транспорт: ${leadData.vehicle}\n` +
-        `Вес: ${leadData.weight}\n` +
-        `Объём: ${leadData.volume}\n` +
-        `Расчёт: ${leadData.price}\n` +
+        (leadData.distance ? `Расстояние: ${leadData.distance}\n` : '') +
+        (leadData.vehicle ? `Транспорт: ${leadData.vehicle}\n` : '') +
+        (leadData.weight ? `Вес: ${leadData.weight}\n` : '') +
+        (leadData.volume ? `Объём: ${leadData.volume}\n` : '') +
+        (leadData.price ? `Стоимость: ${leadData.price}\n` : '') +
         `Комментарий: ${leadData.comment}\n` +
         `Источник: ${leadData.source}\n`;
 
