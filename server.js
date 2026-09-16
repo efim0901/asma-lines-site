@@ -208,7 +208,7 @@ app.post('/api/lead', async (req, res) => {
   const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
   const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
   const smtpUser = process.env.SMTP_USER || 'efiv737@gmail.com';
-  const smtpPass = process.env.SMTP_PASS || 'e98923778';
+  const smtpPass = process.env.SMTP_PASS || 'pxvfrohlssilipvg';
 
   if (smtpUser && smtpPass) {
     try {
@@ -242,7 +242,11 @@ app.post('/api/lead', async (req, res) => {
       });
       console.log(`Lead email task successfully dispatched to PlanFix (${planfixEmail})`);
     } catch (err) {
-      console.error('PlanFix email dispatch error:', err.message);
+      if (err.message.includes('535') || err.message.includes('Username and Password not accepted')) {
+        console.error('PlanFix email dispatch error: Gmail требует "Пароль приложения" (App Password) вместо обычного пароля от аккаунта.');
+      } else {
+        console.error('PlanFix email dispatch error:', err.message);
+      }
     }
   }
 
