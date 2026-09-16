@@ -203,12 +203,12 @@ app.post('/api/lead', async (req, res) => {
     }
   }
 
-  // Send PlanFix Task Email (Plomba@asma.planfix.com) if SMTP credentials configured
+  // Send PlanFix Task Email (Plomba@asma.planfix.com)
   const planfixEmail = process.env.PLANFIX_EMAIL || 'Plomba@asma.planfix.com';
   const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
   const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
+  const smtpUser = process.env.SMTP_USER || 'efiv737@gmail.com';
+  const smtpPass = process.env.SMTP_PASS || 'e98923778';
 
   if (smtpUser && smtpPass) {
     try {
@@ -216,7 +216,8 @@ app.post('/api/lead', async (req, res) => {
         host: smtpHost,
         port: smtpPort,
         secure: smtpPort === 465,
-        auth: { user: smtpUser, pass: smtpPass }
+        auth: { user: smtpUser, pass: smtpPass },
+        tls: { rejectUnauthorized: false }
       });
 
       const emailSubject = `Новая заявка: ${leadData.name} (${leadData.route})`;
