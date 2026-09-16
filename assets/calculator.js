@@ -881,18 +881,57 @@
   function updateShareLinks(fromTxt, toTxt, km, weight, total, extras) {
     if (!els.shareTg) return;
     const extrasTxt = extras && extras.length ? `\nОсобенности: ${extras.join(', ')}` : '';
-    const textMsg = `Расчёт перевозки ASMA Lines:\nМаршрут: ${fromTxt} → ${toTxt}\nРасстояние: ~${km} км\nВес груза: ${weight} т${extrasTxt}\nОриентировочная стоимость: ${Math.round(total).toLocaleString('ru-RU')} BYN`;
+    const textMsg = `Здравствуйте! Хочу заказать перевозку ASMA Lines:\n📍 Маршрут: ${fromTxt} → ${toTxt}\n📏 Расстояние: ~${km} км\n📦 Вес груза: ${weight} т${extrasTxt}\n💰 Расчёт стоимости: от ${Math.round(total).toLocaleString('ru-RU')} BYN\n\nПожалуйста, свяжитесь со мной для уточнения деталей.`;
 
-    els.shareTg.href = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(textMsg)}`;
+    const encodedMsg = encodeURIComponent(textMsg);
+    els.shareTg.href = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodedMsg}`;
+    
+    // Direct Telegram order link in modal
+    const modalTgLink = document.getElementById('modal-tg-direct-link');
+    if (modalTgLink) {
+      modalTgLink.href = `https://t.me/asmalines_bot?text=${encodedMsg}`;
+    }
+
     els.shareViber.href = `viber://forward?text=${encodeURIComponent(textMsg + '\n' + window.location.href)}`;
-    els.shareMail.href = `mailto:?subject=${encodeURIComponent(`Расчёт перевозки ${fromTxt} — ${toTxt} (ASMA Lines)`)}&body=${encodeURIComponent(textMsg + '\n\nСайт: ' + window.location.href)}`;
+    els.shareMail.href = `mailto:?subject=${encodeURIComponent(`Заявка на перевозку ${fromTxt} — ${toTxt} (ASMA Lines)`)}&body=${encodeURIComponent(textMsg + '\n\nСайт: ' + window.location.href)}`;
 
     if (els.modalRoutePreview) {
-      els.modalRoutePreview.textContent = `${fromTxt} → ${toTxt} · ${km} км · ${weight} т · ~${Math.round(total).toLocaleString('ru-RU')} BYN`;
+      els.modalRoutePreview.textContent = `${fromTxt} → ${toTxt} · ${km} км · ${weight} т · от ${Math.round(total).toLocaleString('ru-RU')} BYN`;
     }
     if (els.modalHiddenRoute) {
       els.modalHiddenRoute.value = `${fromTxt} -> ${toTxt}, ${km}km, ${weight}t, est ${Math.round(total)} BYN`;
     }
+  }
+
+  // Modal Channel Tabs (Telegram vs Website / CRM)
+  const tabTg = document.getElementById('tab-btn-tg');
+  const tabSite = document.getElementById('tab-btn-site');
+  const panelTg = document.getElementById('panel-tg');
+  const panelSite = document.getElementById('panel-site');
+
+  if (tabTg && tabSite && panelTg && panelSite) {
+    tabTg.addEventListener('click', () => {
+      tabTg.classList.add('active');
+      tabTg.style.borderColor = 'var(--accent)';
+      tabTg.style.background = 'var(--accent-glow)';
+      tabSite.classList.remove('active');
+      tabSite.style.borderColor = 'var(--border-soft)';
+      tabSite.style.background = 'transparent';
+      panelTg.style.display = 'block';
+      panelSite.style.display = 'none';
+    });
+    tabSite.addEventListener('click', () => {
+      tabSite.classList.add('active');
+      tabSite.style.borderColor = 'var(--accent)';
+      tabSite.style.background = 'var(--accent-glow)';
+      tabTg.classList.remove('active');
+      tabTg.style.borderColor = 'var(--border-soft)';
+      tabTg.style.background = 'transparent';
+      panelSite.style.display = 'block';
+      panelTg.style.display = 'none';
+      const firstInput = panelSite.querySelector('input[name="name"]');
+      if (firstInput) firstInput.focus();
+    });
   }
 
   // Toggle Share Box

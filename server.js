@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import nodemailer from 'nodemailer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -135,9 +136,115 @@ app.get('/api/route', async (req, res) => {
   }
 });
 
-// API route for lead submissions from contact/partner forms
-app.post('/api/lead', (req, res) => {
-  console.log('Lead submission received:', req.body);
+// API route for lead submissions from contact/partner/calculator forms
+app.post('/api/lead', async (req, res) => {
+  const { name, phone, email, contact, fromCity, toCity, distance, vehicle, weight, volume, price, comment, message, route_details, source } = req.body;
+  const leadData = {
+    name: name || 'Не указано',
+    contact: phone || contact || 'Не указан',
+    email: email || '',
+    route: (fromCity && toCity) ? `${fromCity} → ${toCity}` : (route_details || 'Маршрут по запросу'),
+    distance: distance ? `${distance} км` : '',
+    vehicle: vehicle || '',
+    weight: weight ? `${weight} т` : '',
+    volume: volume ? `${volume} м³` : '',
+    price: price ? `${price} BYN` : '',
+    comment: comment || message || '—',
+    source: source || 'Форма сайта'
+  };
+
+  console.log('Lead submission received:', leadData);
+
+  // Send Telegram notification if BOT_TOKEN and CHAT_ID are set
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (botToken && chatId) {
+    try {
+      const text = `🚛 *Новая заявка с сайта ASMA Lines*\n\n` +
+        `👤 *Клиент:* ${leadData.name}\n` +
+        `📞 *Контакты:* ${leadData.contact}\n` +
+        (leadData.email ? `📧 *Email:* ${leadData.email}\n` : '') +
+        `📍 *Маршрут:* ${leadData.route}\n` +
+        (leadData.distance ? `📏 *Расстояние:* ${leadData.distance}\n` : '') +
+        (leadData.vehicle ? `🚚 *Транспорт:* ${leadData.vehicle}\n` : '') +
+        (leadData.weight ? `📦 *Вес:* ${leadData.weight}\n` : '') +
+        (leadData.volume ? `📦 *Объём:* ${leadData.volume}\n` : '') +
+        (leadData.price ? `💰 *Расчёт:* ${leadData.price}\n` : '') +
+        `💬 *Комментарий:* ${leadData.comment}\n` +
+        `🌐 *Источник:* ${leadData.source}`;
+
+      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: text,
+          parse_mode: 'Markdown'
+        })
+      });
+    } catch (err) {
+      console.error('Telegram notification error:', err.message);
+    }
+  }
+
+  // Send PlanFix Webhook if PLANFIX_WEBHOOK_URL is set
+  const planfixUrl = process.env.PLANFIX_WEBHOOK_URL;
+  if (planfixUrl) {
+    try {
+      await fetch(planfixUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(leadData)
+      });
+      console.log('Lead successfully sent to PlanFix webhook');
+    } catch (err) {
+      console.error('PlanFix webhook error:', err.message);
+    }
+  }
+
+  // Send PlanFix Task Email (Plomba@asma.planfix.com) if SMTP credentials configured
+  const planfixEmail = process.env.PLANFIX_EMAIL || 'Plomba@asma.planfix.com';
+  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+
+  if (smtpUser && smtpPass) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465,
+        auth: { user: smtpUser, pass: smtpPass }
+      });
+
+      const emailSubject = `Новая заявка: ${leadData.name} (${leadData.route})`;
+      const emailBody = `Новая заявка с сайта ASMA Lines:\n\n` +
+        `Имя: ${leadData.name}\n` +
+        `Телефон/Контакты: ${leadData.contact}\n` +
+        `Email: ${leadData.email || 'Не указан'}\n` +
+        `Маршрут: ${leadData.route}\n` +
+        `Расстояние: ${leadData.distance}\n` +
+        `Транспорт: ${leadData.vehicle}\n` +
+        `Вес: ${leadData.weight}\n` +
+        `Объём: ${leadData.volume}\n` +
+        `Расчёт: ${leadData.price}\n` +
+        `Комментарий: ${leadData.comment}\n` +
+        `Источник: ${leadData.source}\n`;
+
+      await transporter.sendMail({
+        from: `"ASMA Lines" <${smtpUser}>`,
+        to: planfixEmail,
+        subject: emailSubject,
+        text: emailBody
+      });
+      console.log(`Lead email task successfully dispatched to PlanFix (${planfixEmail})`);
+    } catch (err) {
+      console.error('PlanFix email dispatch error:', err.message);
+    }
+  }
+
   res.json({ success: true, message: 'Заявка успешно принята' });
 });
 

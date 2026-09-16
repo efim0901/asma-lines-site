@@ -257,30 +257,54 @@
     <div class="modal-card">
       <button type="button" class="modal-close" id="modal-close" aria-label="Закрыть окно">×</button>
       <div class="card-head">
-        <p class="kicker" style="margin-bottom:6px;">Быстрая заявка</p>
-        <h3 class="display-3">Подтвердить маршрут</h3>
-        <p>Менеджер ASMA Lines свяжется с вами и согласует подачу транспорта.</p>
+        <p class="kicker" style="margin-bottom:6px;">Оформление рейса</p>
+        <h3 class="display-3">Выберите удобный способ</h3>
+        <p>Отправьте детали напрямую в Telegram или заполните быструю форму на сайте.</p>
       </div>
 
       <div class="modal-route-preview" id="modal-route-preview">Маршрут не выбран</div>
 
-      <form id="consult-form" data-contact-form>
-        <input type="hidden" name="source" value="calculator_modal">
-        <input type="hidden" name="route_details" id="modal-hidden-route" value="">
-        <div style="display:grid;gap:14px;">
-          <label>Ваше имя / Компания
-            <input required name="name" placeholder="Например: Артём (ООО «Вектор»)" autocomplete="name">
-          </label>
-          <label>Телефон (Viber / Telegram)
-            <input required name="contact" type="tel" placeholder="+375 (29) 000-00-00" autocomplete="tel">
-          </label>
-          <label>Комментарий к грузу (необязательно)
-            <textarea name="message" rows="3" placeholder="Уточните желаемую дату погрузки, габариты или требования к машине"></textarea>
-          </label>
-          <button class="btn btn-primary" type="submit" style="width:100%;min-height:48px;">Отправить заявку диспетчеру</button>
-          <p class="form-status" aria-live="polite"></p>
-        </div>
-      </form>
+      <!-- Channel Selector Tabs -->
+      <div class="modal-channel-tabs" style="display:flex;gap:8px;margin-bottom:16px;">
+        <button type="button" class="btn-channel-tab active" id="tab-btn-tg" style="flex:1;padding:10px;border-radius:10px;font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--border-soft);cursor:pointer;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4L3 11l6 2m12-9l-4 17-8-6m12-11L9 13"/></svg>
+          <span>1-Click в Telegram</span>
+        </button>
+        <button type="button" class="btn-channel-tab" id="tab-btn-site" style="flex:1;padding:10px;border-radius:10px;font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--border-soft);cursor:pointer;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <span>Заявка на сайте</span>
+        </button>
+      </div>
+
+      <!-- Telegram Direct Panel -->
+      <div class="channel-panel" id="panel-tg" style="display:block;">
+        <p style="font-size:13px;color:var(--on-ink-soft);margin-bottom:14px;">Нажмите кнопку ниже — Telegram откроется с уже готовым текстом вашего маршрута и расчётом. Останется только нажать «Отправить»!</p>
+        <a href="#" id="modal-tg-direct-link" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:100%;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;background:#229ED9;border-color:#229ED9;color:#FFF;font-weight:700;text-decoration:none;border-radius:12px;">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4L3 11l6 2m12-9l-4 17-8-6m12-11L9 13"/></svg>
+          <span>Перейти в Telegram с готовым заказом</span>
+        </a>
+      </div>
+
+      <!-- Website / CRM Panel -->
+      <div class="channel-panel" id="panel-site" style="display:none;">
+        <form id="consult-form" data-contact-form>
+          <input type="hidden" name="source" value="calculator_modal">
+          <input type="hidden" name="route_details" id="modal-hidden-route" value="">
+          <div style="display:grid;gap:14px;">
+            <label>Ваше имя / Компания
+              <input required name="name" placeholder="Например: Артём (ООО «Вектор»)" autocomplete="name">
+            </label>
+            <label>Телефон (Viber / Telegram)
+              <input required name="contact" type="tel" placeholder="+375 (29) 000-00-00" autocomplete="tel">
+            </label>
+            <label>Комментарий к грузу (необязательно)
+              <textarea name="message" rows="3" placeholder="Уточните желаемую дату погрузки, габариты или требования к машине"></textarea>
+            </label>
+            <button class="btn btn-primary" type="submit" style="width:100%;min-height:48px;">Отправить заявку диспетчеру</button>
+            <p class="form-status" aria-live="polite"></p>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 
