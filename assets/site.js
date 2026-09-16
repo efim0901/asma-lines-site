@@ -684,19 +684,70 @@ async function submitLead(payload, statusNode, successMessage) {
     statusNode.textContent = 'Отправляем данные…';
     statusNode.className = 'form-status form-status--loading';
   }
+
+  let sent = false;
+
+  // 1. Primary: Try Node.js server API (/api/lead)
   try {
     const response = await fetch('/api/lead', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    if (!response.ok) throw new Error('request_failed');
+    if (response.ok) {
+      sent = true;
+    }
+  } catch (error) {
+    console.warn('Backend /api/lead unavailable, attempting direct Telegram fallback...', error);
+  }
+
+  // 2. Fallback for static Cloudflare Workers / GitHub Pages / Netlify hosting
+  if (!sent) {
+    try {
+      const botToken = '8808722578:AAEiNdtl3ut-oYBIrCFOFZYPy1vnYVd9VMY';
+      const chatId = '-5230752915';
+
+      const escapeHtml = (str) => str ? String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+
+      const routeStr = (payload.fromCity && payload.toCity) ? `${payload.fromCity} → ${payload.toCity}` : (payload.route_details || '');
+
+      const textHtml = `🚛 <b>Новая заявка с сайта ASMA Lines</b>\n\n` +
+        `👤 <b>Клиент:</b> ${escapeHtml(payload.name)}\n` +
+        `📞 <b>Контакты:</b> ${escapeHtml(payload.contact)}\n` +
+        (routeStr ? `📍 <b>Маршрут:</b> ${escapeHtml(routeStr)}\n` : '') +
+        (payload.distance ? `📏 <b>Расстояние:</b> ${escapeHtml(payload.distance)}\n` : '') +
+        (payload.vehicle ? `🚚 <b>Транспорт:</b> ${escapeHtml(payload.vehicle)}\n` : '') +
+        (payload.weight ? `📦 <b>Вес:</b> ${escapeHtml(payload.weight)}\n` : '') +
+        (payload.price ? `💰 <b>Расчёт:</b> ${escapeHtml(payload.price)}\n` : '') +
+        (payload.message ? `💬 <b>Комментарий:</b> ${escapeHtml(payload.message)}\n` : '') +
+        `🌐 <b>Источник:</b> Cloudflare Workers (${escapeHtml(payload.source || 'website')})`;
+
+      const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: textHtml,
+          parse_mode: 'HTML'
+        })
+      });
+
+      const tgData = await tgRes.json();
+      if (tgData && tgData.ok) {
+        sent = true;
+      }
+    } catch (err) {
+      console.error('Direct Telegram fallback error:', err);
+    }
+  }
+
+  if (sent) {
     if (statusNode) {
       statusNode.textContent = successMessage;
       statusNode.className = 'form-status form-status--success';
     }
     return true;
-  } catch (error) {
+  } else {
     if (statusNode) {
       statusNode.textContent = 'Не удалось отправить заявку. Пожалуйста, позвоните нам или отправьте повторно.';
       statusNode.className = 'form-status form-status--error';
