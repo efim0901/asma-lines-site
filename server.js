@@ -529,46 +529,86 @@ app.post('/api/lead', async (req, res) => {
   });
 });
 
-// ==================== CRM API ROUTES ====================
+// ==================== CRM API ROUTES & SYNCHRONIZED STORAGE ====================
 const CRM_STORAGE_BIN = 'https://json.extendsclass.com/bin/becdbda';
+
+async function getCloudStorage() {
+  let storeData = { leads: [], deletedIds: [], authorizedUsers: [] };
+  try {
+    const storeRes = await fetch(CRM_STORAGE_BIN + '?_t=' + Date.now(), { cache: 'no-store' });
+    if (storeRes.ok) {
+      const json = await storeRes.json();
+      if (json && typeof json === 'object') {
+        storeData.leads = Array.isArray(json.leads) ? json.leads : [];
+        storeData.deletedIds = Array.isArray(json.deletedIds) ? json.deletedIds : [];
+        storeData.authorizedUsers = Array.isArray(json.authorizedUsers) ? json.authorizedUsers : [];
+      }
+    }
+  } catch (e) {
+    console.warn('getCloudStorage warning:', e.message);
+  }
+
+  // Local fallback if empty
+  if (storeData.leads.length === 0) {
+    const localLeads = await readJsonFile(LEADS_FILE, []);
+    if (localLeads.length > 0) storeData.leads = localLeads;
+  }
+  if (storeData.deletedIds.length === 0) {
+    const localDel = await readJsonFile(DELETED_LEADS_FILE, []);
+    if (localDel.length > 0) storeData.deletedIds = localDel;
+  }
+  if (storeData.authorizedUsers.length === 0) {
+    const localUsers = await readJsonFile(ACCESS_USERS_FILE, []);
+    if (localUsers.length > 0) storeData.authorizedUsers = localUsers;
+  }
+
+  storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers);
+
+  if (storeData.deletedIds.length > 0) {
+    const delSet = new Set(storeData.deletedIds);
+    storeData.leads = storeData.leads.filter(l => !delSet.has(l.id));
+  }
+
+  return storeData;
+}
+
+async function saveCloudStorage(storeData) {
+  if (!storeData) return;
+  storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers);
+
+  if (Array.isArray(storeData.deletedIds) && storeData.deletedIds.length > 0) {
+    const delSet = new Set(storeData.deletedIds);
+    if (Array.isArray(storeData.leads)) {
+      storeData.leads = storeData.leads.filter(l => !delSet.has(l.id));
+    }
+  }
+
+  if (Array.isArray(storeData.leads)) await writeJsonFile(LEADS_FILE, storeData.leads);
+  if (Array.isArray(storeData.deletedIds)) await writeJsonFile(DELETED_LEADS_FILE, storeData.deletedIds);
+  if (Array.isArray(storeData.authorizedUsers)) await writeJsonFile(ACCESS_USERS_FILE, storeData.authorizedUsers);
+
+  try {
+    await fetch(CRM_STORAGE_BIN, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(storeData)
+    });
+  } catch (e) {
+    console.warn('saveCloudStorage PUT warning:', e.message);
+  }
+
+  return storeData;
+}
 
 // GET /api/crm and /api/crm/data
 app.get(['/api/crm', '/api/crm/data'], async (req, res) => {
   try {
-    let leads = [];
-    let deletedIds = await readJsonFile(DELETED_LEADS_FILE, []);
-    let authorizedUsers = await readJsonFile(ACCESS_USERS_FILE, []);
-
-    try {
-      const storeRes = await fetch(CRM_STORAGE_BIN + '?_t=' + Date.now(), { cache: 'no-store' });
-      if (storeRes.ok) {
-        const storeData = await storeRes.json();
-        if (Array.isArray(storeData.deletedIds)) {
-          deletedIds = Array.from(new Set([...deletedIds, ...storeData.deletedIds]));
-        }
-        if (Array.isArray(storeData.authorizedUsers)) {
-          authorizedUsers = storeData.authorizedUsers;
-        }
-        if (Array.isArray(storeData.leads)) leads = storeData.leads;
-      }
-    } catch (e) {}
-
-    authorizedUsers = sanitizeUsers(authorizedUsers);
-
-    if (leads.length === 0) {
-      leads = await readJsonFile(LEADS_FILE, []);
-    }
-
-    if (deletedIds.length > 0) {
-      const delSet = new Set(deletedIds);
-      leads = leads.filter(l => !delSet.has(l.id));
-    }
-
+    const store = await getCloudStorage();
     res.json({
       success: true,
-      leads,
-      deletedIds,
-      authorizedUsers,
+      leads: store.leads,
+      deletedIds: store.deletedIds,
+      authorizedUsers: store.authorizedUsers,
       user: { name: 'Иван', username: 'plombit', role: 'Главный диспетчер' }
     });
   } catch (err) {
@@ -579,17 +619,8 @@ app.get(['/api/crm', '/api/crm/data'], async (req, res) => {
 // GET & POST /api/crm/access
 app.get('/api/crm/access', async (req, res) => {
   try {
-    let users = await readJsonFile(ACCESS_USERS_FILE, []);
-    try {
-      const storeRes = await fetch(CRM_STORAGE_BIN + '?_t=' + Date.now(), { cache: 'no-store' });
-      if (storeRes.ok) {
-        const storeData = await storeRes.json();
-        if (Array.isArray(storeData.authorizedUsers)) users = storeData.authorizedUsers;
-      }
-    } catch (e) {}
-
-    users = sanitizeUsers(users);
-    res.json({ success: true, users });
+    const store = await getCloudStorage();
+    res.json({ success: true, users: store.authorizedUsers });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -602,15 +633,8 @@ app.post('/api/crm/access', async (req, res) => {
       return res.status(403).json({ error: 'Доступ запрещён: только @plombit может управлять списком' });
     }
 
-    let users = await readJsonFile(ACCESS_USERS_FILE, []);
-    let storeData = { leads: [], deletedIds: [], authorizedUsers: [] };
-    try {
-      const storeRes = await fetch(CRM_STORAGE_BIN + '?_t=' + Date.now(), { cache: 'no-store' });
-      if (storeRes.ok) storeData = await storeRes.json();
-      if (Array.isArray(storeData.authorizedUsers)) users = storeData.authorizedUsers;
-    } catch (e) {}
-
-    users = sanitizeUsers(users);
+    const store = await getCloudStorage();
+    let users = store.authorizedUsers;
 
     if (action === 'add' && user) {
       const rawUser = (user.username || '').replace(/^@/, '').trim();
@@ -651,58 +675,49 @@ app.post('/api/crm/access', async (req, res) => {
       });
     }
 
-    users = sanitizeUsers(users);
-    await writeJsonFile(ACCESS_USERS_FILE, users);
+    store.authorizedUsers = sanitizeUsers(users);
+    await saveCloudStorage(store);
 
-    storeData.authorizedUsers = users;
-    try {
-      await fetch(CRM_STORAGE_BIN, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(storeData)
-      });
-    } catch (e) {}
-
-    res.json({ success: true, users });
+    res.json({ success: true, users: store.authorizedUsers });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-
-// POST /api/crm - update leads list
+// POST /api/crm - update leads list or sync from WebApp
 app.post('/api/crm', async (req, res) => {
   try {
-    const { leads, deletedIds, action, leadId } = req.body;
-    let currentLeads = Array.isArray(leads) ? leads : await readJsonFile(LEADS_FILE, []);
-    let currentDeleted = await readJsonFile(DELETED_LEADS_FILE, []);
+    const { leads, deletedIds, action, leadId, authorizedUsers } = req.body;
+    const store = await getCloudStorage();
 
     if (Array.isArray(deletedIds)) {
-      currentDeleted = Array.from(new Set([...currentDeleted, ...deletedIds]));
+      store.deletedIds = Array.from(new Set([...store.deletedIds, ...deletedIds]));
     }
 
     if (action === 'delete' && leadId) {
-      if (!currentDeleted.includes(leadId)) currentDeleted.push(leadId);
-      currentLeads = currentLeads.filter(l => l.id !== leadId);
+      if (!store.deletedIds.includes(leadId)) store.deletedIds.push(leadId);
+      store.leads = store.leads.filter(l => l.id !== leadId);
     }
 
-    if (currentDeleted.length > 0) {
-      const delSet = new Set(currentDeleted);
-      currentLeads = currentLeads.filter(l => !delSet.has(l.id));
+    if (Array.isArray(leads)) {
+      store.leads = leads;
     }
 
-    await writeJsonFile(DELETED_LEADS_FILE, currentDeleted);
-    await writeJsonFile(LEADS_FILE, currentLeads);
-
-    try {
-      await fetch(CRM_STORAGE_BIN, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leads: currentLeads, deletedIds: currentDeleted })
+    if (Array.isArray(authorizedUsers) && authorizedUsers.length > 0) {
+      // Merge authorized users preserving existing
+      authorizedUsers.forEach(au => {
+        const exists = store.authorizedUsers.some(u =>
+          (au.username && u.username && u.username.toLowerCase() === au.username.toLowerCase()) ||
+          (au.id && u.id && String(u.id) === String(au.id))
+        );
+        if (!exists) store.authorizedUsers.push(au);
       });
-    } catch (e) {}
+      store.authorizedUsers = sanitizeUsers(store.authorizedUsers);
+    }
 
-    res.json({ success: true, leads: currentLeads, deletedIds: currentDeleted });
+    await saveCloudStorage(store);
+
+    res.json({ success: true, leads: store.leads, deletedIds: store.deletedIds, authorizedUsers: store.authorizedUsers });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -711,8 +726,8 @@ app.post('/api/crm', async (req, res) => {
 // POST /api/crm/lead - manual lead creation by dispatcher
 app.post('/api/crm/lead', async (req, res) => {
   try {
-    const leads = await readJsonFile(LEADS_FILE, []);
-    const maxNum = leads.reduce((max, l) => {
+    const store = await getCloudStorage();
+    const maxNum = store.leads.reduce((max, l) => {
       const num = parseInt(l.leadNumber, 10);
       return !isNaN(num) && num > max ? num : max;
     }, 100);
@@ -750,11 +765,29 @@ app.post('/api/crm/lead', async (req, res) => {
       source: 'crm_manual'
     };
 
-    leads.unshift(newLead);
-    await writeJsonFile(LEADS_FILE, leads);
+    store.leads.unshift(newLead);
+    await saveCloudStorage(store);
+
     res.json({ success: true, lead: newLead });
   } catch (err) {
     res.status(500).json({ error: 'Failed to create lead: ' + err.message });
+  }
+});
+
+// DELETE /api/crm/lead/:id - delete lead permanently
+app.delete('/api/crm/lead/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const store = await getCloudStorage();
+    if (!store.deletedIds.includes(id)) {
+      store.deletedIds.push(id);
+    }
+    store.leads = store.leads.filter(l => l.id !== id);
+    await saveCloudStorage(store);
+
+    res.json({ success: true, message: 'Заявка удалена навсегда' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete lead: ' + err.message });
   }
 });
 
@@ -1105,17 +1138,8 @@ async function handleTelegramBotMessage(message) {
         addedAt: new Date().toISOString()
       });
 
-      localUsers = sanitizeUsers(localUsers);
-      await writeJsonFile(ACCESS_USERS_FILE, localUsers);
-
-      storeData.authorizedUsers = localUsers;
-      try {
-        await fetch(CRM_STORAGE_BIN, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(storeData)
-        });
-      } catch (e) {}
+      storeData.authorizedUsers = sanitizeUsers(localUsers);
+      await saveCloudStorage(storeData);
 
       await sendTelegramMessage(
         chatId,
@@ -1159,17 +1183,8 @@ async function handleTelegramBotMessage(message) {
         return;
       }
 
-      localUsers = sanitizeUsers(localUsers);
-      await writeJsonFile(ACCESS_USERS_FILE, localUsers);
-
-      storeData.authorizedUsers = localUsers;
-      try {
-        await fetch(CRM_STORAGE_BIN, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(storeData)
-        });
-      } catch (e) {}
+      storeData.authorizedUsers = sanitizeUsers(localUsers);
+      await saveCloudStorage(storeData);
 
       await sendTelegramMessage(chatId, `🗑 Доступ для <b>${escapeHtml(parts[0])}</b> успешно отозван.`);
       return;

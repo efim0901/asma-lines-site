@@ -57,16 +57,21 @@ export async function onRequest(context) {
       const body = await request.json().catch(() => ({}));
       const action = body.action || (url.pathname.includes('status') ? 'update_status' : (url.pathname.includes('note') ? 'add_note' : 'upsert'));
 
-      let storeData = { leads: [] };
+      let storeData = { leads: [], deletedIds: [], authorizedUsers: [] };
       try {
-        const storeRes = await fetch(CLOUD_STORE_URL);
+        const storeRes = await fetch(CLOUD_STORE_URL + '?_t=' + Date.now(), { cache: 'no-store' });
         if (storeRes.ok) storeData = await storeRes.json();
       } catch (err) {}
       if (!Array.isArray(storeData.leads)) storeData.leads = [];
+      if (!Array.isArray(storeData.deletedIds)) storeData.deletedIds = [];
+      if (!Array.isArray(storeData.authorizedUsers)) storeData.authorizedUsers = [];
 
       if (action === 'sync' && Array.isArray(body.leads)) {
         storeData.leads = body.leads;
         if (Array.isArray(body.deletedIds)) storeData.deletedIds = body.deletedIds;
+        if (Array.isArray(body.authorizedUsers) && body.authorizedUsers.length > 0) {
+          storeData.authorizedUsers = body.authorizedUsers;
+        }
       } else if (action === 'update_status' && body.leadId) {
         const lead = storeData.leads.find(l => l.id === body.leadId);
         if (lead) {

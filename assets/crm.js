@@ -24,6 +24,41 @@
     }
   ];
 
+  function sanitizeUsers(usersList) {
+    let list = Array.isArray(usersList) ? [...usersList] : [];
+    const hasMaster = list.some(u => 
+      (u.username && u.username.toLowerCase() === MASTER_ADMIN_USERNAME) ||
+      (u.id && String(u.id) === MASTER_ADMIN_ID)
+    );
+
+    if (!hasMaster) {
+      list.unshift({
+        id: MASTER_ADMIN_ID,
+        username: MASTER_ADMIN_USERNAME,
+        name: 'Иван Ефимович',
+        role: 'Главный администратор',
+        isAdmin: true,
+        addedAt: new Date().toISOString()
+      });
+    }
+
+    // Deduplicate
+    const seen = new Set();
+    return list.filter(u => {
+      const key = (u.username ? u.username.toLowerCase() : '') + '::' + (u.id ? String(u.id) : '');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).map(u => {
+      const isMaster = (u.username && u.username.toLowerCase() === MASTER_ADMIN_USERNAME) ||
+                       (u.id && String(u.id) === MASTER_ADMIN_ID);
+      return {
+        ...u,
+        isAdmin: isMaster ? true : Boolean(u.isAdmin)
+      };
+    });
+  }
+
   let currentOperator = {
     name: 'Иван',
     username: 'plombit',
@@ -263,6 +298,12 @@
           json.deletedIds.forEach(id => deletedLeadIds.add(id));
           saveDeletedIds();
         }
+        if (Array.isArray(json.authorizedUsers) && json.authorizedUsers.length > 0) {
+          authorizedUsers = sanitizeUsers(json.authorizedUsers);
+          if (modalAccessMgmt && modalAccessMgmt.classList.contains('open')) {
+            renderAccessUsersList();
+          }
+        }
         if (Array.isArray(json.leads)) {
           fetched = json.leads;
         }
@@ -277,6 +318,12 @@
         if (Array.isArray(cloudJson.deletedIds)) {
           cloudJson.deletedIds.forEach(id => deletedLeadIds.add(id));
           saveDeletedIds();
+        }
+        if (Array.isArray(cloudJson.authorizedUsers) && cloudJson.authorizedUsers.length > 0) {
+          authorizedUsers = sanitizeUsers(cloudJson.authorizedUsers);
+          if (modalAccessMgmt && modalAccessMgmt.classList.contains('open')) {
+            renderAccessUsersList();
+          }
         }
         if (fetched === null && Array.isArray(cloudJson.leads)) {
           fetched = cloudJson.leads;
@@ -315,9 +362,12 @@
     saveDeletedIds();
     renderCounts();
 
+    const activeLeads = leads.filter(l => !deletedLeadIds.has(l.id));
     const payload = {
-      leads: leads.filter(l => !deletedLeadIds.has(l.id)),
-      deletedIds: Array.from(deletedLeadIds)
+      action: 'sync',
+      leads: activeLeads,
+      deletedIds: Array.from(deletedLeadIds),
+      authorizedUsers: sanitizeUsers(authorizedUsers)
     };
 
     // 1. Primary: Save via CRM API endpoint
@@ -326,24 +376,50 @@
       const res = await fetch('/api/crm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'sync', ...payload })
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
+        const json = await res.json();
+        if (json.authorizedUsers) {
+          authorizedUsers = sanitizeUsers(json.authorizedUsers);
+        }
         apiSuccess = true;
       }
     } catch (e) {}
 
-    // 2. Fallback: Save to direct cloud storage if API was not reachable
-    if (!apiSuccess) {
+    // 2. Direct cloud storage sync
+    try {
+      let storeData = {
+        leads: activeLeads,
+        deletedIds: Array.from(deletedLeadIds),
+        authorizedUsers: sanitizeUsers(authorizedUsers)
+      };
+
       try {
-        await fetch(CLOUD_FALLBACK_URL, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-      } catch (err) {
-        console.warn('Cloud storage sync notice:', err);
-      }
+        const cRes = await fetch(CLOUD_FALLBACK_URL + '?_t=' + Date.now(), { cache: 'no-store' });
+        if (cRes.ok) {
+          const cJson = await cRes.json();
+          if (Array.isArray(cJson.authorizedUsers)) {
+            cJson.authorizedUsers.forEach(u => {
+              const exists = storeData.authorizedUsers.some(ex => 
+                (u.username && ex.username && u.username.toLowerCase() === ex.username.toLowerCase()) ||
+                (u.id && ex.id && String(u.id) === String(ex.id))
+              );
+              if (!exists) storeData.authorizedUsers.push(u);
+            });
+          }
+        }
+      } catch (e) {}
+
+      storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers);
+
+      await fetch(CLOUD_FALLBACK_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(storeData)
+      });
+    } catch (err) {
+      console.warn('Cloud storage sync notice:', err);
     }
   }
 
@@ -555,7 +631,7 @@
     }
 
     if (updatedUsers) {
-      authorizedUsers = updatedUsers;
+      authorizedUsers = sanitizeUsers(updatedUsers);
       renderAccessUsersList();
       formAddAccessUser.reset();
       showToast('✅ Доступ предоставлен!');
@@ -563,6 +639,7 @@
     } else {
       // Local optimistic fallback
       authorizedUsers.push(newUser);
+      authorizedUsers = sanitizeUsers(authorizedUsers);
       renderAccessUsersList();
       formAddAccessUser.reset();
       showToast('✅ Доступ добавлен локально');
@@ -621,6 +698,7 @@
             const uId = String(u.id || '');
             return uName !== cleanTarget && uId !== cleanTarget;
           });
+          storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers);
 
           await fetch(CLOUD_FALLBACK_URL, {
             method: 'PUT',
@@ -636,13 +714,13 @@
     }
 
     if (updatedUsers) {
-      authorizedUsers = updatedUsers;
+      authorizedUsers = sanitizeUsers(updatedUsers);
     } else {
-      authorizedUsers = authorizedUsers.filter(u => {
+      authorizedUsers = sanitizeUsers(authorizedUsers.filter(u => {
         const uName = (u.username || '').toLowerCase().replace(/^@/, '');
         const uId = String(u.id || '');
         return uName !== cleanTarget && uId !== cleanTarget;
-      });
+      }));
     }
 
     renderAccessUsersList();
