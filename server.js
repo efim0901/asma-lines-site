@@ -203,27 +203,122 @@ app.post('/api/lead', async (req, res) => {
       .replace(/>/g, '&gt;');
   }
 
+  const isPartner = leadData.source === 'website_partners' || Boolean(req.body.company);
+  const isCargoOrder = !isPartner && Boolean(
+    (req.body.fromCity && req.body.toCity) ||
+    (leadData.route && leadData.route !== 'Маршрут по запросу') ||
+    leadData.source === 'calculator_modal' ||
+    leadData.source === 'website_calculator' ||
+    (leadData.distance && leadData.vehicle) ||
+    leadData.price
+  );
+
+  const routeStr = (req.body.fromCity && req.body.toCity) ? `${req.body.fromCity} → ${req.body.toCity}` : (leadData.route !== 'Маршрут по запросу' ? leadData.route : '');
+  const nowStr = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Minsk' });
+
+  let textHtml = '';
+  let emailSubject = '';
+  let emailBody = '';
+
+  if (isCargoOrder) {
+    // 1. ЗАЯВКА НА ПЕРЕВОЗКУ ГРУЗА
+    textHtml = `🚛 <b>ЗАЯВКА НА ПЕРЕВОЗКУ ГРУЗА (ASMA LINES)</b>\n`;
+    textHtml += `───────────────────────\n`;
+    textHtml += `👤 <b>Клиент / Компания:</b> ${escapeHtml(leadData.name)}\n`;
+    textHtml += `📞 <b>Контакты:</b> ${escapeHtml(leadData.contact)}\n`;
+    if (leadData.email) textHtml += `📧 <b>Email:</b> ${escapeHtml(leadData.email)}\n`;
+
+    textHtml += `\n📦 <b>УСЛОВИЯ И ДЕТАЛИ РЕЙСА:</b>\n`;
+    if (routeStr) textHtml += `📍 <b>Маршрут:</b> ${escapeHtml(routeStr)}\n`;
+    if (leadData.distance) textHtml += `📏 <b>Расстояние:</b> ${escapeHtml(leadData.distance)}\n`;
+    if (leadData.vehicle) textHtml += `🚚 <b>Транспорт:</b> ${escapeHtml(leadData.vehicle)}\n`;
+    if (leadData.weight) textHtml += `⚖️ <b>Вес груза:</b> ${escapeHtml(leadData.weight)}\n`;
+    if (leadData.volume) textHtml += `📦 <b>Объём:</b> ${escapeHtml(leadData.volume)}\n`;
+    if (leadData.price) textHtml += `💰 <b>Предварительный расчёт:</b> ${escapeHtml(leadData.price)}\n`;
+
+    if (leadData.comment && leadData.comment !== '—') {
+      textHtml += `\n💬 <b>Комментарий заказчика:</b>\n${escapeHtml(leadData.comment)}\n`;
+    }
+
+    textHtml += `───────────────────────\n`;
+    textHtml += `⏱ <b>Время:</b> ${nowStr} (Минск)\n`;
+    textHtml += `🌐 <b>Источник:</b> Калькулятор перевозки (Сайт ASMA Lines)`;
+
+    emailSubject = `🚛 ЗАЯВКА НА ПЕРЕВОЗКУ: ${leadData.name} (${routeStr ? routeStr + ', ' : ''}${leadData.contact})`;
+    emailBody = `ЗАЯВКА НА ПЕРЕВОЗКУ ГРУЗА (ASMA Lines)\n` +
+      `--------------------------------------\n` +
+      `Клиент: ${leadData.name}\n` +
+      `Контакты: ${leadData.contact}\n` +
+      (leadData.email ? `Email: ${leadData.email}\n` : '') +
+      `Маршрут: ${routeStr || 'Уточняется'}\n` +
+      (leadData.distance ? `Расстояние: ${leadData.distance}\n` : '') +
+      (leadData.vehicle ? `Транспорт: ${leadData.vehicle}\n` : '') +
+      (leadData.weight ? `Вес груза: ${leadData.weight}\n` : '') +
+      (leadData.volume ? `Объём груза: ${leadData.volume}\n` : '') +
+      (leadData.price ? `Предварительный расчёт: ${leadData.price}\n` : '') +
+      `Комментарий: ${leadData.comment}\n` +
+      `Время отправки: ${nowStr}\n` +
+      `Источник: Калькулятор перевозки\n`;
+
+  } else if (isPartner) {
+    // 2. ЗАЯВКА НА СОТРУДНИЧЕСТВО (ПАРТНЕРЫ)
+    textHtml = `🤝 <b>ЗАЯВКА НА СОТРУДНИЧЕСТВО (ПАРТНЁРЫ)</b>\n`;
+    textHtml += `───────────────────────\n`;
+    if (req.body.company) textHtml += `🏢 <b>Компания:</b> ${escapeHtml(req.body.company)}\n`;
+    textHtml += `👤 <b>Контактное лицо:</b> ${escapeHtml(req.body.contact_name || leadData.name)}\n`;
+    textHtml += `📞 <b>Контакты:</b> ${escapeHtml(leadData.contact)}\n`;
+    if (req.body.direction) textHtml += `🚛 <b>Направление / Автопарк:</b> ${escapeHtml(req.body.direction)}\n`;
+    if (leadData.comment && leadData.comment !== '—') {
+      textHtml += `\n💬 <b>Сообщение:</b>\n${escapeHtml(leadData.comment)}\n`;
+    }
+    textHtml += `───────────────────────\n`;
+    textHtml += `⏱ <b>Время:</b> ${nowStr} (Минск)\n`;
+    textHtml += `🌐 <b>Источник:</b> Раздел «Партнёрам» (Сайт ASMA Lines)`;
+
+    emailSubject = `🤝 СОТРУДНИЧЕСТВО: ${req.body.company || leadData.name} (${leadData.contact})`;
+    emailBody = `ЗАЯВКА НА СОТРУДНИЧЕСТВО (ПАРТНЕРЫ)\n` +
+      `--------------------------------------\n` +
+      (req.body.company ? `Компания: ${req.body.company}\n` : '') +
+      `Контактное лицо: ${req.body.contact_name || leadData.name}\n` +
+      `Контакты: ${leadData.contact}\n` +
+      (req.body.direction ? `Направление/Парк: ${req.body.direction}\n` : '') +
+      `Сообщение: ${leadData.comment}\n` +
+      `Время: ${nowStr}\n`;
+
+  } else {
+    // 3. ЗАЯВКА НА ОБРАТНУЮ СВЯЗЬ (КОНТАКТЫ / КОНСУЛЬТАЦИЯ)
+    textHtml = `📩 <b>ЗАЯВКА НА ОБРАТНУЮ СВЯЗЬ</b>\n`;
+    textHtml += `───────────────────────\n`;
+    textHtml += `👤 <b>Имя / Клиент:</b> ${escapeHtml(leadData.name)}\n`;
+    textHtml += `📞 <b>Контакты:</b> ${escapeHtml(leadData.contact)}\n`;
+    if (leadData.email) textHtml += `📧 <b>Email:</b> ${escapeHtml(leadData.email)}\n`;
+
+    textHtml += `\n💬 <b>Текст обращения / Вопрос:</b>\n`;
+    textHtml += `${escapeHtml(leadData.comment && leadData.comment !== '—' ? leadData.comment : 'Заказ обратного звонка / консультации')}\n`;
+
+    textHtml += `───────────────────────\n`;
+    textHtml += `⏱ <b>Время:</b> ${nowStr} (Минск)\n`;
+    textHtml += `🌐 <b>Источник:</b> Форма обратной связи (Контакты, ASMA Lines)`;
+
+    emailSubject = `📩 ОБРАТНАЯ СВЯЗЬ: ${leadData.name} (${leadData.contact})`;
+    emailBody = `ЗАЯВКА НА ОБРАТНУЮ СВЯЗЬ (ASMA Lines)\n` +
+      `--------------------------------------\n` +
+      `Имя / Клиент: ${leadData.name}\n` +
+      `Контакты: ${leadData.contact}\n` +
+      (leadData.email ? `Email: ${leadData.email}\n` : '') +
+      `Текст обращения: ${leadData.comment}\n` +
+      `Время отправки: ${nowStr}\n` +
+      `Источник: Форма обратной связи (Контакты)\n`;
+  }
+
   if (botToken && chatId) {
     try {
-      const text = `🚛 <b>Новая заявка с сайта ASMA Lines</b>\n\n` +
-        `👤 <b>Клиент:</b> ${escapeHtml(leadData.name)}\n` +
-        `📞 <b>Контакты:</b> ${escapeHtml(leadData.contact)}\n` +
-        (leadData.email ? `📧 <b>Email:</b> ${escapeHtml(leadData.email)}\n` : '') +
-        `📍 <b>Маршрут:</b> ${escapeHtml(leadData.route)}\n` +
-        (leadData.distance ? `📏 <b>Расстояние:</b> ${escapeHtml(leadData.distance)}\n` : '') +
-        (leadData.vehicle ? `🚚 <b>Транспорт:</b> ${escapeHtml(leadData.vehicle)}\n` : '') +
-        (leadData.weight ? `📦 <b>Вес:</b> ${escapeHtml(leadData.weight)}\n` : '') +
-        (leadData.volume ? `📦 <b>Объём:</b> ${escapeHtml(leadData.volume)}\n` : '') +
-        (leadData.price ? `💰 <b>Расчёт:</b> ${escapeHtml(leadData.price)}\n` : '') +
-        `💬 <b>Комментарий:</b> ${escapeHtml(leadData.comment)}\n` +
-        `🌐 <b>Источник:</b> ${escapeHtml(leadData.source)}`;
-
       const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: chatId,
-          text: text,
+          text: textHtml,
           parse_mode: 'HTML'
         })
       });
@@ -267,20 +362,6 @@ app.post('/api/lead', async (req, res) => {
         auth: { user: smtpUser, pass: smtpPass },
         tls: { rejectUnauthorized: false }
       });
-
-      const emailSubject = `Новая заявка: ${leadData.name} (${leadData.route})`;
-      const emailBody = `Новая заявка с сайта ASMA Lines:\n\n` +
-        `Имя: ${leadData.name}\n` +
-        `Телефон/Контакты: ${leadData.contact}\n` +
-        (leadData.email ? `Email: ${leadData.email}\n` : '') +
-        `Маршрут: ${leadData.route}\n` +
-        (leadData.distance ? `Расстояние: ${leadData.distance}\n` : '') +
-        (leadData.vehicle ? `Транспорт: ${leadData.vehicle}\n` : '') +
-        (leadData.weight ? `Вес: ${leadData.weight}\n` : '') +
-        (leadData.volume ? `Объём: ${leadData.volume}\n` : '') +
-        (leadData.price ? `Стоимость: ${leadData.price}\n` : '') +
-        `Комментарий: ${leadData.comment}\n` +
-        `Источник: ${leadData.source}\n`;
 
       await transporter.sendMail({
         from: `"ASMA Lines" <${smtpUser}>`,

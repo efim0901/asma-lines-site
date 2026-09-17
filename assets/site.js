@@ -709,18 +709,118 @@ async function submitLead(payload, statusNode, successMessage) {
 
       const escapeHtml = (str) => str ? String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
 
-      const routeStr = (payload.fromCity && payload.toCity) ? `${payload.fromCity} → ${payload.toCity}` : (payload.route_details || '');
+      const isPartner = payload.source === 'website_partners' || Boolean(payload.company);
+      const isCargoOrder = !isPartner && Boolean(
+        (payload.fromCity && payload.toCity) ||
+        (payload.route_details && payload.route_details.length > 3) ||
+        payload.source === 'calculator_modal' ||
+        payload.source === 'website_calculator' ||
+        (payload.distance && payload.vehicle) ||
+        payload.price
+      );
 
-      const textHtml = `🚛 <b>Новая заявка с сайта ASMA Lines</b>\n\n` +
-        `👤 <b>Клиент:</b> ${escapeHtml(payload.name)}\n` +
-        `📞 <b>Контакты:</b> ${escapeHtml(payload.contact)}\n` +
-        (routeStr ? `📍 <b>Маршрут:</b> ${escapeHtml(routeStr)}\n` : '') +
-        (payload.distance ? `📏 <b>Расстояние:</b> ${escapeHtml(payload.distance)}\n` : '') +
-        (payload.vehicle ? `🚚 <b>Транспорт:</b> ${escapeHtml(payload.vehicle)}\n` : '') +
-        (payload.weight ? `📦 <b>Вес:</b> ${escapeHtml(payload.weight)}\n` : '') +
-        (payload.price ? `💰 <b>Расчёт:</b> ${escapeHtml(payload.price)}\n` : '') +
-        (payload.message ? `💬 <b>Комментарий:</b> ${escapeHtml(payload.message)}\n` : '') +
-        `🌐 <b>Источник:</b> Cloudflare (${escapeHtml(payload.source || 'website')})`;
+      const routeStr = (payload.fromCity && payload.toCity) ? `${payload.fromCity} → ${payload.toCity}` : (payload.route_details || '');
+      const nowStr = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Minsk' });
+
+      let textHtml = '';
+      let emailSubject = '';
+      let emailFormData = {};
+
+      if (isCargoOrder) {
+        // === 1. ЗАЯВКА НА ПЕРЕВОЗКУ ГРУЗА ===
+        textHtml = `🚛 <b>ЗАЯВКА НА ПЕРЕВОЗКУ ГРУЗА (ASMA LINES)</b>\n`;
+        textHtml += `───────────────────────\n`;
+        textHtml += `👤 <b>Клиент / Компания:</b> ${escapeHtml(payload.name || 'Не указано')}\n`;
+        textHtml += `📞 <b>Контакты:</b> ${escapeHtml(payload.contact || payload.phone || 'Не указан')}\n`;
+        if (payload.email) textHtml += `📧 <b>Email:</b> ${escapeHtml(payload.email)}\n`;
+
+        textHtml += `\n📦 <b>УСЛОВИЯ И ДЕТАЛИ РЕЙСА:</b>\n`;
+        if (routeStr) textHtml += `📍 <b>Маршрут:</b> ${escapeHtml(routeStr)}\n`;
+        if (payload.distance) textHtml += `📏 <b>Расстояние:</b> ${escapeHtml(payload.distance)}\n`;
+        if (payload.vehicle) textHtml += `🚚 <b>Транспорт:</b> ${escapeHtml(payload.vehicle)}\n`;
+        if (payload.weight) textHtml += `⚖️ <b>Вес груза:</b> ${escapeHtml(payload.weight)}\n`;
+        if (payload.volume) textHtml += `📦 <b>Объём:</b> ${escapeHtml(payload.volume)}\n`;
+        if (payload.price) textHtml += `💰 <b>Предварительный расчёт:</b> ${escapeHtml(payload.price)}\n`;
+
+        if (payload.message || payload.comment) {
+          textHtml += `\n💬 <b>Комментарий заказчика:</b>\n${escapeHtml(payload.message || payload.comment)}\n`;
+        }
+
+        textHtml += `───────────────────────\n`;
+        textHtml += `⏱ <b>Время:</b> ${nowStr} (Минск)\n`;
+        textHtml += `🌐 <b>Источник:</b> Калькулятор перевозки (Сайт ASMA Lines)`;
+
+        emailSubject = `🚛 ЗАЯВКА НА ПЕРЕВОЗКУ: ${payload.name || 'Клиент'} (${routeStr ? routeStr + ', ' : ''}${payload.contact || ''})`;
+        emailFormData = {
+          _subject: emailSubject,
+          'Категория': 'Заявка на перевозку груза',
+          'Клиент / Заказчик': payload.name || 'Не указано',
+          'Телефон / Контакты': payload.contact || payload.phone || 'Не указан',
+          'Email': payload.email || '—',
+          'Маршрут': routeStr || 'По согласованию',
+          'Расстояние': payload.distance || '—',
+          'Транспорт': payload.vehicle || '—',
+          'Вес груза': payload.weight || '—',
+          'Объём груза': payload.volume || '—',
+          'Ориентир стоимости': payload.price || '—',
+          'Комментарий': payload.message || payload.comment || '—',
+          'Время отправки': nowStr,
+          'Источник': 'Калькулятор на сайте ASMA Lines'
+        };
+
+      } else if (isPartner) {
+        // === 2. ЗАЯВКА НА СОТРУДНИЧЕСТВО (ПАРТНЕРЫ) ===
+        textHtml = `🤝 <b>ЗАЯВКА НА СОТРУДНИЧЕСТВО (ПАРТНЁРЫ)</b>\n`;
+        textHtml += `───────────────────────\n`;
+        if (payload.company) textHtml += `🏢 <b>Компания:</b> ${escapeHtml(payload.company)}\n`;
+        textHtml += `👤 <b>Контактное лицо:</b> ${escapeHtml(payload.contact_name || payload.name || 'Не указано')}\n`;
+        textHtml += `📞 <b>Контакты:</b> ${escapeHtml(payload.contact || payload.phone || 'Не указан')}\n`;
+        if (payload.direction) textHtml += `🚛 <b>Направление / Автопарк:</b> ${escapeHtml(payload.direction)}\n`;
+        if (payload.message) textHtml += `\n💬 <b>Сообщение:</b>\n${escapeHtml(payload.message)}\n`;
+        textHtml += `───────────────────────\n`;
+        textHtml += `⏱ <b>Время:</b> ${nowStr} (Минск)\n`;
+        textHtml += `🌐 <b>Источник:</b> Раздел «Партнёрам» (Сайт ASMA Lines)`;
+
+        emailSubject = `🤝 СОТРУДНИЧЕСТВО: ${payload.company || payload.contact_name || 'Партнёр'} (${payload.contact || ''})`;
+        emailFormData = {
+          _subject: emailSubject,
+          'Категория': 'Заявка на партнерство / сотрудничество',
+          'Компания': payload.company || '—',
+          'Контактное лицо': payload.contact_name || payload.name || 'Не указано',
+          'Телефон / Контакты': payload.contact || payload.phone || 'Не указан',
+          'Направление / Автопарк': payload.direction || '—',
+          'Сообщение': payload.message || '—',
+          'Время отправки': nowStr,
+          'Источник': 'Раздел Партнерам'
+        };
+
+      } else {
+        // === 3. ЗАЯВКА НА ОБРАТНУЮ СВЯЗЬ (КОНТАКТЫ / КОНСУЛЬТАЦИЯ) ===
+        textHtml = `📩 <b>ЗАЯВКА НА ОБРАТНУЮ СВЯЗЬ</b>\n`;
+        textHtml += `───────────────────────\n`;
+        textHtml += `👤 <b>Имя / Клиент:</b> ${escapeHtml(payload.name || 'Не указано')}\n`;
+        textHtml += `📞 <b>Контакты:</b> ${escapeHtml(payload.contact || payload.phone || 'Не указан')}\n`;
+        if (payload.email) textHtml += `📧 <b>Email:</b> ${escapeHtml(payload.email)}\n`;
+
+        textHtml += `\n💬 <b>Текст обращения / Вопрос:</b>\n`;
+        textHtml += `${escapeHtml(payload.message || payload.comment || 'Заказ обратного звонка / консультации')}\n`;
+
+        textHtml += `───────────────────────\n`;
+        textHtml += `⏱ <b>Время:</b> ${nowStr} (Минск)\n`;
+        textHtml += `🌐 <b>Источник:</b> Форма обратной связи (Контакты, ASMA Lines)`;
+
+        emailSubject = `📩 ОБРАТНАЯ СВЯЗЬ: ${payload.name || 'Клиент'} (${payload.contact || ''})`;
+        emailFormData = {
+          _subject: emailSubject,
+          'Категория': 'Заявка на обратную связь (Консультация / Вопрос)',
+          'Имя / Клиент': payload.name || 'Не указано',
+          'Телефон / Контакты': payload.contact || payload.phone || 'Не указан',
+          'Email': payload.email || '—',
+          'Текст обращения': payload.message || payload.comment || 'Заказ обратного звонка',
+          'Время отправки': nowStr,
+          'Источник': 'Форма обратной связи (Контакты)'
+        };
+      }
 
       const tgPromise = fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: 'POST',
@@ -739,19 +839,7 @@ async function submitLead(payload, statusNode, successMessage) {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify({
-          _subject: `Новая заявка с сайта ASMA Lines: ${payload.name || 'Клиент'} (${payload.contact || ''})`,
-          'Имя': payload.name || 'Не указано',
-          'Телефон / Контакты': payload.contact || payload.phone || 'Не указан',
-          'Email': payload.email || '—',
-          'Маршрут': routeStr || 'Маршрут по запросу',
-          'Расстояние': payload.distance || '—',
-          'Транспорт': payload.vehicle || '—',
-          'Вес': payload.weight || '—',
-          'Расчет стоимости': payload.price || '—',
-          'Комментарий': payload.message || payload.comment || '—',
-          'Источник': payload.source || 'Форма сайта (Cloudflare)'
-        })
+        body: JSON.stringify(emailFormData)
       }).catch(e => console.error('PlanFix email dispatch error:', e));
 
       // If PlanFix Webhook URL is set globally on window (e.g. window.PLANFIX_WEBHOOK_URL), post to PlanFix as well

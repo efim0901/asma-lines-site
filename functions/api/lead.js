@@ -30,30 +30,90 @@ export async function onRequestPost(context) {
       source: source || 'Форма сайта (Cloudflare)'
     };
 
+    const isPartner = source === 'website_partners' || Boolean(body.company);
+    const isCargoOrder = !isPartner && Boolean(
+      (fromCity && toCity) ||
+      (route_details && route_details.length > 3) ||
+      source === 'calculator_modal' ||
+      source === 'website_calculator' ||
+      (distance && vehicle) ||
+      price
+    );
+
+    const routeStr = (fromCity && toCity) ? `${fromCity} → ${toCity}` : (route_details || '');
+    const nowStr = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Minsk' });
     const escapeHtml = (str) => str ? String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+
+    let textHtml = '';
+    let emailSubject = '';
+
+    if (isCargoOrder) {
+      // 1. ЗАЯВКА НА ПЕРЕВОЗКУ ГРУЗА
+      textHtml = `🚛 <b>ЗАЯВКА НА ПЕРЕВОЗКУ ГРУЗА (ASMA LINES)</b>\n`;
+      textHtml += `───────────────────────\n`;
+      textHtml += `👤 <b>Клиент / Компания:</b> ${escapeHtml(leadData.name)}\n`;
+      textHtml += `📞 <b>Контакты:</b> ${escapeHtml(leadData.contact)}\n`;
+      if (leadData.email) textHtml += `📧 <b>Email:</b> ${escapeHtml(leadData.email)}\n`;
+
+      textHtml += `\n📦 <b>УСЛОВИЯ И ДЕТАЛИ РЕЙСА:</b>\n`;
+      if (routeStr) textHtml += `📍 <b>Маршрут:</b> ${escapeHtml(routeStr)}\n`;
+      if (leadData.distance) textHtml += `📏 <b>Расстояние:</b> ${escapeHtml(leadData.distance)}\n`;
+      if (leadData.vehicle) textHtml += `🚚 <b>Транспорт:</b> ${escapeHtml(leadData.vehicle)}\n`;
+      if (leadData.weight) textHtml += `⚖️ <b>Вес груза:</b> ${escapeHtml(leadData.weight)}\n`;
+      if (leadData.volume) textHtml += `📦 <b>Объём:</b> ${escapeHtml(leadData.volume)}\n`;
+      if (leadData.price) textHtml += `💰 <b>Предварительный расчёт:</b> ${escapeHtml(leadData.price)}\n`;
+
+      if (leadData.comment && leadData.comment !== '—') {
+        textHtml += `\n💬 <b>Комментарий заказчика:</b>\n${escapeHtml(leadData.comment)}\n`;
+      }
+
+      textHtml += `───────────────────────\n`;
+      textHtml += `⏱ <b>Время:</b> ${nowStr} (Минск)\n`;
+      textHtml += `🌐 <b>Источник:</b> Калькулятор перевозки (Сайт ASMA Lines)`;
+      emailSubject = `🚛 ЗАЯВКА НА ПЕРЕВОЗКУ: ${leadData.name} (${routeStr ? routeStr + ', ' : ''}${leadData.contact})`;
+
+    } else if (isPartner) {
+      // 2. ЗАЯВКА НА СОТРУДНИЧЕСТВО (ПАРТНЕРЫ)
+      textHtml = `🤝 <b>ЗАЯВКА НА СОТРУДНИЧЕСТВО (ПАРТНЁРЫ)</b>\n`;
+      textHtml += `───────────────────────\n`;
+      if (body.company) textHtml += `🏢 <b>Компания:</b> ${escapeHtml(body.company)}\n`;
+      textHtml += `👤 <b>Контактное лицо:</b> ${escapeHtml(body.contact_name || leadData.name)}\n`;
+      textHtml += `📞 <b>Контакты:</b> ${escapeHtml(leadData.contact)}\n`;
+      if (body.direction) textHtml += `🚛 <b>Направление / Автопарк:</b> ${escapeHtml(body.direction)}\n`;
+      if (leadData.comment && leadData.comment !== '—') {
+        textHtml += `\n💬 <b>Сообщение:</b>\n${escapeHtml(leadData.comment)}\n`;
+      }
+      textHtml += `───────────────────────\n`;
+      textHtml += `⏱ <b>Время:</b> ${nowStr} (Минск)\n`;
+      textHtml += `🌐 <b>Источник:</b> Раздел «Партнёрам» (Сайт ASMA Lines)`;
+      emailSubject = `🤝 СОТРУДНИЧЕСТВО: ${body.company || leadData.name} (${leadData.contact})`;
+
+    } else {
+      // 3. ЗАЯВКА НА ОБРАТНУЮ СВЯЗЬ (КОНТАКТЫ / КОНСУЛЬТАЦИЯ)
+      textHtml = `📩 <b>ЗАЯВКА НА ОБРАТНУЮ СВЯЗЬ</b>\n`;
+      textHtml += `───────────────────────\n`;
+      textHtml += `👤 <b>Имя / Клиент:</b> ${escapeHtml(leadData.name)}\n`;
+      textHtml += `📞 <b>Контакты:</b> ${escapeHtml(leadData.contact)}\n`;
+      if (leadData.email) textHtml += `📧 <b>Email:</b> ${escapeHtml(leadData.email)}\n`;
+
+      textHtml += `\n💬 <b>Текст обращения / Вопрос:</b>\n`;
+      textHtml += `${escapeHtml(leadData.comment && leadData.comment !== '—' ? leadData.comment : 'Заказ обратного звонка / консультации')}\n`;
+
+      textHtml += `───────────────────────\n`;
+      textHtml += `⏱ <b>Время:</b> ${nowStr} (Минск)\n`;
+      textHtml += `🌐 <b>Источник:</b> Форма обратной связи (Контакты, ASMA Lines)`;
+      emailSubject = `📩 ОБРАТНАЯ СВЯЗЬ: ${leadData.name} (${leadData.contact})`;
+    }
 
     // 1. Send to Telegram
     const botToken = context.env.TELEGRAM_BOT_TOKEN || '8808722578:AAEiNdtl3ut-oYBIrCFOFZYPy1vnYVd9VMY';
     const chatId = context.env.TELEGRAM_CHAT_ID || '-5230752915';
 
     if (botToken && chatId) {
-      const text = `🚛 <b>Новая заявка с сайта ASMA Lines</b>\n\n` +
-        `👤 <b>Клиент:</b> ${escapeHtml(leadData.name)}\n` +
-        `📞 <b>Контакты:</b> ${escapeHtml(leadData.contact)}\n` +
-        (leadData.email ? `📧 <b>Email:</b> ${escapeHtml(leadData.email)}\n` : '') +
-        `📍 <b>Маршрут:</b> ${escapeHtml(leadData.route)}\n` +
-        (leadData.distance ? `📏 <b>Расстояние:</b> ${escapeHtml(leadData.distance)}\n` : '') +
-        (leadData.vehicle ? `🚚 <b>Транспорт:</b> ${escapeHtml(leadData.vehicle)}\n` : '') +
-        (leadData.weight ? `📦 <b>Вес:</b> ${escapeHtml(leadData.weight)}\n` : '') +
-        (leadData.volume ? `📦 <b>Объём:</b> ${escapeHtml(leadData.volume)}\n` : '') +
-        (leadData.price ? `💰 <b>Расчёт:</b> ${escapeHtml(leadData.price)}\n` : '') +
-        `💬 <b>Комментарий:</b> ${escapeHtml(leadData.comment)}\n` +
-        `🌐 <b>Источник:</b> ${escapeHtml(leadData.source)}`;
-
       await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'HTML' })
+        body: JSON.stringify({ chat_id: chatId, text: textHtml, parse_mode: 'HTML' })
       });
     }
 
