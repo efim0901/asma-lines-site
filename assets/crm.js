@@ -18,7 +18,6 @@
       id: '1014012851',
       username: 'plombit',
       name: 'Иван Ефимович',
-      role: 'Главный администратор',
       isAdmin: true,
       addedAt: '2026-09-17T10:00:00.000Z'
     }
@@ -36,7 +35,6 @@
         id: MASTER_ADMIN_ID,
         username: MASTER_ADMIN_USERNAME,
         name: 'Иван Ефимович',
-        role: 'Главный администратор',
         isAdmin: true,
         addedAt: new Date().toISOString()
       });
@@ -63,7 +61,6 @@
     name: 'Иван',
     username: 'plombit',
     id: '1014012851',
-    role: 'Главный диспетчер',
     isAdmin: true
   };
 
@@ -191,7 +188,6 @@
           name: matched?.name || tgFullName || 'Иван',
           username: tgUsername || 'plombit',
           id: tgId,
-          role: matched?.role || (isMaster ? 'Главный администратор' : 'Диспетчер'),
           isAdmin: isMaster || Boolean(matched?.isAdmin)
         };
         grantAccessUI();
@@ -211,7 +207,6 @@
         name: 'Иван Ефимович',
         username: 'plombit',
         id: '1014012851',
-        role: 'Главный администратор',
         isAdmin: true
       };
       grantAccessUI();
@@ -558,8 +553,8 @@
         <div class="access-user-item">
           <div class="access-user-info">
             <div class="access-user-name">
-              <span>${escapeHtml(u.name || 'Диспетчер')}</span>
-              ${isMaster ? '<span class="access-user-badge">⭐ Владелец</span>' : `<span style="font-size:11px;color:#94A3B8;">(${escapeHtml(u.role || 'Диспетчер')})</span>`}
+              <span>${escapeHtml(u.name || 'Сотрудник')}</span>
+              ${isMaster ? '<span class="access-user-badge">⭐ Владелец</span>' : ''}
             </div>
             <div class="access-user-meta">${handleDisplay}</div>
           </div>
@@ -578,7 +573,6 @@
     const fd = new FormData(formAddAccessUser);
     const rawHandle = (fd.get('userHandle') || '').trim();
     const name = (fd.get('userName') || '').trim();
-    const role = (fd.get('userRole') || 'Диспетчер').trim();
 
     if (!rawHandle) {
       showToast('⚠️ Укажите @username или Telegram ID');
@@ -603,7 +597,6 @@
       id: cleanId,
       username: cleanUsername,
       name: name || rawHandle,
-      role,
       isAdmin: false,
       addedAt: new Date().toISOString()
     };

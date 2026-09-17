@@ -225,7 +225,7 @@ export async function onRequest(context) {
       let listText = `👥 <b>Список доступа к CRM ASMA Lines:</b>\n───────────────────────\n`;
       storeData.authorizedUsers.forEach((u, i) => {
         const uLabel = u.username ? `@${u.username}` : `ID: ${u.id}`;
-        listText += `${i + 1}. <b>${escapeHtml(u.name || 'Сотрудник')}</b> (${uLabel})\n   Роль: ${escapeHtml(u.role || 'Диспетчер')}${u.isAdmin ? ' ⭐ (Владелец)' : ''}\n\n`;
+        listText += `${i + 1}. <b>${escapeHtml(u.name || 'Сотрудник')}</b> (${uLabel})${u.isAdmin ? ' ⭐ (Владелец)' : ''}\n\n`;
       });
       listText += `<i>Всего пользователей: ${storeData.authorizedUsers.length}</i>`;
 
@@ -254,7 +254,7 @@ export async function onRequest(context) {
       const parts = text.split(/\s+/).slice(1);
       if (parts.length === 0) {
         await sendTg(
-          `ℹ️ <b>Формат команды:</b>\n<code>/add @username Имя [Роль]</code>\nили:\n<code>/add 123456789 Имя [Роль]</code>\n\nПример:\n<code>/add @dmitry Дмитрий Логист</code>`
+          `ℹ️ <b>Формат команды:</b>\n<code>/add @username Имя</code>\nили:\n<code>/add 123456789 Имя</code>\n\nПример:\n<code>/add @dmitry Дмитрий</code>`
         );
         return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
       }
@@ -264,17 +264,7 @@ export async function onRequest(context) {
       const username = isId ? null : rawTarget;
       const id = isId ? rawTarget : null;
 
-      // Rest parameters: Name and optional role
-      let restWords = parts.slice(1);
-      let role = 'Диспетчер';
-      if (restWords.length > 1) {
-        const lastWord = restWords[restWords.length - 1].toLowerCase();
-        if (['логист', 'диспетчер', 'старший диспетчер', 'водитель', 'менеджер', 'админ', 'администратор'].includes(lastWord)) {
-          role = restWords.pop();
-          role = role.charAt(0).toUpperCase() + role.slice(1);
-        }
-      }
-      const restName = restWords.join(' ') || rawTarget;
+      const restName = parts.slice(1).join(' ') || rawTarget;
 
       const exists = storeData.authorizedUsers.some(u =>
         (username && u.username && u.username.toLowerCase() === username.toLowerCase()) ||
@@ -290,7 +280,6 @@ export async function onRequest(context) {
         id,
         username,
         name: restName,
-        role,
         isAdmin: false,
         addedAt: new Date().toISOString()
       });
@@ -306,8 +295,7 @@ export async function onRequest(context) {
       await sendTg(
         `✅ <b>Доступ успешно предоставлен!</b>\n\n` +
         `👤 Пользователь: <b>${username ? '@' + escapeHtml(username) : 'ID ' + escapeHtml(id)}</b>\n` +
-        `🏷 Имя: <b>${escapeHtml(restName)}</b>\n` +
-        `💼 Роль: <b>${escapeHtml(role)}</b>\n\n` +
+        `🏷 Имя: <b>${escapeHtml(restName)}</b>\n\n` +
         `Сотрудник теперь может открыть диспетчерскую по кнопке или командой /start.`
       );
       return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });

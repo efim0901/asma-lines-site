@@ -8,7 +8,6 @@ const DEFAULT_AUTHORIZED_USERS = [
     id: '1014012851',
     username: 'plombit',
     name: 'Иван Ефимович',
-    role: 'Главный администратор',
     isAdmin: true,
     addedAt: '2026-09-17T10:00:00.000Z'
   }
@@ -106,7 +105,6 @@ export async function onRequest(context) {
             id,
             username,
             name: user.name || (username ? `@${username}` : `ID: ${id}`),
-            role: user.role || 'Диспетчер',
             isAdmin: false,
             addedAt: new Date().toISOString()
           });
