@@ -681,18 +681,6 @@ if (document.readyState === "loading") {
 
 async function syncLeadToCrmCloud(payload) {
   try {
-    const CRM_BIN = 'https://extendsclass.com/api/json-storage/bin/becdbda';
-    const res = await fetch(CRM_BIN + '?_t=' + Date.now(), { cache: 'no-store' });
-    let data = { leads: [] };
-    if (res.ok) {
-      data = await res.json();
-    }
-    if (!Array.isArray(data.leads)) data.leads = [];
-    if (Array.isArray(data.deletedIds) && data.deletedIds.length > 0) {
-      const delSet = new Set(data.deletedIds);
-      data.leads = data.leads.filter(l => !delSet.has(l.id));
-    }
-
     const isPartner = payload.source === 'website_partners' || Boolean(payload.company);
     const isCargo = !isPartner && Boolean(
       (payload.fromCity && payload.toCity) ||
@@ -706,7 +694,7 @@ async function syncLeadToCrmCloud(payload) {
 
     const newLead = {
       id: 'lead-' + Date.now(),
-      leadNumber: String(data.leads.length + 101),
+      leadNumber: String(Date.now()).slice(-3),
       type: isPartner ? 'partner' : (isCargo ? 'cargo' : 'contact'),
       category: isPartner ? 'Сотрудничество' : (isCargo ? 'Перевозка груза' : 'Обратная связь'),
       status: 'new',
@@ -733,13 +721,37 @@ async function syncLeadToCrmCloud(payload) {
       source: payload.source || 'website'
     };
 
+    // Primary: Send to CRM API endpoint
+    try {
+      const apiRes = await fetch('/api/crm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create', lead: newLead })
+      });
+      if (apiRes.ok) return;
+    } catch (e) {}
+
+    // Fallback: Fetch current cloud data and prepend
+    const CRM_BIN = 'https://json.extendsclass.com/bin/becdbda';
+    const res = await fetch(CRM_BIN + '?_t=' + Date.now(), { cache: 'no-store' });
+    let data = { leads: [], deletedIds: [] };
+    if (res.ok) {
+      data = await res.json();
+    }
+    if (!Array.isArray(data.leads)) data.leads = [];
+    if (!Array.isArray(data.deletedIds)) data.deletedIds = [];
+
+    const delSet = new Set(data.deletedIds);
+    data.leads = data.leads.filter(l => !delSet.has(l.id));
+    newLead.leadNumber = String(data.leads.length + 101);
     data.leads.unshift(newLead);
 
+    // Save back if supported
     await fetch(CRM_BIN, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
-    });
+    }).catch(() => {});
   } catch (err) {
     console.warn('CRM sync error:', err);
   }

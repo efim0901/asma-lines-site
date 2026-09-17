@@ -137,16 +137,25 @@ export async function onRequestPost(context) {
 
     // 2. Persist lead into CRM Cloud Store (accessible by Telegram Web App)
     try {
-      const storeRes = await fetch('https://extendsclass.com/api/json-storage/bin/becdbda');
-      let storeData = { leads: [] };
+      const storeRes = await fetch('https://json.extendsclass.com/bin/becdbda?_t=' + Date.now(), { cache: 'no-store' });
+      let storeData = { leads: [], deletedIds: [] };
       if (storeRes.ok) {
         storeData = await storeRes.json();
       }
       if (!Array.isArray(storeData.leads)) storeData.leads = [];
+      if (!Array.isArray(storeData.deletedIds)) storeData.deletedIds = [];
+
+      const delSet = new Set(storeData.deletedIds);
+      storeData.leads = storeData.leads.filter(l => !delSet.has(l.id));
+
+      const maxNum = storeData.leads.reduce((max, l) => {
+        const num = parseInt(l.leadNumber, 10);
+        return !isNaN(num) && num > max ? num : max;
+      }, 100);
 
       const newLeadObj = {
         id: 'lead-' + Date.now(),
-        leadNumber: String(storeData.leads.length + 101),
+        leadNumber: String(maxNum + 1),
         type: isPartner ? 'partner' : (isCargoOrder ? 'cargo' : 'contact'),
         category: isPartner ? 'Сотрудничество' : (isCargoOrder ? 'Перевозка груза' : 'Обратная связь'),
         status: 'new',
@@ -175,7 +184,7 @@ export async function onRequestPost(context) {
 
       storeData.leads.unshift(newLeadObj);
 
-      await fetch('https://extendsclass.com/api/json-storage/bin/becdbda', {
+      await fetch('https://json.extendsclass.com/bin/becdbda', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(storeData)

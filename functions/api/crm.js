@@ -1,5 +1,5 @@
 // Cloudflare Pages Worker for CRM operations (/api/crm)
-const CLOUD_STORE_URL = 'https://extendsclass.com/api/json-storage/bin/becdbda';
+const CLOUD_STORE_URL = 'https://json.extendsclass.com/bin/becdbda';
 
 export async function onRequest(context) {
   const { request } = context;

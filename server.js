@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 
 const DATA_DIR = path.join(__dirname, 'data');
 const LEADS_FILE = path.join(DATA_DIR, 'leads.json');
+const DELETED_LEADS_FILE = path.join(DATA_DIR, 'deleted_leads.json');
 const EMPLOYEES_FILE = path.join(DATA_DIR, 'employees.json');
 
 async function readJsonFile(file, fallback = []) {
@@ -483,16 +484,21 @@ app.post('/api/lead', async (req, res) => {
 });
 
 // ==================== CRM API ROUTES ====================
-const CRM_STORAGE_BIN = 'https://extendsclass.com/api/json-storage/bin/becdbda';
+const CRM_STORAGE_BIN = 'https://json.extendsclass.com/bin/becdbda';
 
 // GET /api/crm and /api/crm/data
 app.get(['/api/crm', '/api/crm/data'], async (req, res) => {
   try {
     let leads = [];
+    let deletedIds = await readJsonFile(DELETED_LEADS_FILE, []);
+
     try {
-      const storeRes = await fetch(CRM_STORAGE_BIN);
+      const storeRes = await fetch(CRM_STORAGE_BIN + '?_t=' + Date.now(), { cache: 'no-store' });
       if (storeRes.ok) {
         const storeData = await storeRes.json();
+        if (Array.isArray(storeData.deletedIds)) {
+          deletedIds = Array.from(new Set([...deletedIds, ...storeData.deletedIds]));
+        }
         if (Array.isArray(storeData.leads)) leads = storeData.leads;
       }
     } catch (e) {}
@@ -501,9 +507,15 @@ app.get(['/api/crm', '/api/crm/data'], async (req, res) => {
       leads = await readJsonFile(LEADS_FILE, []);
     }
 
+    if (deletedIds.length > 0) {
+      const delSet = new Set(deletedIds);
+      leads = leads.filter(l => !delSet.has(l.id));
+    }
+
     res.json({
       success: true,
       leads,
+      deletedIds,
       user: { name: 'Иван', username: 'plombit', role: 'Диспетчер' }
     });
   } catch (err) {
@@ -514,18 +526,36 @@ app.get(['/api/crm', '/api/crm/data'], async (req, res) => {
 // POST /api/crm - update leads list
 app.post('/api/crm', async (req, res) => {
   try {
-    const { leads, deletedIds } = req.body;
-    if (Array.isArray(leads)) {
-      await writeJsonFile(LEADS_FILE, leads);
-      try {
-        await fetch(CRM_STORAGE_BIN, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ leads, deletedIds: deletedIds || [] })
-        });
-      } catch (e) {}
+    const { leads, deletedIds, action, leadId } = req.body;
+    let currentLeads = Array.isArray(leads) ? leads : await readJsonFile(LEADS_FILE, []);
+    let currentDeleted = await readJsonFile(DELETED_LEADS_FILE, []);
+
+    if (Array.isArray(deletedIds)) {
+      currentDeleted = Array.from(new Set([...currentDeleted, ...deletedIds]));
     }
-    res.json({ success: true, leads });
+
+    if (action === 'delete' && leadId) {
+      if (!currentDeleted.includes(leadId)) currentDeleted.push(leadId);
+      currentLeads = currentLeads.filter(l => l.id !== leadId);
+    }
+
+    if (currentDeleted.length > 0) {
+      const delSet = new Set(currentDeleted);
+      currentLeads = currentLeads.filter(l => !delSet.has(l.id));
+    }
+
+    await writeJsonFile(DELETED_LEADS_FILE, currentDeleted);
+    await writeJsonFile(LEADS_FILE, currentLeads);
+
+    try {
+      await fetch(CRM_STORAGE_BIN, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leads: currentLeads, deletedIds: currentDeleted })
+      });
+    } catch (e) {}
+
+    res.json({ success: true, leads: currentLeads, deletedIds: currentDeleted });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -7,7 +7,7 @@
   'use strict';
 
   // Constants & Storage Config
-  const CLOUD_FALLBACK_URL = 'https://extendsclass.com/api/json-storage/bin/becdbda';
+  const CLOUD_FALLBACK_URL = 'https://json.extendsclass.com/bin/becdbda';
   const CACHE_KEY = 'asma_crm_leads_v2';
   const DELETED_KEY = 'asma_crm_deleted_leads_v1';
   const OPERATOR = { name: 'Иван', username: 'plombit', role: 'Диспетчер' };
@@ -177,29 +177,35 @@
     renderCounts();
 
     const payload = {
-      leads,
+      leads: leads.filter(l => !deletedLeadIds.has(l.id)),
       deletedIds: Array.from(deletedLeadIds)
     };
 
-    // 1. Always directly save to Cloud Storage (guaranteed for Cloudflare Pages / Telegram WebApp)
+    // 1. Primary: Save via CRM API endpoint
+    let apiSuccess = false;
     try {
-      await fetch(CLOUD_FALLBACK_URL, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    } catch (err) {
-      console.warn('Cloud fallback sync error:', err);
-    }
-
-    // 2. Also try local backend API
-    try {
-      await fetch('/api/crm', {
+      const res = await fetch('/api/crm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'sync', ...payload })
       });
+      if (res.ok) {
+        apiSuccess = true;
+      }
     } catch (e) {}
+
+    // 2. Fallback: Save to direct cloud storage if API was not reachable
+    if (!apiSuccess) {
+      try {
+        await fetch(CLOUD_FALLBACK_URL, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (err) {
+        console.warn('Cloud storage sync notice:', err);
+      }
+    }
   }
 
   // Event Listeners Setup
