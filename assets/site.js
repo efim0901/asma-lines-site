@@ -421,7 +421,7 @@ function initRouteConstructorAndNetwork() {
     });
 
     if (filtered.length === 0) {
-      citiesGrid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px 10px; color:rgba(248,247,239,0.5); font-size:13px;">Город не найден в фильтре. ASMA Lines выполняет доставку в любой населённый пункт РБ — свяжитесь с диспетчером.</div>`;
+      citiesGrid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px 10px; color:var(--ink-mute); font-size:13px;">Город не найден в фильтре. ASMA Lines выполняет доставку в любой населённый пункт РБ — свяжитесь с диспетчером.</div>`;
       return;
     }
 

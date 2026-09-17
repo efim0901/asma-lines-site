@@ -116,6 +116,14 @@
   const countCompletedEl = document.getElementById('count-completed');
   const countAllEl = document.getElementById('count-all');
 
+  // Desktop Metrics Elements
+  const metricTotalLeads = document.getElementById('metric-total-leads');
+  const metricNewLeads = document.getElementById('metric-new-leads');
+  const metricProcessingLeads = document.getElementById('metric-processing-leads');
+  const metricTransitLeads = document.getElementById('metric-transit-leads');
+  const metricCompletedLeads = document.getElementById('metric-completed-leads');
+  const btnThemeToggle = document.getElementById('btn-theme-toggle');
+
   // Initialize
   init();
 
@@ -452,6 +460,40 @@
 
     // Refresh
     btnRefresh.addEventListener('click', () => fetchLeads(true));
+
+    // Theme Switcher Toggle
+    if (btnThemeToggle) {
+      btnThemeToggle.addEventListener('click', () => {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const nextTheme = isDark ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', nextTheme);
+        if (nextTheme === 'dark') {
+          document.documentElement.classList.add('theme-dark');
+        } else {
+          document.documentElement.classList.remove('theme-dark');
+        }
+        try {
+          localStorage.setItem('asma-theme', nextTheme);
+        } catch(e) {}
+        if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+      });
+    }
+
+    // Keyboard Shortcuts (Desktop)
+    document.addEventListener('keydown', (e) => {
+      // Don't trigger when typing in inputs/textareas
+      const isInputActive = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
+      if (e.key === '/' && !isInputActive) {
+        e.preventDefault();
+        searchInput?.focus();
+      } else if (e.key === 'Escape') {
+        closeAddModal();
+        closeAccessModal();
+      } else if ((e.key === 'n' || e.key === 'т') && !isInputActive && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        openAddModal();
+      }
+    });
 
     // Access Management Modal (Admin only)
     if (btnAccessMgmt) {
@@ -938,11 +980,19 @@
       if (counts[s] !== undefined) counts[s]++;
     });
 
+    // Mobile & Toolbar Tab Counts
     if (countNewEl) countNewEl.textContent = counts.new;
     if (countProcessingEl) countProcessingEl.textContent = counts.processing;
     if (countTransitEl) countTransitEl.textContent = counts.transit;
     if (countCompletedEl) countCompletedEl.textContent = counts.completed;
     if (countAllEl) countAllEl.textContent = counts.all;
+
+    // Desktop Header Metrics Bar
+    if (metricTotalLeads) metricTotalLeads.textContent = counts.all;
+    if (metricNewLeads) metricNewLeads.textContent = counts.new;
+    if (metricProcessingLeads) metricProcessingLeads.textContent = counts.processing;
+    if (metricTransitLeads) metricTransitLeads.textContent = counts.transit;
+    if (metricCompletedLeads) metricCompletedLeads.textContent = counts.completed;
   }
 
   function createCardHtml(lead) {

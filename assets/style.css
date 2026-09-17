@@ -1806,6 +1806,16 @@ body[data-theme='dark'] .form-status--error {
   background: rgba(255, 138, 128, .12);
   border-left-color: #FF8A80;
 }
+.form-privacy-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-mute);
+  text-transform: none;
+  letter-spacing: normal;
+}
 .hidden { display: none; }
 .contact-tiles { display: grid; gap: 12px; margin-top: 22px; }
 .contact-tile {
@@ -3051,6 +3061,37 @@ body[data-theme='dark'] .quote-share-btn:hover {
   font-size: 13.5px;
   color: var(--ink);
   font-weight: 600;
+}
+.modal-operator-btn {
+  width: 100%;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  border-radius: var(--r-sm);
+  text-decoration: none;
+  background: var(--surface-subtle);
+  border: 1px solid var(--line-strong);
+  color: var(--burgundy);
+  transition: all .18s var(--ease);
+}
+.modal-operator-btn:hover {
+  background: var(--brand-soft);
+  border-color: var(--burgundy);
+  color: var(--burgundy);
+}
+body[data-theme='dark'] .modal-operator-btn {
+  background: rgba(38, 17, 25, 0.8);
+  border-color: rgba(139, 37, 54, 0.4);
+  color: #FFD382;
+}
+body[data-theme='dark'] .modal-operator-btn:hover {
+  background: var(--burgundy-primary, #5C1B27);
+  border-color: #FFD382;
+  color: #FFFFFF;
 }
 
 /* Commercial Proposal Print Styling */
