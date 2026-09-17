@@ -50,6 +50,14 @@ function checkUserAdmin(tgUser) {
   return username === MASTER_ADMIN_USERNAME || id === MASTER_ADMIN_ID;
 }
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 async function readJsonFile(file, fallback = []) {
   try {
     const raw = await fs.promises.readFile(file, 'utf8');
@@ -938,228 +946,236 @@ async function sendTelegramMessage(chatId, textHtml, extra = {}) {
 async function handleTelegramBotMessage(message) {
   if (!message || !message.text) return;
 
-  const chatId = message.chat.id;
-  const from = message.from || message.chat || {};
-  const rawText = (message.text || '').trim();
-  const text = rawText.replace(/@\w+bot/i, '').trim();
-  const senderUsername = (from.username || '').replace(/^@/, '');
-  const senderId = String(from.id || '');
-  const senderName = [from.first_name, from.last_name].filter(Boolean).join(' ') || senderUsername || 'Диспетчер';
-
-  // Load current authorized users
-  let storeData = { authorizedUsers: [], leads: [], deletedIds: [] };
-  let localUsers = await readJsonFile(ACCESS_USERS_FILE, []);
   try {
-    const storeRes = await fetch(CRM_STORAGE_BIN + '?_t=' + Date.now(), { cache: 'no-store' });
-    if (storeRes.ok) storeData = await storeRes.json();
-  } catch (e) {}
+    const chatId = message.chat.id;
+    const from = message.from || message.chat || {};
+    const rawText = (message.text || '').trim();
+    const text = rawText.replace(/@\w+bot/i, '').trim();
+    const senderUsername = (from.username || '').replace(/^@/, '');
+    const senderId = String(from.id || '');
+    const senderName = [from.first_name, from.last_name].filter(Boolean).join(' ') || senderUsername || 'Диспетчер';
 
-  if (Array.isArray(storeData.authorizedUsers) && storeData.authorizedUsers.length > 0) {
-    localUsers = storeData.authorizedUsers;
-  }
-  localUsers = sanitizeUsers(localUsers);
-  storeData.authorizedUsers = localUsers;
+    console.log(`Telegram Bot Command received from @${senderUsername || senderId}: "${text}"`);
 
-  const isAdmin = checkUserAdmin(from) || localUsers.some(u => {
-    const uName = (u.username || '').toLowerCase().replace(/^@/, '');
-    const uId = String(u.id || '');
-    return ((uName && uName === senderUsername.toLowerCase()) || (uId && uId === senderId)) && u.isAdmin;
-  });
-
-  const isAuthorized = isAdmin || localUsers.some(u => {
-    const uName = (u.username || '').toLowerCase().replace(/^@/, '');
-    const uId = String(u.id || '');
-    return (uName && uName === senderUsername.toLowerCase()) || (uId && uId === senderId);
-  });
-
-  // 1. /start, /crm, /app, /help, 'диспетчерская'
-  if (text.startsWith('/start') || text.startsWith('/crm') || text.startsWith('/app') || text.startsWith('/help') || text.toLowerCase() === 'диспетчерская') {
-    if (!isAuthorized) {
-      await sendTelegramMessage(
-        chatId,
-        `⛔ <b>Доступ ограничен</b>\n\n` +
-        `Ваш профиль Telegram (@${escapeHtml(senderUsername) || 'нет юзернейма'}, ID: <code>${senderId}</code>) не найден в списке диспетчеров ASMA Lines.\n\n` +
-        `Для получения доступа обратитесь к главному администратору: @plombit`
-      );
-      return;
-    }
-
-    let reply = `🚛 <b>Диспетчерская ASMA Lines</b>\n\n` +
-      `Здравствуйте, <b>${escapeHtml(senderName)}</b>!\n` +
-      `Система управления заявками и рейсами готова к работе.\n\n` +
-      `Нажмите кнопку ниже, чтобы открыть рабочее место:`;
-
-    if (isAdmin) {
-      reply += `\n\n👑 <b>Команды управления доступом:</b>\n` +
-        `• <code>/add @username Имя</code> — добавить диспетчера\n` +
-        `• <code>/remove @username</code> — отозвать доступ\n` +
-        `• <code>/users</code> — список сотрудников\n\n` +
-        `<i>Также вы можете управлять доступом прямо в интерфейсе CRM.</i>`;
-    }
-
-    await sendTelegramMessage(chatId, reply, {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: '🚀 Открыть Диспетчерскую CRM',
-              web_app: { url: CRM_WEBAPP_URL }
-            }
-          ]
-        ]
-      }
-    });
-    return;
-  }
-
-  // 2. /users, /access, /list
-  if (text.startsWith('/users') || text.startsWith('/access') || text.startsWith('/list')) {
-    if (!isAuthorized) {
-      await sendTelegramMessage(chatId, `⛔ У вас нет доступа к этой команде.`);
-      return;
-    }
-
-    let listText = `👥 <b>Список доступа к CRM ASMA Lines:</b>\n───────────────────────\n`;
-    localUsers.forEach((u, i) => {
-      const uLabel = u.username ? `@${escapeHtml(u.username)}` : `ID: ${escapeHtml(u.id)}`;
-      listText += `${i + 1}. <b>${escapeHtml(u.name || 'Сотрудник')}</b> (${uLabel})\n   Роль: ${escapeHtml(u.role || 'Диспетчер')}${u.isAdmin ? ' ⭐ (Владелец)' : ''}\n\n`;
-    });
-    listText += `<i>Всего пользователей: ${localUsers.length}</i>`;
-
-    await sendTelegramMessage(chatId, listText, {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: '🚀 Открыть CRM',
-              web_app: { url: CRM_WEBAPP_URL }
-            }
-          ]
-        ]
-      }
-    });
-    return;
-  }
-
-  // 3. /add
-  if (text.startsWith('/add')) {
-    if (!isAdmin) {
-      await sendTelegramMessage(chatId, `⛔ Только главный администратор (@plombit) может добавлять пользователей.`);
-      return;
-    }
-
-    const parts = text.split(/\s+/).slice(1);
-    if (parts.length === 0) {
-      await sendTelegramMessage(
-        chatId,
-        `ℹ️ <b>Формат команды:</b>\n<code>/add @username Имя [Роль]</code>\nили:\n<code>/add 123456789 Имя [Роль]</code>\n\nПример:\n<code>/add @dmitry Дмитрий Логист</code>`
-      );
-      return;
-    }
-
-    const rawTarget = parts[0].replace(/^@/, '').trim();
-    const isId = /^\d+$/.test(rawTarget);
-    const username = isId ? null : rawTarget;
-    const id = isId ? rawTarget : null;
-
-    let restWords = parts.slice(1);
-    let role = 'Диспетчер';
-    if (restWords.length > 1) {
-      const lastWord = restWords[restWords.length - 1].toLowerCase();
-      if (['логист', 'диспетчер', 'старший диспетчер', 'водитель', 'менеджер', 'админ', 'администратор'].includes(lastWord)) {
-        role = restWords.pop();
-        role = role.charAt(0).toUpperCase() + role.slice(1);
-      }
-    }
-    const restName = restWords.join(' ') || rawTarget;
-
-    const exists = localUsers.some(u =>
-      (username && u.username && u.username.toLowerCase() === username.toLowerCase()) ||
-      (id && u.id && String(u.id) === id)
-    );
-
-    if (exists) {
-      await sendTelegramMessage(chatId, `⚠️ Пользователь <b>${escapeHtml(rawTarget)}</b> уже есть в списке доступа.`);
-      return;
-    }
-
-    localUsers.push({
-      id,
-      username,
-      name: restName,
-      role,
-      isAdmin: false,
-      addedAt: new Date().toISOString()
-    });
-
-    localUsers = sanitizeUsers(localUsers);
-    await writeJsonFile(ACCESS_USERS_FILE, localUsers);
-
-    storeData.authorizedUsers = localUsers;
+    // Load current authorized users
+    let storeData = { authorizedUsers: [], leads: [], deletedIds: [] };
+    let localUsers = await readJsonFile(ACCESS_USERS_FILE, []);
     try {
-      await fetch(CRM_STORAGE_BIN, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(storeData)
-      });
-    } catch (e) {}
-
-    await sendTelegramMessage(
-      chatId,
-      `✅ <b>Доступ успешно предоставлен!</b>\n\n` +
-      `👤 Пользователь: <b>${username ? '@' + escapeHtml(username) : 'ID ' + escapeHtml(id)}</b>\n` +
-      `🏷 Имя: <b>${escapeHtml(restName)}</b>\n` +
-      `💼 Роль: <b>${escapeHtml(role)}</b>\n\n` +
-      `Сотрудник теперь может открыть диспетчерскую через бот @asmalinesbot.`
-    );
-    return;
-  }
-
-  // 4. /remove, /del
-  if (text.startsWith('/remove') || text.startsWith('/del')) {
-    if (!isAdmin) {
-      await sendTelegramMessage(chatId, `⛔ Только главный администратор (@plombit) может удалять пользователей.`);
-      return;
+      const storeRes = await fetch(CRM_STORAGE_BIN + '?_t=' + Date.now(), { cache: 'no-store' });
+      if (storeRes.ok) storeData = await storeRes.json();
+    } catch (e) {
+      console.warn('CRM storage bin fetch warning:', e.message);
     }
 
-    const parts = text.split(/\s+/).slice(1);
-    if (parts.length === 0) {
-      await sendTelegramMessage(chatId, `ℹ️ <b>Формат команды:</b>\n<code>/remove @username</code> или <code>/remove ID</code>`);
-      return;
+    if (Array.isArray(storeData.authorizedUsers) && storeData.authorizedUsers.length > 0) {
+      localUsers = storeData.authorizedUsers;
     }
+    localUsers = sanitizeUsers(localUsers);
+    storeData.authorizedUsers = localUsers;
 
-    const cleanTarget = parts[0].replace(/^@/, '').toLowerCase().trim();
-    if (cleanTarget === MASTER_ADMIN_USERNAME || cleanTarget === MASTER_ADMIN_ID) {
-      await sendTelegramMessage(chatId, `⚠️ Нельзя отозвать доступ у главного администратора.`);
-      return;
-    }
-
-    const beforeLen = localUsers.length;
-    localUsers = localUsers.filter(u => {
+    const isAdmin = checkUserAdmin(from) || localUsers.some(u => {
       const uName = (u.username || '').toLowerCase().replace(/^@/, '');
       const uId = String(u.id || '');
-      return uName !== cleanTarget && uId !== cleanTarget;
+      return ((uName && uName === senderUsername.toLowerCase()) || (uId && uId === senderId)) && u.isAdmin;
     });
 
-    if (localUsers.length === beforeLen) {
-      await sendTelegramMessage(chatId, `❓ Пользователь <b>${escapeHtml(parts[0])}</b> не найден в списке доступа.`);
+    const isAuthorized = isAdmin || localUsers.some(u => {
+      const uName = (u.username || '').toLowerCase().replace(/^@/, '');
+      const uId = String(u.id || '');
+      return (uName && uName === senderUsername.toLowerCase()) || (uId && uId === senderId);
+    });
+
+    // 1. /start, /crm, /app, /help, 'диспетчерская'
+    if (text.startsWith('/start') || text.startsWith('/crm') || text.startsWith('/app') || text.startsWith('/help') || text.toLowerCase() === 'диспетчерская') {
+      if (!isAuthorized) {
+        await sendTelegramMessage(
+          chatId,
+          `⛔ <b>Доступ ограничен</b>\n\n` +
+          `Ваш профиль Telegram (@${escapeHtml(senderUsername) || 'нет юзернейма'}, ID: <code>${senderId}</code>) не найден в списке диспетчеров ASMA Lines.\n\n` +
+          `Для получения доступа обратитесь к главному администратору: @plombit`
+        );
+        return;
+      }
+
+      let reply = `🚛 <b>Диспетчерская ASMA Lines</b>\n\n` +
+        `Здравствуйте, <b>${escapeHtml(senderName)}</b>!\n` +
+        `Система управления заявками и рейсами готова к работе.\n\n` +
+        `Нажмите кнопку ниже, чтобы открыть рабочее место:`;
+
+      if (isAdmin) {
+        reply += `\n\n👑 <b>Команды управления доступом:</b>\n` +
+          `• <code>/add @username Имя</code> — добавить диспетчера\n` +
+          `• <code>/remove @username</code> — отозвать доступ\n` +
+          `• <code>/users</code> — список сотрудников\n\n` +
+          `<i>Также вы можете управлять доступом прямо в интерфейсе CRM.</i>`;
+      }
+
+      await sendTelegramMessage(chatId, reply, {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: '🚀 Открыть Диспетчерскую CRM',
+                web_app: { url: CRM_WEBAPP_URL }
+              }
+            ]
+          ]
+        }
+      });
       return;
     }
 
-    localUsers = sanitizeUsers(localUsers);
-    await writeJsonFile(ACCESS_USERS_FILE, localUsers);
+    // 2. /users, /access, /list, /members
+    if (text.startsWith('/users') || text.startsWith('/access') || text.startsWith('/list') || text.startsWith('/members')) {
+      if (!isAuthorized) {
+        await sendTelegramMessage(chatId, `⛔ У вас нет доступа к этой команде.`);
+        return;
+      }
 
-    storeData.authorizedUsers = localUsers;
-    try {
-      await fetch(CRM_STORAGE_BIN, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(storeData)
+      let listText = `👥 <b>Список доступа к CRM ASMA Lines:</b>\n───────────────────────\n`;
+      localUsers.forEach((u, i) => {
+        const uLabel = u.username ? `@${escapeHtml(u.username)}` : `ID: ${escapeHtml(u.id)}`;
+        listText += `${i + 1}. <b>${escapeHtml(u.name || 'Сотрудник')}</b> (${uLabel})\n   Роль: ${escapeHtml(u.role || 'Диспетчер')}${u.isAdmin ? ' ⭐ (Владелец)' : ''}\n\n`;
       });
-    } catch (e) {}
+      listText += `<i>Всего пользователей: ${localUsers.length}</i>`;
 
-    await sendTelegramMessage(chatId, `🗑 Доступ для <b>${escapeHtml(parts[0])}</b> успешно отозван.`);
-    return;
+      await sendTelegramMessage(chatId, listText, {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: '🚀 Открыть CRM',
+                web_app: { url: CRM_WEBAPP_URL }
+              }
+            ]
+          ]
+        }
+      });
+      return;
+    }
+
+    // 3. /add
+    if (text.startsWith('/add')) {
+      if (!isAdmin) {
+        await sendTelegramMessage(chatId, `⛔ Только главный администратор (@plombit) может добавлять пользователей.`);
+        return;
+      }
+
+      const parts = text.split(/\s+/).slice(1);
+      if (parts.length === 0) {
+        await sendTelegramMessage(
+          chatId,
+          `ℹ️ <b>Формат команды:</b>\n<code>/add @username Имя [Роль]</code>\nили:\n<code>/add 123456789 Имя [Роль]</code>\n\nПример:\n<code>/add @dmitry Дмитрий Логист</code>`
+        );
+        return;
+      }
+
+      const rawTarget = parts[0].replace(/^@/, '').trim();
+      const isId = /^\d+$/.test(rawTarget);
+      const username = isId ? null : rawTarget;
+      const id = isId ? rawTarget : null;
+
+      let restWords = parts.slice(1);
+      let role = 'Диспетчер';
+      if (restWords.length > 1) {
+        const lastWord = restWords[restWords.length - 1].toLowerCase();
+        if (['логист', 'диспетчер', 'старший диспетчер', 'водитель', 'менеджер', 'админ', 'администратор'].includes(lastWord)) {
+          role = restWords.pop();
+          role = role.charAt(0).toUpperCase() + role.slice(1);
+        }
+      }
+      const restName = restWords.join(' ') || rawTarget;
+
+      const exists = localUsers.some(u =>
+        (username && u.username && u.username.toLowerCase() === username.toLowerCase()) ||
+        (id && u.id && String(u.id) === id)
+      );
+
+      if (exists) {
+        await sendTelegramMessage(chatId, `⚠️ Пользователь <b>${escapeHtml(rawTarget)}</b> уже есть в списке доступа.`);
+        return;
+      }
+
+      localUsers.push({
+        id,
+        username,
+        name: restName,
+        role,
+        isAdmin: false,
+        addedAt: new Date().toISOString()
+      });
+
+      localUsers = sanitizeUsers(localUsers);
+      await writeJsonFile(ACCESS_USERS_FILE, localUsers);
+
+      storeData.authorizedUsers = localUsers;
+      try {
+        await fetch(CRM_STORAGE_BIN, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(storeData)
+        });
+      } catch (e) {}
+
+      await sendTelegramMessage(
+        chatId,
+        `✅ <b>Доступ успешно предоставлен!</b>\n\n` +
+        `👤 Пользователь: <b>${username ? '@' + escapeHtml(username) : 'ID ' + escapeHtml(id)}</b>\n` +
+        `🏷 Имя: <b>${escapeHtml(restName)}</b>\n` +
+        `💼 Роль: <b>${escapeHtml(role)}</b>\n\n` +
+        `Сотрудник теперь может открыть диспетчерскую через бот @asmalinesbot.`
+      );
+      return;
+    }
+
+    // 4. /remove, /del
+    if (text.startsWith('/remove') || text.startsWith('/del')) {
+      if (!isAdmin) {
+        await sendTelegramMessage(chatId, `⛔ Только главный администратор (@plombit) может удалять пользователей.`);
+        return;
+      }
+
+      const parts = text.split(/\s+/).slice(1);
+      if (parts.length === 0) {
+        await sendTelegramMessage(chatId, `ℹ️ <b>Формат команды:</b>\n<code>/remove @username</code> или <code>/remove ID</code>`);
+        return;
+      }
+
+      const cleanTarget = parts[0].replace(/^@/, '').toLowerCase().trim();
+      if (cleanTarget === MASTER_ADMIN_USERNAME || cleanTarget === MASTER_ADMIN_ID) {
+        await sendTelegramMessage(chatId, `⚠️ Нельзя отозвать доступ у главного администратора.`);
+        return;
+      }
+
+      const beforeLen = localUsers.length;
+      localUsers = localUsers.filter(u => {
+        const uName = (u.username || '').toLowerCase().replace(/^@/, '');
+        const uId = String(u.id || '');
+        return uName !== cleanTarget && uId !== cleanTarget;
+      });
+
+      if (localUsers.length === beforeLen) {
+        await sendTelegramMessage(chatId, `❓ Пользователь <b>${escapeHtml(parts[0])}</b> не найден в списке доступа.`);
+        return;
+      }
+
+      localUsers = sanitizeUsers(localUsers);
+      await writeJsonFile(ACCESS_USERS_FILE, localUsers);
+
+      storeData.authorizedUsers = localUsers;
+      try {
+        await fetch(CRM_STORAGE_BIN, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(storeData)
+        });
+      } catch (e) {}
+
+      await sendTelegramMessage(chatId, `🗑 Доступ для <b>${escapeHtml(parts[0])}</b> успешно отозван.`);
+      return;
+    }
+  } catch (err) {
+    console.error('handleTelegramBotMessage error:', err);
   }
 }
 
@@ -1202,13 +1218,18 @@ async function startTelegramPolling() {
           offset = update.update_id + 1;
           const msg = update.message || update.channel_post || update.edited_message;
           if (msg) {
-            await handleTelegramBotMessage(msg);
+            try {
+              await handleTelegramBotMessage(msg);
+            } catch (msgErr) {
+              console.error('Error processing single update:', msgErr);
+            }
           }
         }
       } else if (!data.ok) {
         await new Promise(r => setTimeout(r, 4000));
       }
     } catch (err) {
+      console.error('getUpdates fetch error:', err.message);
       await new Promise(r => setTimeout(r, 3000));
     }
   }
