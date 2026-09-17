@@ -337,6 +337,56 @@ body {
   margin-bottom: 8px;
 }
 
+.card-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-delete-lead {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.btn-delete-lead:hover,
+.btn-delete-lead:active {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #EF4444;
+  transform: scale(1.05);
+}
+
+.btn-delete-link {
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #EF4444;
+  opacity: 0.8;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.btn-delete-link:active {
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.15);
+  transform: scale(0.96);
+}
+
 .card-number-time {
   display: flex;
   align-items: center;
@@ -570,6 +620,12 @@ body {
   margin-top: 10px;
   border-top: 1px dashed var(--border-subtle);
   padding-top: 8px;
+}
+
+.footer-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .notes-toggle {

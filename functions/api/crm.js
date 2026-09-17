@@ -111,6 +111,8 @@ export async function onRequest(context) {
           source: 'manual_crm'
         };
         storeData.leads.unshift(newLead);
+      } else if (action === 'delete_lead' && body.leadId) {
+        storeData.leads = storeData.leads.filter(l => l.id !== body.leadId);
       } else if (body.leadId && body.lead) {
         // Direct lead update
         const idx = storeData.leads.findIndex(l => l.id === body.leadId);

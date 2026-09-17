@@ -55,6 +55,11 @@
     loadCachedLeads();
     setupEventListeners();
     await fetchLeads(false);
+
+    // Auto-poll in background every 10 seconds for real-time dispatching
+    setInterval(() => {
+      fetchLeads(false);
+    }, 10000);
   }
 
   function loadCachedLeads() {
@@ -83,20 +88,21 @@
     }
 
     let fetched = null;
+    const cacheBuster = '?_t=' + Date.now();
 
     // 1. Try local API
     try {
-      const res = await fetch('/api/crm', { cache: 'no-store' });
+      const res = await fetch('/api/crm' + cacheBuster, { cache: 'no-store' });
       if (res.ok) {
         const json = await res.json();
-        if (Array.isArray(json.leads)) fetched = json.leads;
+        if (Array.isArray(json.leads) && json.leads.length > 0) fetched = json.leads;
       }
     } catch (e) {}
 
-    // 2. Direct cloud fallback if needed
+    // 2. Direct cloud storage (always with cache buster for Telegram Webview)
     if (!fetched) {
       try {
-        const cloudRes = await fetch(CLOUD_FALLBACK_URL, { cache: 'no-store' });
+        const cloudRes = await fetch(CLOUD_FALLBACK_URL + cacheBuster, { cache: 'no-store' });
         if (cloudRes.ok) {
           const cloudJson = await cloudRes.json();
           if (Array.isArray(cloudJson.leads)) fetched = cloudJson.leads;
@@ -111,10 +117,18 @@
     feedLoadingEl.style.display = 'none';
 
     if (fetched) {
+      const prevCount = leads.length;
       leads = fetched;
       saveCache(leads);
       render();
-      if (isUserRefresh) showToast(`Заявки обновлены (${leads.length})`);
+
+      if (isUserRefresh) {
+        showToast(`Заявки обновлены (${leads.length})`);
+      } else if (prevCount > 0 && fetched.length > prevCount) {
+        // New lead arrived in background
+        showToast('🔔 Новая заявка поступила!');
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+      }
     } else if (leads.length === 0) {
       feedEmptyEl.style.display = 'block';
     }
@@ -303,6 +317,54 @@
     await syncLeadsToCloud();
   };
 
+  // Delete Lead Permanently (with full confirmation)
+  window.deleteLead = async function (leadId) {
+    const lead = leads.find(l => l.id === leadId);
+    if (!lead) return;
+
+    const leadNum = lead.leadNumber || lead.id;
+    const clientName = lead.name || 'клиента';
+
+    const confirmed = await askConfirmation(`Удалить заявку #${leadNum} (${clientName}) с концами?\nВосстановить её будет невозможно.`);
+    if (!confirmed) return;
+
+    // Visual fade out
+    const cardEl = document.getElementById(`card-${leadId}`);
+    if (cardEl) {
+      cardEl.style.transition = 'all 0.25s ease';
+      cardEl.style.opacity = '0';
+      cardEl.style.transform = 'scale(0.95)';
+    }
+
+    // Filter out from memory
+    leads = leads.filter(l => l.id !== leadId);
+
+    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+    showToast(`🗑️ Заявка #${leadNum} удалена навсегда`);
+
+    setTimeout(() => {
+      render();
+    }, 250);
+
+    // Sync to Cloud Storage
+    await syncLeadsToCloud();
+
+    // Call DELETE API if available
+    try {
+      fetch(`/api/crm/lead/${encodeURIComponent(leadId)}`, { method: 'DELETE' }).catch(() => {});
+    } catch (e) {}
+  };
+
+  function askConfirmation(message) {
+    return new Promise((resolve) => {
+      if (window.Telegram?.WebApp?.showConfirm) {
+        window.Telegram.WebApp.showConfirm(message, (ok) => resolve(Boolean(ok)));
+      } else {
+        resolve(window.confirm(message));
+      }
+    });
+  }
+
   // Toggle Notes visibility
   window.toggleNotes = function (leadId) {
     const panel = document.getElementById(`notes-panel-${leadId}`);
@@ -458,7 +520,14 @@
             <span class="lead-num">#${num}</span>
             <span class="lead-time">${timeStr}</span>
           </div>
-          <span class="lead-badge ${badgeClass}">${badgeLabel}</span>
+          <div class="card-meta-right">
+            <span class="lead-badge ${badgeClass}">${badgeLabel}</span>
+            <button class="btn-delete-lead" onclick="deleteLead('${lead.id}')" title="Удалить заявку с концами" aria-label="Удалить заявку">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <!-- Client Info -->
@@ -490,9 +559,14 @@
           <div class="stage-buttons">
             ${statusActionsHtml}
           </div>
-          <button class="notes-toggle" onclick="toggleNotes('${lead.id}')">
-            📝 Заметки (${notesCount})
-          </button>
+          <div class="footer-actions-right">
+            <button class="notes-toggle" onclick="toggleNotes('${lead.id}')">
+              📝 Заметки (${notesCount})
+            </button>
+            <button class="btn-delete-link" onclick="deleteLead('${lead.id}')" title="Удалить навсегда">
+              🗑️ Удалить
+            </button>
+          </div>
         </div>
 
         <!-- Inline Notes Panel -->

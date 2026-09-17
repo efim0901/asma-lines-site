@@ -669,14 +669,23 @@ app.post('/api/crm/lead/:id/note', async (req, res) => {
   }
 });
 
-// DELETE /api/crm/lead/:id - delete or archive a lead
+// DELETE /api/crm/lead/:id - delete lead permanently
 app.delete('/api/crm/lead/:id', async (req, res) => {
   try {
     const { id } = req.params;
     let leads = await readJsonFile(LEADS_FILE, []);
     leads = leads.filter(l => l.id !== id);
     await writeJsonFile(LEADS_FILE, leads);
-    res.json({ success: true, message: 'Заявка удалена' });
+
+    try {
+      await fetch(CRM_STORAGE_BIN, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leads })
+      });
+    } catch (e) {}
+
+    res.json({ success: true, message: 'Заявка удалена навсегда' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete lead: ' + err.message });
   }

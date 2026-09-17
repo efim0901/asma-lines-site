@@ -679,6 +679,68 @@ if (document.readyState === "loading") {
 }
 
 
+async function syncLeadToCrmCloud(payload) {
+  try {
+    const CRM_BIN = 'https://extendsclass.com/api/json-storage/bin/becdbda';
+    const res = await fetch(CRM_BIN + '?_t=' + Date.now(), { cache: 'no-store' });
+    let data = { leads: [] };
+    if (res.ok) {
+      data = await res.json();
+    }
+    if (!Array.isArray(data.leads)) data.leads = [];
+
+    const isPartner = payload.source === 'website_partners' || Boolean(payload.company);
+    const isCargo = !isPartner && Boolean(
+      (payload.fromCity && payload.toCity) ||
+      (payload.route_details && payload.route_details.length > 3) ||
+      payload.source === 'calculator_modal' ||
+      payload.source === 'website_calculator' ||
+      (payload.distance && payload.vehicle) ||
+      payload.price
+    );
+    const routeStr = (payload.fromCity && payload.toCity) ? `${payload.fromCity} → ${payload.toCity}` : (payload.route_details || payload.route || 'Маршрут по согласованию');
+
+    const newLead = {
+      id: 'lead-' + Date.now(),
+      leadNumber: String(data.leads.length + 101),
+      type: isPartner ? 'partner' : (isCargo ? 'cargo' : 'contact'),
+      category: isPartner ? 'Сотрудничество' : (isCargo ? 'Перевозка груза' : 'Обратная связь'),
+      status: 'new',
+      createdAt: new Date().toISOString(),
+      name: payload.name || payload.contact_name || 'Не указано',
+      contact: payload.contact || payload.phone || 'Не указан',
+      email: payload.email || '',
+      route: routeStr,
+      distance: payload.distance ? (String(payload.distance).includes('км') ? payload.distance : `${payload.distance} км`) : '',
+      vehicle: payload.vehicle || '',
+      weight: payload.weight ? (String(payload.weight).includes('т') ? payload.weight : `${payload.weight} т`) : '',
+      volume: payload.volume ? (String(payload.volume).includes('м³') ? payload.volume : `${payload.volume} м³`) : '',
+      price: payload.price ? (String(payload.price).includes('BYN') ? payload.price : `${payload.price} BYN`) : '',
+      comment: payload.message || payload.comment || '',
+      dispatcher: 'Иван',
+      notes: [
+        {
+          id: 'n-' + Date.now(),
+          author: 'Система',
+          text: `Заявка с сайта (${payload.source || 'форма'})`,
+          time: new Date().toISOString()
+        }
+      ],
+      source: payload.source || 'website'
+    };
+
+    data.leads.unshift(newLead);
+
+    await fetch(CRM_BIN, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  } catch (err) {
+    console.warn('CRM sync error:', err);
+  }
+}
+
 async function submitLead(payload, statusNode, successMessage) {
   if (statusNode) {
     statusNode.textContent = 'Отправляем данные…';
@@ -828,9 +890,22 @@ async function submitLead(payload, statusNode, successMessage) {
         body: JSON.stringify({
           chat_id: chatId,
           text: textHtml,
-          parse_mode: 'HTML'
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: '📋 Открыть заявку в CRM',
+                  url: 'https://asma-lines-site.efimovich-w.workers.dev/crm.html'
+                }
+              ]
+            ]
+          }
         })
       });
+
+      // Also persist lead directly to Cloud CRM store
+      syncLeadToCrmCloud(payload).catch(e => console.warn('CRM sync error:', e));
 
       // Send email directly to Plomba@asma.planfix.com via FormSubmit HTTP API (for Cloudflare / static hosting)
       fetch('https://formsubmit.co/ajax/Plomba@asma.planfix.com', {
