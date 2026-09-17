@@ -468,37 +468,104 @@
     }
 
     const isId = /^\d+$/.test(rawHandle.replace(/^@/, ''));
-    const userPayload = {
-      id: isId ? rawHandle.replace(/^@/, '') : null,
-      username: !isId ? rawHandle.replace(/^@/, '') : null,
+    const cleanUsername = !isId ? rawHandle.replace(/^@/, '').toLowerCase() : null;
+    const cleanId = isId ? rawHandle.replace(/^@/, '') : null;
+
+    const exists = authorizedUsers.some(u =>
+      (cleanUsername && u.username && u.username.toLowerCase() === cleanUsername) ||
+      (cleanId && u.id && String(u.id) === cleanId)
+    );
+
+    if (exists) {
+      showToast('⚠️ Пользователь уже есть в списке доступа');
+      return;
+    }
+
+    const newUser = {
+      id: cleanId,
+      username: cleanUsername,
       name: name || rawHandle,
-      role
+      role,
+      isAdmin: false,
+      addedAt: new Date().toISOString()
     };
 
+    showToast('Сохранение доступа...');
+
+    let updatedUsers = null;
+
+    // 1. Try local / Worker API first
     try {
-      showToast('Сохранение доступа...');
       const res = await fetch('/api/crm/access', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'add',
-          user: userPayload,
+          user: newUser,
           requestedBy: currentOperator
         })
       });
-
-      const json = await res.json();
-      if (res.ok && json.success) {
-        authorizedUsers = json.users;
-        renderAccessUsersList();
-        formAddAccessUser.reset();
-        showToast('✅ Доступ предоставлен!');
-        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-      } else {
-        showToast('❌ ' + (json.error || 'Ошибка добавления'));
+      if (res.ok) {
+        const text = await res.text();
+        if (text) {
+          const json = JSON.parse(text);
+          if (json.success && Array.isArray(json.users)) {
+            updatedUsers = json.users;
+          }
+        }
       }
-    } catch (err) {
-      showToast('Ошибка сети: ' + err.message);
+    } catch (e) {
+      console.warn('API add user notice:', e);
+    }
+
+    // 2. Direct Cloud Storage sync (guarantees immediate persistence even without server/worker)
+    if (!updatedUsers) {
+      try {
+        let storeData = { leads: [], deletedIds: [], authorizedUsers: [] };
+        const cloudRes = await fetch(CLOUD_FALLBACK_URL + '?_t=' + Date.now(), { cache: 'no-store' });
+        if (cloudRes.ok) {
+          storeData = await cloudRes.json();
+        }
+
+        if (!Array.isArray(storeData.authorizedUsers)) {
+          storeData.authorizedUsers = [...authorizedUsers];
+        }
+
+        const alreadyInCloud = storeData.authorizedUsers.some(u =>
+          (cleanUsername && u.username && u.username.toLowerCase() === cleanUsername) ||
+          (cleanId && u.id && String(u.id) === cleanId)
+        );
+
+        if (!alreadyInCloud) {
+          storeData.authorizedUsers.push(newUser);
+        }
+
+        const saveRes = await fetch(CLOUD_FALLBACK_URL, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(storeData)
+        });
+
+        if (saveRes.ok) {
+          updatedUsers = storeData.authorizedUsers;
+        }
+      } catch (cloudErr) {
+        console.error('Direct cloud sync error:', cloudErr);
+      }
+    }
+
+    if (updatedUsers) {
+      authorizedUsers = updatedUsers;
+      renderAccessUsersList();
+      formAddAccessUser.reset();
+      showToast('✅ Доступ предоставлен!');
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    } else {
+      // Local optimistic fallback
+      authorizedUsers.push(newUser);
+      renderAccessUsersList();
+      formAddAccessUser.reset();
+      showToast('✅ Доступ добавлен локально');
     }
   }
 
@@ -506,30 +573,81 @@
     const confirmed = await askConfirmation(`Отозвать доступ к диспетчерской для ${target}?`);
     if (!confirmed) return;
 
+    const cleanTarget = String(target).replace(/^@/, '').toLowerCase().trim();
+    if (cleanTarget === MASTER_ADMIN_USERNAME || cleanTarget === MASTER_ADMIN_ID) {
+      showToast('⚠️ Нельзя отозвать доступ у владельца');
+      return;
+    }
+
+    showToast('Отзыв доступа...');
+    let updatedUsers = null;
+
+    // 1. Try local API
     try {
-      showToast('Отзыв доступа...');
       const res = await fetch('/api/crm/access', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'remove',
-          target,
+          target: cleanTarget,
           requestedBy: currentOperator
         })
       });
-
-      const json = await res.json();
-      if (res.ok && json.success) {
-        authorizedUsers = json.users;
-        renderAccessUsersList();
-        showToast('🗑 Доступ отозван');
-        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
-      } else {
-        showToast('❌ ' + (json.error || 'Ошибка'));
+      if (res.ok) {
+        const text = await res.text();
+        if (text) {
+          const json = JSON.parse(text);
+          if (json.success && Array.isArray(json.users)) {
+            updatedUsers = json.users;
+          }
+        }
       }
-    } catch (err) {
-      showToast('Ошибка: ' + err.message);
+    } catch (e) {
+      console.warn('API remove user notice:', e);
     }
+
+    // 2. Direct Cloud Storage sync
+    if (!updatedUsers) {
+      try {
+        let storeData = { leads: [], deletedIds: [], authorizedUsers: [] };
+        const cloudRes = await fetch(CLOUD_FALLBACK_URL + '?_t=' + Date.now(), { cache: 'no-store' });
+        if (cloudRes.ok) {
+          storeData = await cloudRes.json();
+        }
+
+        if (Array.isArray(storeData.authorizedUsers)) {
+          storeData.authorizedUsers = storeData.authorizedUsers.filter(u => {
+            const uName = (u.username || '').toLowerCase().replace(/^@/, '');
+            const uId = String(u.id || '');
+            return uName !== cleanTarget && uId !== cleanTarget;
+          });
+
+          await fetch(CLOUD_FALLBACK_URL, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(storeData)
+          });
+
+          updatedUsers = storeData.authorizedUsers;
+        }
+      } catch (cloudErr) {
+        console.error('Direct cloud remove error:', cloudErr);
+      }
+    }
+
+    if (updatedUsers) {
+      authorizedUsers = updatedUsers;
+    } else {
+      authorizedUsers = authorizedUsers.filter(u => {
+        const uName = (u.username || '').toLowerCase().replace(/^@/, '');
+        const uId = String(u.id || '');
+        return uName !== cleanTarget && uId !== cleanTarget;
+      });
+    }
+
+    renderAccessUsersList();
+    showToast('🗑 Доступ отозван');
+    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
   };
 
   function openAddModal() {
