@@ -1,7 +1,7 @@
 // Cloudflare Pages Function: /api/crm/access
 const CLOUD_STORE_URL = 'https://json.extendsclass.com/bin/becdbda';
-const MASTER_ADMIN_USERNAME = 'plombit';
-const MASTER_ADMIN_ID = '1014012851';
+const DEFAULT_MASTER_ADMIN_USERNAME = 'plombit';
+const DEFAULT_MASTER_ADMIN_ID = '1014012851';
 
 const DEFAULT_AUTHORIZED_USERS = [
   {
@@ -14,19 +14,19 @@ const DEFAULT_AUTHORIZED_USERS = [
   }
 ];
 
-function sanitizeUsers(users) {
+function sanitizeUsers(users, masterUsername = DEFAULT_MASTER_ADMIN_USERNAME, masterId = DEFAULT_MASTER_ADMIN_ID) {
   if (!Array.isArray(users)) users = [];
   const list = [...users];
   const hasMaster = list.some(u => 
-    (u.username && u.username.toLowerCase() === MASTER_ADMIN_USERNAME) ||
-    (u.id && String(u.id) === MASTER_ADMIN_ID)
+    (u.username && u.username.toLowerCase() === masterUsername.toLowerCase()) ||
+    (u.id && String(u.id) === String(masterId))
   );
   if (!hasMaster) {
-    list.unshift({ ...DEFAULT_AUTHORIZED_USERS[0] });
+    list.unshift({ ...DEFAULT_AUTHORIZED_USERS[0], username: masterUsername, id: masterId });
   } else {
     list.forEach(u => {
-      if ((u.username && u.username.toLowerCase() === MASTER_ADMIN_USERNAME) ||
-          (u.id && String(u.id) === MASTER_ADMIN_ID)) {
+      if ((u.username && u.username.toLowerCase() === masterUsername.toLowerCase()) ||
+          (u.id && String(u.id) === String(masterId))) {
         u.isAdmin = true;
       }
     });
@@ -35,7 +35,10 @@ function sanitizeUsers(users) {
 }
 
 export async function onRequest(context) {
-  const { request } = context;
+  const { request, env } = context;
+
+  const masterAdminUsername = (env?.MASTER_ADMIN_USERNAME || DEFAULT_MASTER_ADMIN_USERNAME).toLowerCase().replace(/^@/, '');
+  const masterAdminId = String(env?.MASTER_ADMIN_ID || DEFAULT_MASTER_ADMIN_ID);
 
   const corsHeaders = {
     'Content-Type': 'application/json; charset=utf-8',
@@ -55,7 +58,7 @@ export async function onRequest(context) {
       if (storeRes.ok) storeData = await storeRes.json();
     } catch (e) {}
 
-    storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers);
+    storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers, masterAdminUsername, masterAdminId);
 
     if (request.method === 'GET') {
       return new Response(JSON.stringify({
@@ -68,12 +71,15 @@ export async function onRequest(context) {
       const body = await request.json().catch(() => ({}));
       const { action, user, target, requestedBy } = body;
 
+      const reqUser = (requestedBy?.username || '').toLowerCase().replace(/^@/, '');
+      const reqId = String(requestedBy?.id || '');
+
       const isAdmin = requestedBy?.isAdmin ||
-                      requestedBy?.username?.toLowerCase() === MASTER_ADMIN_USERNAME ||
-                      String(requestedBy?.id) === MASTER_ADMIN_ID;
+                      reqUser === masterAdminUsername ||
+                      reqId === masterAdminId;
 
       if (!isAdmin) {
-        return new Response(JSON.stringify({ error: 'Доступ запрещён: требуется роль администратора' }), {
+        return new Response(JSON.stringify({ error: `Доступ запрещён: требуется роль администратора (@${masterAdminUsername})` }), {
           status: 403,
           headers: corsHeaders
         });
@@ -107,7 +113,7 @@ export async function onRequest(context) {
         }
       } else if (action === 'remove' && target) {
         const cleanTarget = String(target).replace(/^@/, '').toLowerCase().trim();
-        if (cleanTarget === MASTER_ADMIN_USERNAME || cleanTarget === MASTER_ADMIN_ID) {
+        if (cleanTarget === masterAdminUsername || cleanTarget === masterAdminId) {
           return new Response(JSON.stringify({ error: 'Нельзя удалить главного администратора' }), {
             status: 400,
             headers: corsHeaders
@@ -121,7 +127,7 @@ export async function onRequest(context) {
         });
       }
 
-      storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers);
+      storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers, masterAdminUsername, masterAdminId);
 
       await fetch(CLOUD_STORE_URL, {
         method: 'PUT',

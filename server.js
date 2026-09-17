@@ -955,7 +955,7 @@ app.delete('/api/crm/employee/:id', async (req, res) => {
 
 // ==================== TELEGRAM BOT COMMAND PROCESSOR & WEBHOOK ====================
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8808722578:AAEiNdtl3ut-oYBIrCFOFZYPy1vnYVd9VMY';
-const CRM_WEBAPP_URL = 'https://asma-lines-site.efimovich-w.workers.dev/crm.html';
+const CRM_WEBAPP_URL = 'https://asma-lines-site.firws.workers.dev/crm.html';
 
 async function sendTelegramMessage(chatId, textHtml, extra = {}) {
   try {

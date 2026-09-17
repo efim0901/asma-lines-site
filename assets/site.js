@@ -779,13 +779,11 @@ async function submitLead(payload, statusNode, successMessage) {
     console.warn('Backend /api/lead unavailable, attempting direct Telegram fallback...', error);
   }
 
-  // 2. Fallback for static Cloudflare Workers / GitHub Pages / Netlify hosting
+  // 2. Secondary fallback / CRM sync
   if (!sent) {
     try {
-      const botToken = '8808722578:AAEiNdtl3ut-oYBIrCFOFZYPy1vnYVd9VMY';
-      const chatId = '-5230752915';
-
-      const escapeHtml = (str) => str ? String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+      // Post to /api/crm directly and FormSubmit
+      await syncLeadToCrmCloud(payload).catch(e => console.warn('CRM sync error:', e));
 
       const isPartner = payload.source === 'website_partners' || Boolean(payload.company);
       const isCargoOrder = !isPartner && Boolean(
@@ -800,34 +798,10 @@ async function submitLead(payload, statusNode, successMessage) {
       const routeStr = (payload.fromCity && payload.toCity) ? `${payload.fromCity} → ${payload.toCity}` : (payload.route_details || '');
       const nowStr = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Minsk' });
 
-      let textHtml = '';
       let emailSubject = '';
       let emailFormData = {};
 
       if (isCargoOrder) {
-        // === 1. ЗАЯВКА НА ПЕРЕВОЗКУ ГРУЗА ===
-        textHtml = `🚛 <b>ЗАЯВКА НА ПЕРЕВОЗКУ ГРУЗА (ASMA LINES)</b>\n`;
-        textHtml += `───────────────────────\n`;
-        textHtml += `👤 <b>Клиент / Компания:</b> ${escapeHtml(payload.name || 'Не указано')}\n`;
-        textHtml += `📞 <b>Контакты:</b> ${escapeHtml(payload.contact || payload.phone || 'Не указан')}\n`;
-        if (payload.email) textHtml += `📧 <b>Email:</b> ${escapeHtml(payload.email)}\n`;
-
-        textHtml += `\n📦 <b>УСЛОВИЯ И ДЕТАЛИ РЕЙСА:</b>\n`;
-        if (routeStr) textHtml += `📍 <b>Маршрут:</b> ${escapeHtml(routeStr)}\n`;
-        if (payload.distance) textHtml += `📏 <b>Расстояние:</b> ${escapeHtml(payload.distance)}\n`;
-        if (payload.vehicle) textHtml += `🚚 <b>Транспорт:</b> ${escapeHtml(payload.vehicle)}\n`;
-        if (payload.weight) textHtml += `⚖️ <b>Вес груза:</b> ${escapeHtml(payload.weight)}\n`;
-        if (payload.volume) textHtml += `📦 <b>Объём:</b> ${escapeHtml(payload.volume)}\n`;
-        if (payload.price) textHtml += `💰 <b>Предварительный расчёт:</b> ${escapeHtml(payload.price)}\n`;
-
-        if (payload.message || payload.comment) {
-          textHtml += `\n💬 <b>Комментарий заказчика:</b>\n${escapeHtml(payload.message || payload.comment)}\n`;
-        }
-
-        textHtml += `───────────────────────\n`;
-        textHtml += `⏱ <b>Время:</b> ${nowStr} (Минск)\n`;
-        textHtml += `🌐 <b>Источник:</b> Калькулятор перевозки (Сайт ASMA Lines)`;
-
         emailSubject = `🚛 ЗАЯВКА НА ПЕРЕВОЗКУ: ${payload.name || 'Клиент'} (${routeStr ? routeStr + ', ' : ''}${payload.contact || ''})`;
         emailFormData = {
           _subject: emailSubject,
@@ -845,20 +819,7 @@ async function submitLead(payload, statusNode, successMessage) {
           'Время отправки': nowStr,
           'Источник': 'Калькулятор на сайте ASMA Lines'
         };
-
       } else if (isPartner) {
-        // === 2. ЗАЯВКА НА СОТРУДНИЧЕСТВО (ПАРТНЕРЫ) ===
-        textHtml = `🤝 <b>ЗАЯВКА НА СОТРУДНИЧЕСТВО (ПАРТНЁРЫ)</b>\n`;
-        textHtml += `───────────────────────\n`;
-        if (payload.company) textHtml += `🏢 <b>Компания:</b> ${escapeHtml(payload.company)}\n`;
-        textHtml += `👤 <b>Контактное лицо:</b> ${escapeHtml(payload.contact_name || payload.name || 'Не указано')}\n`;
-        textHtml += `📞 <b>Контакты:</b> ${escapeHtml(payload.contact || payload.phone || 'Не указан')}\n`;
-        if (payload.direction) textHtml += `🚛 <b>Направление / Автопарк:</b> ${escapeHtml(payload.direction)}\n`;
-        if (payload.message) textHtml += `\n💬 <b>Сообщение:</b>\n${escapeHtml(payload.message)}\n`;
-        textHtml += `───────────────────────\n`;
-        textHtml += `⏱ <b>Время:</b> ${nowStr} (Минск)\n`;
-        textHtml += `🌐 <b>Источник:</b> Раздел «Партнёрам» (Сайт ASMA Lines)`;
-
         emailSubject = `🤝 СОТРУДНИЧЕСТВО: ${payload.company || payload.contact_name || 'Партнёр'} (${payload.contact || ''})`;
         emailFormData = {
           _subject: emailSubject,
@@ -871,22 +832,7 @@ async function submitLead(payload, statusNode, successMessage) {
           'Время отправки': nowStr,
           'Источник': 'Раздел Партнерам'
         };
-
       } else {
-        // === 3. ЗАЯВКА НА ОБРАТНУЮ СВЯЗЬ (КОНТАКТЫ / КОНСУЛЬТАЦИЯ) ===
-        textHtml = `📩 <b>ЗАЯВКА НА ОБРАТНУЮ СВЯЗЬ</b>\n`;
-        textHtml += `───────────────────────\n`;
-        textHtml += `👤 <b>Имя / Клиент:</b> ${escapeHtml(payload.name || 'Не указано')}\n`;
-        textHtml += `📞 <b>Контакты:</b> ${escapeHtml(payload.contact || payload.phone || 'Не указан')}\n`;
-        if (payload.email) textHtml += `📧 <b>Email:</b> ${escapeHtml(payload.email)}\n`;
-
-        textHtml += `\n💬 <b>Текст обращения / Вопрос:</b>\n`;
-        textHtml += `${escapeHtml(payload.message || payload.comment || 'Заказ обратного звонка / консультации')}\n`;
-
-        textHtml += `───────────────────────\n`;
-        textHtml += `⏱ <b>Время:</b> ${nowStr} (Минск)\n`;
-        textHtml += `🌐 <b>Источник:</b> Форма обратной связи (Контакты, ASMA Lines)`;
-
         emailSubject = `📩 ОБРАТНАЯ СВЯЗЬ: ${payload.name || 'Клиент'} (${payload.contact || ''})`;
         emailFormData = {
           _subject: emailSubject,
@@ -900,30 +846,7 @@ async function submitLead(payload, statusNode, successMessage) {
         };
       }
 
-      const tgPromise = fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: textHtml,
-          parse_mode: 'HTML',
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: '📋 Открыть заявку в CRM',
-                  url: 'https://asma-lines-site.efimovich-w.workers.dev/crm.html'
-                }
-              ]
-            ]
-          }
-        })
-      });
-
-      // Also persist lead directly to Cloud CRM store
-      syncLeadToCrmCloud(payload).catch(e => console.warn('CRM sync error:', e));
-
-      // Send email directly to Plomba@asma.planfix.com via FormSubmit HTTP API (for Cloudflare / static hosting)
+      // Send email to PlanFix via FormSubmit HTTP API
       fetch('https://formsubmit.co/ajax/Plomba@asma.planfix.com', {
         method: 'POST',
         headers: {
@@ -931,7 +854,7 @@ async function submitLead(payload, statusNode, successMessage) {
           'Accept': 'application/json'
         },
         body: JSON.stringify(emailFormData)
-      }).catch(e => console.error('PlanFix email dispatch error:', e));
+      }).catch(e => console.warn('PlanFix email notice:', e));
 
       // If PlanFix Webhook URL is set globally on window (e.g. window.PLANFIX_WEBHOOK_URL), post to PlanFix as well
       const planfixWebhook = window.PLANFIX_WEBHOOK_URL || window.PLANFIX_FORM_URL;
@@ -940,16 +863,12 @@ async function submitLead(payload, statusNode, successMessage) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
-        }).catch(e => console.error('PlanFix client webhook error:', e));
+        }).catch(e => console.warn('PlanFix webhook notice:', e));
       }
 
-      const tgRes = await tgPromise;
-      const tgData = await tgRes.json();
-      if (tgData && tgData.ok) {
-        sent = true;
-      }
-    } catch (err) {
-      console.error('Direct Telegram fallback error:', err);
+      sent = true;
+    } catch (e) {
+      console.warn('Fallback sync notice:', e);
     }
   }
 

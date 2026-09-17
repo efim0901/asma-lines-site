@@ -106,8 +106,10 @@ export async function onRequestPost(context) {
     }
 
     // 1. Send to Telegram
-    const botToken = context.env.TELEGRAM_BOT_TOKEN || '8808722578:AAEiNdtl3ut-oYBIrCFOFZYPy1vnYVd9VMY';
-    const chatId = context.env.TELEGRAM_CHAT_ID || '-5230752915';
+    const DEFAULT_BOT_TOKEN = '8808722578:AAEYNIMN8P7LG8IYtUOsytw6yWO1bEBLlLI';
+    const botToken = context.env?.TELEGRAM_BOT_TOKEN || DEFAULT_BOT_TOKEN;
+    const chatId = context.env?.TELEGRAM_CHAT_ID || '-5230752915';
+    const crmUrl = context.env?.CRM_APP_URL || `${new URL(context.request.url).origin}/crm.html`;
 
     if (botToken && chatId) {
       try {
@@ -123,7 +125,7 @@ export async function onRequestPost(context) {
                 [
                   {
                     text: '📋 Открыть заявку в CRM',
-                    url: 'https://asma-lines-site.efimovich-w.workers.dev/crm.html'
+                    url: crmUrl
                   }
                 ]
               ]

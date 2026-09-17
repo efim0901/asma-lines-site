@@ -1,13 +1,13 @@
 /**
  * Cloudflare Worker entry point for ASMA Lines
- * Handles /api/lead, /api/crm, and static assets via env.ASSETS
+ * Handles /api/lead, /api/crm, /api/telegram-webhook, and static assets via env.ASSETS
  */
 
 const CLOUD_STORE_URL = 'https://json.extendsclass.com/bin/becdbda';
-const TELEGRAM_BOT_TOKEN = '8808722578:AAEiNdtl3ut-oYBIrCFOFZYPy1vnYVd9VMY';
-const TELEGRAM_CHAT_ID = '-5230752915';
-const MASTER_ADMIN_USERNAME = 'plombit';
-const MASTER_ADMIN_ID = '1014012851';
+const DEFAULT_TELEGRAM_BOT_TOKEN = '8808722578:AAEYNIMN8P7LG8IYtUOsytw6yWO1bEBLlLI';
+const DEFAULT_TELEGRAM_CHAT_ID = '-5230752915';
+const DEFAULT_MASTER_ADMIN_USERNAME = 'plombit';
+const DEFAULT_MASTER_ADMIN_ID = '1014012851';
 
 const DEFAULT_AUTHORIZED_USERS = [
   {
@@ -20,19 +20,19 @@ const DEFAULT_AUTHORIZED_USERS = [
   }
 ];
 
-function sanitizeUsers(users) {
+function sanitizeUsers(users, masterUsername = DEFAULT_MASTER_ADMIN_USERNAME, masterId = DEFAULT_MASTER_ADMIN_ID) {
   if (!Array.isArray(users)) users = [];
   const list = [...users];
   const hasMaster = list.some(u => 
-    (u.username && u.username.toLowerCase() === MASTER_ADMIN_USERNAME) ||
-    (u.id && String(u.id) === MASTER_ADMIN_ID)
+    (u.username && u.username.toLowerCase() === masterUsername.toLowerCase()) ||
+    (u.id && String(u.id) === String(masterId))
   );
   if (!hasMaster) {
-    list.unshift({ ...DEFAULT_AUTHORIZED_USERS[0] });
+    list.unshift({ ...DEFAULT_AUTHORIZED_USERS[0], username: masterUsername, id: masterId });
   } else {
     list.forEach(u => {
-      if ((u.username && u.username.toLowerCase() === MASTER_ADMIN_USERNAME) ||
-          (u.id && String(u.id) === MASTER_ADMIN_ID)) {
+      if ((u.username && u.username.toLowerCase() === masterUsername.toLowerCase()) ||
+          (u.id && String(u.id) === String(masterId))) {
         u.isAdmin = true;
       }
     });
@@ -40,11 +40,11 @@ function sanitizeUsers(users) {
   return list;
 }
 
-function checkUserAuthorized(users, tgUser) {
+function checkUserAuthorized(users, tgUser, masterUsername = DEFAULT_MASTER_ADMIN_USERNAME, masterId = DEFAULT_MASTER_ADMIN_ID) {
   if (!tgUser) return false;
   const username = (tgUser.username || '').toLowerCase().replace(/^@/, '');
   const id = String(tgUser.id || '');
-  if (username === MASTER_ADMIN_USERNAME || id === MASTER_ADMIN_ID) return true;
+  if (username === masterUsername.toLowerCase() || id === String(masterId)) return true;
   return users.some(u => {
     const uName = (u.username || '').toLowerCase().replace(/^@/, '');
     const uId = String(u.id || '');
@@ -52,16 +52,31 @@ function checkUserAuthorized(users, tgUser) {
   });
 }
 
-function checkUserAdmin(tgUser) {
+function checkUserAdmin(tgUser, masterUsername = DEFAULT_MASTER_ADMIN_USERNAME, masterId = DEFAULT_MASTER_ADMIN_ID) {
   if (!tgUser) return false;
   const username = (tgUser.username || '').toLowerCase().replace(/^@/, '');
   const id = String(tgUser.id || '');
-  return username === MASTER_ADMIN_USERNAME || id === MASTER_ADMIN_ID;
+  return username === masterUsername.toLowerCase() || id === String(masterId);
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+
+    // Read configured secrets / environment variables with resilient defaults
+    const botToken = env?.TELEGRAM_BOT_TOKEN || DEFAULT_TELEGRAM_BOT_TOKEN;
+    const chatId = env?.TELEGRAM_CHAT_ID || DEFAULT_TELEGRAM_CHAT_ID;
+    const masterAdminUsername = (env?.MASTER_ADMIN_USERNAME || DEFAULT_MASTER_ADMIN_USERNAME).toLowerCase().replace(/^@/, '');
+    const masterAdminId = String(env?.MASTER_ADMIN_ID || DEFAULT_MASTER_ADMIN_ID);
+    const crmAppUrl = env?.CRM_APP_URL || `${url.origin}/crm.html`;
 
     // Common CORS headers
     const corsHeaders = {
@@ -101,7 +116,7 @@ export default {
           if (storeRes.ok) storeData = await storeRes.json();
         } catch (e) {}
 
-        storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers);
+        storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers, masterAdminUsername, masterAdminId);
 
         if (request.method === 'GET') {
           return jsonResponse({
@@ -115,8 +130,8 @@ export default {
           const { action, user, target, requestedBy } = body;
 
           // Only admin can modify access
-          if (!checkUserAdmin(requestedBy)) {
-            return jsonResponse({ error: 'Доступ запрещён: только администратор (@plombit) может изменять список доступа' }, 403);
+          if (!checkUserAdmin(requestedBy, masterAdminUsername, masterAdminId)) {
+            return jsonResponse({ error: `Доступ запрещён: только администратор (@${masterAdminUsername}) может изменять список доступа` }, 403);
           }
 
           if (action === 'add' && user) {
@@ -148,7 +163,7 @@ export default {
             });
           } else if (action === 'remove' && target) {
             const cleanTarget = String(target).replace(/^@/, '').toLowerCase().trim();
-            if (cleanTarget === MASTER_ADMIN_USERNAME || cleanTarget === MASTER_ADMIN_ID) {
+            if (cleanTarget === masterAdminUsername || cleanTarget === masterAdminId) {
               return jsonResponse({ error: 'Нельзя удалить главного администратора' }, 400);
             }
 
@@ -159,7 +174,7 @@ export default {
             });
           }
 
-          storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers);
+          storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers, masterAdminUsername, masterAdminId);
 
           await fetch(CLOUD_STORE_URL, {
             method: 'PUT',
@@ -178,219 +193,345 @@ export default {
     }
 
     // ----------------------------------------------------
-    // ROUTE: /api/telegram-webhook (POST - Telegram Bot Bot Commands)
+    // ROUTE: /api/setup-webhook (GET / POST - Registers Webhook on Telegram)
     // ----------------------------------------------------
-    if (url.pathname === '/api/telegram-webhook' && request.method === 'POST') {
+    if (url.pathname === '/api/setup-webhook') {
+      if (!botToken) {
+        return jsonResponse({
+          ok: false,
+          error: 'TELEGRAM_BOT_TOKEN не установлен в Cloudflare Secrets (Environment Variables).',
+          hint: 'Установите TELEGRAM_BOT_TOKEN в настройках Cloudflare Worker (Settings -> Variables and Secrets).'
+        }, 400);
+      }
+
+      const webhookUrl = `${url.origin}/api/telegram-webhook`;
       try {
-        const update = await request.json().catch(() => ({}));
-        const message = update.message || update.channel_post;
-        if (!message || !message.text) {
-          return jsonResponse({ ok: true });
-        }
+        // 1. Call setWebhook
+        const setRes = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: webhookUrl,
+            allowed_updates: ['message', 'edited_message', 'callback_query']
+          })
+        });
+        const setResult = await setRes.json();
 
-        const chatId = message.chat.id;
-        const from = message.from || {};
-        const text = (message.text || '').trim();
-        const senderUsername = (from.username || '').replace(/^@/, '');
-        const senderId = String(from.id || '');
-        const senderName = [from.first_name, from.last_name].filter(Boolean).join(' ') || senderUsername || 'Диспетчер';
+        // 2. Call getWebhookInfo
+        const infoRes = await fetch(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
+        const infoResult = await infoRes.json();
 
-        let storeData = { authorizedUsers: [] };
-        try {
-          const storeRes = await fetch(CLOUD_STORE_URL + '?_t=' + Date.now(), { cache: 'no-store' });
-          if (storeRes.ok) storeData = await storeRes.json();
-        } catch (e) {}
-        storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers);
+        // 3. Call getMe
+        const meRes = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+        const meResult = await meRes.json();
 
-        const isAuthorized = checkUserAuthorized(storeData.authorizedUsers, from);
-        const isAdmin = checkUserAdmin(from);
-
-        const sendTg = async (msgText, extra = {}) => {
-          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              chat_id: chatId,
-              text: msgText,
-              parse_mode: 'HTML',
-              ...extra
-            })
-          });
-        };
-
-        const crmAppUrl = 'https://asma-lines-site.efimovich-w.workers.dev/crm.html';
-
-        if (text.startsWith('/start') || text.startsWith('/crm') || text.startsWith('/app') || text.toLowerCase() === 'диспетчерская') {
-          if (!isAuthorized) {
-            await sendTg(
-              `⛔ <b>Доступ ограничен</b>\n\n` +
-              `Ваш профиль Telegram (@${senderUsername || 'нет юзернейма'}, ID: <code>${senderId}</code>) не найден в списке авторизованных диспетчеров ASMA Lines.\n\n` +
-              `Для получения доступа обратитесь к главному администратору: @plombit`
-            );
-            return jsonResponse({ ok: true });
-          }
-
-          let reply = `🚛 <b>Диспетчерская ASMA Lines</b>\n\n` +
-            `Здравствуйте, <b>${senderName}</b>!\n` +
-            `Система управления заявками и рейсами готова к работе.\n\n` +
-            `Нажмите кнопку ниже, чтобы открыть рабочее место диспетчера:`;
-
-          if (isAdmin) {
-            reply += `\n\n👑 <b>Управление доступом через Telegram:</b>\n` +
-              `• <code>/add @username Имя</code> — добавить диспетчера\n` +
-              `• <code>/remove @username</code> — отозвать доступ\n` +
-              `• <code>/users</code> — список пользователей с доступом\n\n` +
-              `<i>Также вы можете управлять доступом прямо в интерфейсе CRM по кнопке «👥 Доступ».</i>`;
-          }
-
-          await sendTg(reply, {
-            reply_markup: {
-              inline_keyboard: [
-                [
-                  {
-                    text: '🚀 Открыть Диспетчерскую CRM',
-                    web_app: { url: crmAppUrl }
-                  }
-                ]
-              ]
-            }
-          });
-          return jsonResponse({ ok: true });
-        }
-
-        if (text.startsWith('/users') || text.startsWith('/access') || text.startsWith('/list')) {
-          if (!isAuthorized) {
-            await sendTg(`⛔ У вас нет доступа к этой команде.`);
-            return jsonResponse({ ok: true });
-          }
-
-          let listText = `👥 <b>Список доступа к диспетчерской ASMA Lines:</b>\n───────────────────────\n`;
-          storeData.authorizedUsers.forEach((u, i) => {
-            const uLabel = u.username ? `@${u.username}` : `ID: ${u.id}`;
-            listText += `${i + 1}. <b>${u.name}</b> (${uLabel})\n   Роль: ${u.role}${u.isAdmin ? ' ⭐ (Владелец)' : ''}\n\n`;
-          });
-          listText += `<i>Всего диспетчеров: ${storeData.authorizedUsers.length}</i>`;
-
-          await sendTg(listText, {
-            reply_markup: {
-              inline_keyboard: [
-                [
-                  {
-                    text: '🚀 Открыть CRM',
-                    web_app: { url: crmAppUrl }
-                  }
-                ]
-              ]
-            }
-          });
-          return jsonResponse({ ok: true });
-        }
-
-        if (text.startsWith('/add')) {
-          if (!isAdmin) {
-            await sendTg(`⛔ Только главный администратор (@plombit) может добавлять пользователей в список доступа.`);
-            return jsonResponse({ ok: true });
-          }
-
-          const parts = text.split(/\s+/).slice(1);
-          if (parts.length === 0) {
-            await sendTg(
-              `ℹ️ <b>Формат команды:</b>\n<code>/add @username Имя [Роль]</code>\nили:\n<code>/add 123456789 Имя [Роль]</code>\n\nПример:\n<code>/add @bukvaaak Дмитрий Логист</code>`
-            );
-            return jsonResponse({ ok: true });
-          }
-
-          const rawTarget = parts[0].replace(/^@/, '').trim();
-          const isId = /^\d+$/.test(rawTarget);
-          const username = isId ? null : rawTarget;
-          const id = isId ? rawTarget : null;
-
-          const restName = parts.slice(1).join(' ') || rawTarget;
-          const role = 'Диспетчер';
-
-          const exists = storeData.authorizedUsers.some(u =>
-            (username && u.username && u.username.toLowerCase() === username.toLowerCase()) ||
-            (id && u.id && String(u.id) === id)
-          );
-
-          if (exists) {
-            await sendTg(`⚠️ Пользователь <b>${rawTarget}</b> уже есть в списке доступа.`);
-            return jsonResponse({ ok: true });
-          }
-
-          storeData.authorizedUsers.push({
-            id,
-            username,
-            name: restName,
-            role,
-            isAdmin: false,
-            addedAt: new Date().toISOString()
-          });
-
-          storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers);
-
-          await fetch(CLOUD_STORE_URL, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(storeData)
-          });
-
-          await sendTg(
-            `✅ <b>Доступ предоставлен!</b>\n\n` +
-            `👤 Пользователь: <b>${username ? '@' + username : 'ID ' + id}</b>\n` +
-            `🏷 Имя: <b>${restName}</b>\n` +
-            `💼 Роль: <b>${role}</b>\n\n` +
-            `Теперь сотрудник может открыть диспетчерскую через бот @asmalinesbot.`
-          );
-          return jsonResponse({ ok: true });
-        }
-
-        if (text.startsWith('/remove') || text.startsWith('/del')) {
-          if (!isAdmin) {
-            await sendTg(`⛔ Только главный администратор (@plombit) может удалять пользователей.`);
-            return jsonResponse({ ok: true });
-          }
-
-          const parts = text.split(/\s+/).slice(1);
-          if (parts.length === 0) {
-            await sendTg(`ℹ️ <b>Формат команды:</b>\n<code>/remove @username</code> или <code>/remove ID</code>`);
-            return jsonResponse({ ok: true });
-          }
-
-          const cleanTarget = parts[0].replace(/^@/, '').toLowerCase().trim();
-          if (cleanTarget === MASTER_ADMIN_USERNAME || cleanTarget === MASTER_ADMIN_ID) {
-            await sendTg(`⚠️ Нельзя отозвать доступ у главного администратора.`);
-            return jsonResponse({ ok: true });
-          }
-
-          const beforeLen = storeData.authorizedUsers.length;
-          storeData.authorizedUsers = storeData.authorizedUsers.filter(u => {
-            const uName = (u.username || '').toLowerCase().replace(/^@/, '');
-            const uId = String(u.id || '');
-            return uName !== cleanTarget && uId !== cleanTarget;
-          });
-
-          if (storeData.authorizedUsers.length === beforeLen) {
-            await sendTg(`❓ Пользователь <b>${parts[0]}</b> не найден в списке доступа.`);
-            return jsonResponse({ ok: true });
-          }
-
-          storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers);
-
-          await fetch(CLOUD_STORE_URL, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(storeData)
-          });
-
-          await sendTg(`🗑 Доступ для <b>${parts[0]}</b> успешно отозван.`);
-          return jsonResponse({ ok: true });
-        }
-
-        return jsonResponse({ ok: true });
+        return jsonResponse({
+          ok: true,
+          message: setResult.ok ? 'Webhook успешно зарегистрирован!' : 'Ошибка регистрации Webhook в Telegram',
+          bot: meResult?.result || {},
+          targetWebhookUrl: webhookUrl,
+          telegramSetResult: setResult,
+          webhookInfo: infoResult?.result || {},
+          instructions: 'Теперь отправьте боту в Telegram команду /start или /test для проверки.'
+        });
       } catch (err) {
-        console.error('Webhook error:', err);
-        return jsonResponse({ ok: false, error: err.message });
+        return jsonResponse({
+          ok: false,
+          error: 'Сбой подключения к Telegram API: ' + err.message
+        }, 500);
+      }
+    }
+
+    // ----------------------------------------------------
+    // ROUTE: /api/telegram-webhook (GET / POST - Telegram Bot Commands)
+    // ----------------------------------------------------
+    if (url.pathname === '/api/telegram-webhook') {
+      if (request.method === 'GET') {
+        return jsonResponse({
+          ok: true,
+          status: 'online',
+          service: 'asma-lines-telegram-webhook',
+          configuredBotToken: Boolean(botToken),
+          configuredChatId: Boolean(chatId),
+          admin: `@${masterAdminUsername}`,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      if (request.method === 'POST') {
+        try {
+          const update = await request.json().catch(() => ({}));
+
+          // 1. Answer callback queries (inline button clicks)
+          if (update.callback_query) {
+            const cbId = update.callback_query.id;
+            if (botToken) {
+              fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ callback_query_id: cbId })
+              }).catch(() => {});
+            }
+          }
+
+          const message = update.message || update.channel_post || update.edited_message;
+          if (!message || !message.text) {
+            return jsonResponse({ ok: true });
+          }
+
+          const msgChatId = message.chat.id;
+          const from = message.from || message.chat || {};
+          const rawText = (message.text || '').trim();
+          // Normalize command (strip bot mention like /start@asmalinesbot)
+          const text = rawText.replace(/@\w+bot/i, '').trim();
+          const senderUsername = (from.username || '').replace(/^@/, '');
+          const senderId = String(from.id || '');
+          const senderName = [from.first_name, from.last_name].filter(Boolean).join(' ') || senderUsername || 'Диспетчер';
+
+          let storeData = { authorizedUsers: [] };
+          try {
+            const storeRes = await fetch(CLOUD_STORE_URL + '?_t=' + Date.now(), { cache: 'no-store' });
+            if (storeRes.ok) storeData = await storeRes.json();
+          } catch (e) {}
+          storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers, masterAdminUsername, masterAdminId);
+
+          const isAuthorized = checkUserAuthorized(storeData.authorizedUsers, from, masterAdminUsername, masterAdminId);
+          const isAdmin = checkUserAdmin(from, masterAdminUsername, masterAdminId);
+
+          const sendTg = async (msgText, extra = {}) => {
+            if (!botToken) {
+              console.error('TELEGRAM_BOT_TOKEN is not set in Cloudflare Secrets');
+              return;
+            }
+            try {
+              await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: msgChatId,
+                  text: msgText,
+                  parse_mode: 'HTML',
+                  ...extra
+                })
+              });
+            } catch (err) {
+              console.error('sendTg fetch error:', err);
+            }
+          };
+
+          // Diagnostic / Test command
+          if (text.startsWith('/test') || text.startsWith('/ping')) {
+            await sendTg(
+              `⚡ <b>Диагностика бота ASMA Lines:</b>\n` +
+              `───────────────────────\n` +
+              `✅ <b>Статус:</b> Бот работает в облаке Cloudflare\n` +
+              `🔑 <b>Токен:</b> Настроен (${botToken ? 'присутствует' : 'ОТСУТСТВУЕТ!'})\n` +
+              `👤 <b>Ваш профиль:</b> @${senderUsername || 'нет юзернейма'} (ID: <code>${senderId}</code>)\n` +
+              `🛡 <b>Доступ:</b> ${isAuthorized ? 'Разрешён ✅' : 'Ограничен ⛔'}\n` +
+              `👑 <b>Роль администратора:</b> ${isAdmin ? 'Да ⭐' : 'Нет'}\n` +
+              `🌐 <b>Домен CRM:</b> <code>${crmAppUrl}</code>\n` +
+              `⏱ <b>Время сервера:</b> ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Minsk' })}`
+            );
+            return jsonResponse({ ok: true });
+          }
+
+          // Main commands: /start, /crm, /app, /help
+          if (text.startsWith('/start') || text.startsWith('/crm') || text.startsWith('/app') || text.startsWith('/help') || text.toLowerCase() === 'диспетчерская') {
+            if (!isAuthorized) {
+              await sendTg(
+                `⛔ <b>Доступ ограничен</b>\n\n` +
+                `Ваш профиль Telegram (@${senderUsername || 'нет юзернейма'}, ID: <code>${senderId}</code>) не найден в списке авторизованных диспетчеров ASMA Lines.\n\n` +
+                `Для получения доступа обратитесь к главному администратору: @${masterAdminUsername}`
+              );
+              return jsonResponse({ ok: true });
+            }
+
+            let reply = `🚛 <b>Диспетчерская ASMA Lines</b>\n\n` +
+              `Здравствуйте, <b>${escapeHtml(senderName)}</b>!\n` +
+              `Система управления заявками и рейсами готова к работе.\n\n` +
+              `Нажмите кнопку ниже, чтобы открыть рабочее место диспетчера:`;
+
+            if (isAdmin) {
+              reply += `\n\n👑 <b>Управление доступом через Telegram:</b>\n` +
+                `• <code>/add @username Имя</code> — добавить диспетчера\n` +
+                `• <code>/remove @username</code> — отозвать доступ\n` +
+                `• <code>/users</code> — список пользователей с доступом\n` +
+                `• <code>/test</code> — проверить статус бота\n\n` +
+                `<i>Также вы можете управлять доступом прямо в интерфейсе CRM по кнопке «👥 Доступ».</i>`;
+            }
+
+            await sendTg(reply, {
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: '🚀 Открыть Диспетчерскую CRM',
+                      web_app: { url: crmAppUrl }
+                    }
+                  ]
+                ]
+              }
+            });
+            return jsonResponse({ ok: true });
+          }
+
+          // /users, /access, /list
+          if (text.startsWith('/users') || text.startsWith('/access') || text.startsWith('/list')) {
+            if (!isAuthorized) {
+              await sendTg(`⛔ У вас нет доступа к этой команде.`);
+              return jsonResponse({ ok: true });
+            }
+
+            let listText = `👥 <b>Список доступа к диспетчерской ASMA Lines:</b>\n───────────────────────\n`;
+            storeData.authorizedUsers.forEach((u, i) => {
+              const uLabel = u.username ? `@${u.username}` : `ID: ${u.id}`;
+              listText += `${i + 1}. <b>${escapeHtml(u.name || 'Сотрудник')}</b> (${uLabel})\n   Роль: ${escapeHtml(u.role || 'Диспетчер')}${u.isAdmin ? ' ⭐ (Владелец)' : ''}\n\n`;
+            });
+            listText += `<i>Всего диспетчеров: ${storeData.authorizedUsers.length}</i>`;
+
+            await sendTg(listText, {
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: '🚀 Открыть CRM',
+                      web_app: { url: crmAppUrl }
+                    }
+                  ]
+                ]
+              }
+            });
+            return jsonResponse({ ok: true });
+          }
+
+          // /add
+          if (text.startsWith('/add')) {
+            if (!isAdmin) {
+              await sendTg(`⛔ Только главный администратор (@${masterAdminUsername}) может добавлять пользователей в список доступа.`);
+              return jsonResponse({ ok: true });
+            }
+
+            const parts = text.split(/\s+/).slice(1);
+            if (parts.length === 0) {
+              await sendTg(
+                `ℹ️ <b>Формат команды:</b>\n<code>/add @username Имя [Роль]</code>\nили:\n<code>/add 123456789 Имя [Роль]</code>\n\nПример:\n<code>/add @dmitry Дмитрий Логист</code>`
+              );
+              return jsonResponse({ ok: true });
+            }
+
+            const rawTarget = parts[0].replace(/^@/, '').trim();
+            const isId = /^\d+$/.test(rawTarget);
+            const username = isId ? null : rawTarget;
+            const id = isId ? rawTarget : null;
+
+            const restName = parts.slice(1).join(' ') || rawTarget;
+            const role = 'Диспетчер';
+
+            const exists = storeData.authorizedUsers.some(u =>
+              (username && u.username && u.username.toLowerCase() === username.toLowerCase()) ||
+              (id && u.id && String(u.id) === id)
+            );
+
+            if (exists) {
+              await sendTg(`⚠️ Пользователь <b>${escapeHtml(rawTarget)}</b> уже есть в списке доступа.`);
+              return jsonResponse({ ok: true });
+            }
+
+            storeData.authorizedUsers.push({
+              id,
+              username,
+              name: restName,
+              role,
+              isAdmin: false,
+              addedAt: new Date().toISOString()
+            });
+
+            storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers, masterAdminUsername, masterAdminId);
+
+            await fetch(CLOUD_STORE_URL, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(storeData)
+            });
+
+            await sendTg(
+              `✅ <b>Доступ предоставлен!</b>\n\n` +
+              `👤 Пользователь: <b>${username ? '@' + escapeHtml(username) : 'ID ' + escapeHtml(id)}</b>\n` +
+              `🏷 Имя: <b>${escapeHtml(restName)}</b>\n` +
+              `💼 Роль: <b>${escapeHtml(role)}</b>\n\n` +
+              `Теперь сотрудник может открыть диспетчерскую через бот командой /start.`
+            );
+            return jsonResponse({ ok: true });
+          }
+
+          // /remove, /del
+          if (text.startsWith('/remove') || text.startsWith('/del')) {
+            if (!isAdmin) {
+              await sendTg(`⛔ Только главный администратор (@${masterAdminUsername}) может удалять пользователей.`);
+              return jsonResponse({ ok: true });
+            }
+
+            const parts = text.split(/\s+/).slice(1);
+            if (parts.length === 0) {
+              await sendTg(`ℹ️ <b>Формат команды:</b>\n<code>/remove @username</code> или <code>/remove ID</code>`);
+              return jsonResponse({ ok: true });
+            }
+
+            const cleanTarget = parts[0].replace(/^@/, '').toLowerCase().trim();
+            if (cleanTarget === masterAdminUsername || cleanTarget === masterAdminId) {
+              await sendTg(`⚠️ Нельзя отозвать доступ у главного администратора.`);
+              return jsonResponse({ ok: true });
+            }
+
+            const beforeLen = storeData.authorizedUsers.length;
+            storeData.authorizedUsers = storeData.authorizedUsers.filter(u => {
+              const uName = (u.username || '').toLowerCase().replace(/^@/, '');
+              const uId = String(u.id || '');
+              return uName !== cleanTarget && uId !== cleanTarget;
+            });
+
+            if (storeData.authorizedUsers.length === beforeLen) {
+              await sendTg(`❓ Пользователь <b>${escapeHtml(parts[0])}</b> не найден в списке доступа.`);
+              return jsonResponse({ ok: true });
+            }
+
+            storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers, masterAdminUsername, masterAdminId);
+
+            await fetch(CLOUD_STORE_URL, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(storeData)
+            });
+
+            await sendTg(`🗑 Доступ для <b>${escapeHtml(parts[0])}</b> успешно отозван.`);
+            return jsonResponse({ ok: true });
+          }
+
+          // Fallback reply for any other message in private chat
+          if (message.chat.type === 'private') {
+            await sendTg(
+              `🚛 <b>Диспетчерская ASMA Lines</b>\n\n` +
+              `Чтобы открыть рабочее место CRM, нажмите кнопку ниже или введите /start`,
+              {
+                reply_markup: {
+                  inline_keyboard: [
+                    [
+                      {
+                        text: '🚀 Открыть CRM',
+                        web_app: { url: crmAppUrl }
+                      }
+                    ]
+                  ]
+                }
+              }
+            );
+          }
+
+          return jsonResponse({ ok: true });
+        } catch (err) {
+          console.error('Webhook error:', err);
+          return jsonResponse({ ok: false, error: err.message });
+        }
       }
     }
 
@@ -622,25 +763,31 @@ export default {
         }
 
         // Send Telegram notification
-        fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: TELEGRAM_CHAT_ID,
-            text: textHtml,
-            parse_mode: 'HTML',
-            reply_markup: {
-              inline_keyboard: [
-                [
-                  {
-                    text: '📋 Открыть заявку в CRM',
-                    url: `${url.origin}/crm.html`
-                  }
-                ]
-              ]
-            }
-          })
-        }).catch(err => console.error('Worker Telegram send error:', err));
+        if (botToken) {
+          try {
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: textHtml,
+                parse_mode: 'HTML',
+                reply_markup: {
+                  inline_keyboard: [
+                    [
+                      {
+                        text: '📋 Открыть заявку в CRM',
+                        url: `${url.origin}/crm.html`
+                      }
+                    ]
+                  ]
+                }
+              })
+            });
+          } catch (err) {
+            console.error('Worker Telegram send error:', err);
+          }
+        }
 
         // 2. Persist to Cloud CRM Store
         let storeData = { leads: [], deletedIds: [] };
