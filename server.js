@@ -2,9 +2,32 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const DATA_DIR = path.join(__dirname, 'data');
+const LEADS_FILE = path.join(DATA_DIR, 'leads.json');
+const EMPLOYEES_FILE = path.join(DATA_DIR, 'employees.json');
+
+async function readJsonFile(file, fallback = []) {
+  try {
+    const raw = await fs.promises.readFile(file, 'utf8');
+    return JSON.parse(raw);
+  } catch (err) {
+    return fallback;
+  }
+}
+
+async function writeJsonFile(file, data) {
+  try {
+    await fs.promises.mkdir(path.dirname(file), { recursive: true });
+    await fs.promises.writeFile(file, JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Failed to write file:', file, err.message);
+  }
+}
 
 const app = express();
 const PORT = 3000;
@@ -311,16 +334,80 @@ app.post('/api/lead', async (req, res) => {
       `Источник: Форма обратной связи (Контакты)\n`;
   }
 
+  // Save to CRM Database (data/leads.json)
+  let savedLead = null;
+  try {
+    const leads = await readJsonFile(LEADS_FILE, []);
+    const maxNum = leads.reduce((max, l) => {
+      const num = parseInt(l.leadNumber, 10);
+      return !isNaN(num) && num > max ? num : max;
+    }, 100);
+    const newNum = String(maxNum + 1);
+
+    savedLead = {
+      id: 'lead-' + Date.now(),
+      leadNumber: newNum,
+      type: isPartner ? 'partner' : (isCargoOrder ? 'cargo' : 'contact'),
+      category: isPartner ? 'Заявка на сотрудничество' : (isCargoOrder ? 'Заявка на перевозку груза' : 'Заявка на обратную связь'),
+      status: 'new',
+      createdAt: new Date().toISOString(),
+      name: leadData.name,
+      contact: leadData.contact,
+      email: leadData.email,
+      fromCity: req.body.fromCity || '',
+      toCity: req.body.toCity || '',
+      route: routeStr || (leadData.route !== 'Маршрут по запросу' ? leadData.route : 'По согласованию'),
+      distance: leadData.distance || '',
+      vehicle: leadData.vehicle || '',
+      weight: leadData.weight || '',
+      volume: leadData.volume || '',
+      price: leadData.price || '',
+      comment: leadData.comment !== '—' ? leadData.comment : '',
+      assignedTo: null,
+      priority: isCargoOrder ? 'high' : 'normal',
+      notes: [
+        {
+          id: 'n-' + Date.now(),
+          author: 'Система',
+          text: `Заявка поступила с сайта: ${leadData.source}`,
+          time: new Date().toISOString()
+        }
+      ],
+      source: leadData.source
+    };
+
+    leads.unshift(savedLead);
+    await writeJsonFile(LEADS_FILE, leads);
+  } catch (dbErr) {
+    console.error('Failed to persist lead in CRM database:', dbErr.message);
+  }
+
+  const host = req.get('host') || 'localhost:3000';
+  const protocol = req.protocol || 'http';
+  const crmUrl = `${protocol}://${host}/crm.html`;
+
   if (botToken && chatId) {
     try {
+      const tgPayload = {
+        chat_id: chatId,
+        text: textHtml,
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: '📋 Открыть в CRM диспетчера',
+                url: crmUrl
+              }
+            ]
+          ]
+        }
+      };
+
       const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: textHtml,
-          parse_mode: 'HTML'
-        })
+        body: JSON.stringify(tgPayload)
       });
       const tgData = await tgRes.json();
       console.log('Telegram lead notification result:', tgData);
@@ -379,7 +466,256 @@ app.post('/api/lead', async (req, res) => {
     }
   }
 
-  res.json({ success: true, message: 'Заявка успешно принята' });
+  res.json({
+    success: true,
+    message: 'Заявка успешно принята',
+    leadId: savedLead ? savedLead.id : null,
+    leadNumber: savedLead ? savedLead.leadNumber : null
+  });
+});
+
+// ==================== CRM API ROUTES ====================
+
+// GET /api/crm/data - get all leads, employees and stats
+app.get('/api/crm/data', async (req, res) => {
+  try {
+    const leads = await readJsonFile(LEADS_FILE, []);
+    const employees = await readJsonFile(EMPLOYEES_FILE, []);
+
+    // Compute stats
+    const total = leads.length;
+    const newCount = leads.filter(l => l.status === 'new').length;
+    const processingCount = leads.filter(l => l.status === 'processing' || l.status === 'calculation').length;
+    const inTransitCount = leads.filter(l => l.status === 'in_transit').length;
+    const completedCount = leads.filter(l => l.status === 'completed').length;
+
+    let revenueSum = 0;
+    leads.forEach(l => {
+      if (l.status === 'completed' || l.status === 'in_transit') {
+        const p = parseFloat(String(l.price).replace(/[^\d.]/g, ''));
+        if (!isNaN(p)) revenueSum += p;
+      }
+    });
+
+    res.json({
+      success: true,
+      leads,
+      employees,
+      stats: {
+        total,
+        new: newCount,
+        processing: processingCount,
+        inTransit: inTransitCount,
+        completed: completedCount,
+        revenue: revenueSum > 0 ? `${Math.round(revenueSum).toLocaleString('ru-RU')} BYN` : '0 BYN'
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'CRM data retrieval failed: ' + err.message });
+  }
+});
+
+// POST /api/crm/lead - manual lead creation by dispatcher
+app.post('/api/crm/lead', async (req, res) => {
+  try {
+    const leads = await readJsonFile(LEADS_FILE, []);
+    const maxNum = leads.reduce((max, l) => {
+      const num = parseInt(l.leadNumber, 10);
+      return !isNaN(num) && num > max ? num : max;
+    }, 100);
+    const newNum = String(maxNum + 1);
+
+    const newLead = {
+      id: 'lead-' + Date.now(),
+      leadNumber: newNum,
+      type: req.body.type || 'cargo',
+      category: req.body.category || (req.body.type === 'contact' ? 'Заявка на обратную связь' : 'Заявка на перевозку груза'),
+      status: req.body.status || 'new',
+      createdAt: new Date().toISOString(),
+      name: req.body.name || 'Без имени',
+      contact: req.body.contact || 'Не указан',
+      email: req.body.email || '',
+      fromCity: req.body.fromCity || '',
+      toCity: req.body.toCity || '',
+      route: req.body.route || (req.body.fromCity && req.body.toCity ? `${req.body.fromCity} → ${req.body.toCity}` : 'По согласованию'),
+      distance: req.body.distance || '',
+      vehicle: req.body.vehicle || '',
+      weight: req.body.weight || '',
+      volume: req.body.volume || '',
+      price: req.body.price || '',
+      comment: req.body.comment || '',
+      assignedTo: req.body.assignedTo || null,
+      priority: req.body.priority || 'normal',
+      notes: [
+        {
+          id: 'n-' + Date.now(),
+          author: req.body.creatorName || 'Диспетчер',
+          text: 'Заявка создана вручную в CRM',
+          time: new Date().toISOString()
+        }
+      ],
+      source: 'crm_manual'
+    };
+
+    leads.unshift(newLead);
+    await writeJsonFile(LEADS_FILE, leads);
+    res.json({ success: true, lead: newLead });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create lead: ' + err.message });
+  }
+});
+
+// PATCH /api/crm/lead/:id - update lead status, assigned dispatcher, priority or details
+app.patch('/api/crm/lead/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const leads = await readJsonFile(LEADS_FILE, []);
+    const index = leads.findIndex(l => l.id === id);
+    if (index === -1) return res.status(404).json({ error: 'Lead not found' });
+
+    const currentLead = leads[index];
+    const previousStatus = currentLead.status;
+    const previousAssigned = currentLead.assignedTo;
+
+    const updatedLead = {
+      ...currentLead,
+      ...req.body,
+      id: currentLead.id,
+      leadNumber: currentLead.leadNumber
+    };
+
+    // Auto-append audit note if status changed
+    if (req.body.status && req.body.status !== previousStatus) {
+      const statusNames = {
+        new: 'Новая заявка',
+        processing: 'В работе / Звонок',
+        calculation: 'Поиск авто / Расчёт',
+        in_transit: 'В рейсе / Исполнение',
+        completed: 'Завершено / Оплачено',
+        cancelled: 'Отказ / Архив'
+      };
+      updatedLead.notes = updatedLead.notes || [];
+      updatedLead.notes.unshift({
+        id: 'n-' + Date.now(),
+        author: req.body.editorName || 'Диспетчер',
+        text: `Статус изменён: «${statusNames[req.body.status] || req.body.status}»`,
+        time: new Date().toISOString()
+      });
+    }
+
+    // Auto-append audit note if employee assigned
+    if (req.body.assignedTo !== undefined && req.body.assignedTo !== previousAssigned) {
+      const employees = await readJsonFile(EMPLOYEES_FILE, []);
+      const emp = employees.find(e => e.id === req.body.assignedTo);
+      const empName = emp ? emp.name : 'Не назначен';
+      updatedLead.notes = updatedLead.notes || [];
+      updatedLead.notes.unshift({
+        id: 'n-' + Date.now(),
+        author: req.body.editorName || 'Диспетчер',
+        text: `Ответственный сотрудник назначен: ${empName}`,
+        time: new Date().toISOString()
+      });
+    }
+
+    leads[index] = updatedLead;
+    await writeJsonFile(LEADS_FILE, leads);
+    res.json({ success: true, lead: updatedLead });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update lead: ' + err.message });
+  }
+});
+
+// POST /api/crm/lead/:id/note - add a dispatcher note/comment
+app.post('/api/crm/lead/:id/note', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { text, author } = req.body;
+    if (!text || !text.trim()) return res.status(400).json({ error: 'Note text is required' });
+
+    const leads = await readJsonFile(LEADS_FILE, []);
+    const index = leads.findIndex(l => l.id === id);
+    if (index === -1) return res.status(404).json({ error: 'Lead not found' });
+
+    const newNote = {
+      id: 'n-' + Date.now(),
+      author: author || 'Диспетчер',
+      text: text.trim(),
+      time: new Date().toISOString()
+    };
+
+    leads[index].notes = leads[index].notes || [];
+    leads[index].notes.unshift(newNote);
+    await writeJsonFile(LEADS_FILE, leads);
+
+    res.json({ success: true, note: newNote, lead: leads[index] });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to add note: ' + err.message });
+  }
+});
+
+// DELETE /api/crm/lead/:id - delete or archive a lead
+app.delete('/api/crm/lead/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    let leads = await readJsonFile(LEADS_FILE, []);
+    leads = leads.filter(l => l.id !== id);
+    await writeJsonFile(LEADS_FILE, leads);
+    res.json({ success: true, message: 'Заявка удалена' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete lead: ' + err.message });
+  }
+});
+
+// GET /api/crm/employees - get employee list
+app.get('/api/crm/employees', async (req, res) => {
+  try {
+    const employees = await readJsonFile(EMPLOYEES_FILE, []);
+    res.json({ success: true, employees });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/crm/employee - add new employee (dispatcher, driver, logistics manager)
+app.post('/api/crm/employee', async (req, res) => {
+  try {
+    const { name, role, phone, telegram, color } = req.body;
+    if (!name || !name.trim()) return res.status(400).json({ error: 'Имя сотрудника обязательно' });
+
+    const employees = await readJsonFile(EMPLOYEES_FILE, []);
+    const colors = ['#1d4ed8', '#0d9488', '#d97706', '#b91c1c', '#7c3aed', '#059669', '#64748b'];
+    const chosenColor = color || colors[employees.length % colors.length];
+
+    const newEmp = {
+      id: 'emp-' + Date.now(),
+      name: name.trim(),
+      role: role ? role.trim() : 'Диспетчер',
+      phone: phone ? phone.trim() : '',
+      telegram: telegram ? telegram.trim() : '',
+      color: chosenColor,
+      active: true,
+      createdAt: new Date().toISOString()
+    };
+
+    employees.push(newEmp);
+    await writeJsonFile(EMPLOYEES_FILE, employees);
+    res.json({ success: true, employee: newEmp });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to add employee: ' + err.message });
+  }
+});
+
+// DELETE /api/crm/employee/:id - delete employee
+app.delete('/api/crm/employee/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    let employees = await readJsonFile(EMPLOYEES_FILE, []);
+    employees = employees.filter(e => e.id !== id);
+    await writeJsonFile(EMPLOYEES_FILE, employees);
+    res.json({ success: true, message: 'Сотрудник удален' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete employee: ' + err.message });
+  }
 });
 
 // Serve all static files from root directory, supporting clean URLs with .html extension

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CRM Диспетчерская — ASMA Lines</title>
+  <meta name="description" content="Диспетчерская система управления грузоперевозками и заявками клиентов ASMA Lines">
+  <meta name="theme-color" content="#6B1E2D">
+
+  <!-- Telegram WebApp Integration -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Typography & Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/assets/crm.css">
+  <link rel="icon" type="image/svg+xml" href="/assets/brand/logo.svg">
+</head>
+<body class="crm-body">
+
+  <!-- Top Header Navigation -->
+  <header class="crm-header">
+    <div class="crm-header-left">
+      <a href="/" class="crm-brand-logo">
+        <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="40" height="40" rx="8" fill="#6B1E2D"/>
+          <path d="M12 28L20 12L28 28H23.5L20 20.5L16.5 28H12Z" fill="#FAF9F5"/>
+          <path d="M15 25H25" stroke="#FAF9F5" stroke-width="2"/>
+        </svg>
+        <span style="font-weight: 800; font-size: 16px; letter-spacing: -0.5px;">ASMA Lines</span>
+      </a>
+      <span class="crm-brand-badge">CRM Диспетчерская</span>
+    </div>
+
+    <div class="crm-header-right">
+      <!-- Active Dispatcher Switcher -->
+      <div id="current-employee-pill" class="dispatcher-selector-pill" title="Нажмите, чтобы сменить сотрудника">
+        <div class="emp-avatar" style="background-color: #6B1E2D;">АС</div>
+        <span>Диспетчер</span>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <button id="btn-open-employees" class="crm-btn crm-btn-secondary" title="Управление сотрудниками">
+        👥 Сотрудники
+      </button>
+
+      <button id="btn-export-csv" class="crm-btn crm-btn-secondary" title="Экспорт в Excel">
+        📊 Excel (CSV)
+      </button>
+
+      <button id="btn-open-create-lead" class="crm-btn crm-btn-primary">
+        ➕ Новая заявка
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="crm-container">
+
+    <!-- KPI Stats Row -->
+    <div class="crm-stats-row">
+      <div class="crm-stat-card">
+        <span class="crm-stat-label">Всего заявок</span>
+        <span class="crm-stat-value" id="stat-total">0</span>
+      </div>
+      <div class="crm-stat-card" style="border-left: 4px solid #3b82f6;">
+        <span class="crm-stat-label">Новые (требуют звонка)</span>
+        <span class="crm-stat-value" id="stat-new" style="color: #3b82f6;">0</span>
+      </div>
+      <div class="crm-stat-card" style="border-left: 4px solid #f59e0b;">
+        <span class="crm-stat-label">В обработке / Поиск авто</span>
+        <span class="crm-stat-value" id="stat-processing" style="color: #f59e0b;">0</span>
+      </div>
+      <div class="crm-stat-card" style="border-left: 4px solid #06b6d4;">
+        <span class="crm-stat-label">В рейсе (исполнение)</span>
+        <span class="crm-stat-value" id="stat-transit" style="color: #06b6d4;">0</span>
+      </div>
+      <div class="crm-stat-card" style="border-left: 4px solid #10b981;">
+        <span class="crm-stat-label">Оборот в работе</span>
+        <span class="crm-stat-value" id="stat-revenue" style="color: #10b981;">0 BYN</span>
+      </div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="crm-toolbar">
+      <div class="crm-search-box">
+        <span class="crm-search-icon">🔍</span>
+        <input type="text" id="crm-search" class="crm-search-input" placeholder="Поиск по клиенту, телефону, городу или номеру #...">
+      </div>
+
+      <select id="crm-filter-employee" class="crm-select">
+        <option value="all">👥 Все сотрудники</option>
+        <option value="mine">⭐️ Мои заявки</option>
+        <option value="unassigned">⚠️ Не назначены</option>
+      </select>
+
+      <select id="crm-filter-type" class="crm-select">
+        <option value="all">Все категории</option>
+        <option value="cargo">🚛 Перевозки грузов</option>
+        <option value="contact">📩 Обратная связь</option>
+        <option value="partner">🤝 Партнёры</option>
+      </select>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="crm-board-wrapper">
+      <div class="crm-board" id="crm-kanban-board">
+        <!-- Injected dynamically by crm.js -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: Lead Details & Notes -->
+  <div id="lead-modal" class="crm-modal-overlay">
+    <div class="crm-modal">
+      <div class="crm-modal-header">
+        <h3 class="crm-modal-title" id="modal-lead-title">Карточка заявки</h3>
+        <button class="crm-btn-icon crm-modal-close" style="border:none; background:none; font-size:20px;">✕</button>
+      </div>
+      <div class="crm-modal-body" id="modal-lead-content">
+        <!-- Content injected by crm.js -->
+      </div>
+      <div class="crm-modal-footer">
+        <button class="crm-btn crm-btn-secondary crm-modal-close">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Employees & Workload Management -->
+  <div id="employee-modal" class="crm-modal-overlay">
+    <div class="crm-modal" style="max-width: 580px;">
+      <div class="crm-modal-header">
+        <h3 class="crm-modal-title">👥 Сотрудники и диспетчеры</h3>
+        <button class="crm-btn-icon crm-modal-close" style="border:none; background:none; font-size:20px;">✕</button>
+      </div>
+      <div class="crm-modal-body">
+        <div style="font-size: 13px; color: var(--crm-text-muted);">
+          Здесь отображаются ответственные диспетчеры и водители, их активная загрузка и контакты.
+        </div>
+
+        <!-- Employees List -->
+        <div id="employee-list-container" style="display:flex; flex-direction:column; gap:10px;"></div>
+
+        <!-- Add Employee Form -->
+        <div style="border-top: 1px dashed var(--crm-border); padding-top: 14px; margin-top: 8px;">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 10px;">➕ Добавить нового сотрудника</div>
+          <form id="add-employee-form" style="display:flex; flex-direction:column; gap:10px;">
+            <div class="crm-form-row">
+              <input type="text" name="name" class="crm-form-input" placeholder="ФИО сотрудника" required>
+              <input type="text" name="role" class="crm-form-input" placeholder="Должность (Диспетчер / Водитель)" required>
+            </div>
+            <div class="crm-form-row">
+              <input type="text" name="phone" class="crm-form-input" placeholder="Телефон (+375 ...)">
+              <input type="text" name="telegram" class="crm-form-input" placeholder="Telegram (@username)">
+            </div>
+            <div style="display:flex; justify-content:flex-end;">
+              <button type="submit" class="crm-btn crm-btn-primary">Сохранить сотрудника</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="crm-modal-footer">
+        <button class="crm-btn crm-btn-secondary crm-modal-close">Готово</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Create New Lead -->
+  <div id="create-lead-modal" class="crm-modal-overlay">
+    <div class="crm-modal" style="max-width: 620px;">
+      <div class="crm-modal-header">
+        <h3 class="crm-modal-title">➕ Новая заявка в CRM</h3>
+        <button class="crm-btn-icon crm-modal-close" style="border:none; background:none; font-size:20px;">✕</button>
+      </div>
+      <form id="create-lead-form">
+        <div class="crm-modal-body">
+          <div class="crm-form-row">
+            <div class="crm-form-group">
+              <label class="crm-form-label">Тип обращения:</label>
+              <select name="type" class="crm-form-select">
+                <option value="cargo">🚛 Перевозка груза</option>
+                <option value="contact">📩 Консультация / Обратный звонок</option>
+                <option value="partner">🤝 Партнёрство</option>
+              </select>
+            </div>
+            <div class="crm-form-group">
+              <label class="crm-form-label">Приоритет:</label>
+              <select name="priority" class="crm-form-select">
+                <option value="normal">🔵 Обычный</option>
+                <option value="high">🔴 Срочный</option>
+                <option value="low">⚪️ Низкий</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="crm-form-row">
+            <div class="crm-form-group">
+              <label class="crm-form-label">Клиент / Компания:</label>
+              <input type="text" name="name" class="crm-form-input" placeholder="ФИО или название фирмы" required>
+            </div>
+            <div class="crm-form-group">
+              <label class="crm-form-label">Телефон:</label>
+              <input type="text" name="contact" class="crm-form-input" placeholder="+375 (29) ..." required>
+            </div>
+          </div>
+
+          <div class="crm-form-row">
+            <div class="crm-form-group">
+              <label class="crm-form-label">Город погрузки:</label>
+              <input type="text" name="fromCity" class="crm-form-input" placeholder="Напр. Минск">
+            </div>
+            <div class="crm-form-group">
+              <label class="crm-form-label">Город разгрузки:</label>
+              <input type="text" name="toCity" class="crm-form-input" placeholder="Напр. Гомель">
+            </div>
+          </div>
+
+          <div class="crm-form-row">
+            <div class="crm-form-group">
+              <label class="crm-form-label">Транспорт / Вес:</label>
+              <input type="text" name="vehicle" class="crm-form-input" placeholder="Тент 10т / 8.5т">
+            </div>
+            <div class="crm-form-group">
+              <label class="crm-form-label">Ставка / Цена:</label>
+              <input type="text" name="price" class="crm-form-input" placeholder="Напр. 850 BYN">
+            </div>
+          </div>
+
+          <div class="crm-form-group">
+            <label class="crm-form-label">Назначить работника (Выдача):</label>
+            <select name="assignedTo" id="new-lead-assigned" class="crm-form-select">
+              <!-- Dynamically filled with employees -->
+            </select>
+          </div>
+
+          <div class="crm-form-group">
+            <label class="crm-form-label">Комментарий / Детали:</label>
+            <textarea name="comment" class="crm-form-textarea" rows="2" placeholder="Особые требования, температурный режим, рампа..."></textarea>
+          </div>
+        </div>
+        <div class="crm-modal-footer">
+          <button type="button" class="crm-btn crm-btn-secondary crm-modal-close">Отмена</button>
+          <button type="submit" class="crm-btn crm-btn-primary">Создать заявку</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- App Script -->
+  <script src="/assets/crm.js"></script>
+</body>
+</html>

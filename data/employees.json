@@ -1,0 +1,42 @@
+[
+  {
+    "id": "emp-1",
+    "name": "Иван Ефимович",
+    "role": "Руководитель / Старший диспетчер",
+    "phone": "+375 (29) 123-45-01",
+    "telegram": "@ivan_asma",
+    "color": "#1d4ed8",
+    "active": true,
+    "createdAt": "2026-09-01T08:00:00.000Z"
+  },
+  {
+    "id": "emp-2",
+    "name": "Ольга Смирнова",
+    "role": "Диспетчер-логист",
+    "phone": "+375 (29) 234-56-02",
+    "telegram": "@olga_dispatch",
+    "color": "#0d9488",
+    "active": true,
+    "createdAt": "2026-09-05T09:00:00.000Z"
+  },
+  {
+    "id": "emp-3",
+    "name": "Дмитрий Прокопенко",
+    "role": "Диспетчер по междугороду",
+    "phone": "+375 (29) 345-67-03",
+    "telegram": "@dmitry_logist",
+    "color": "#d97706",
+    "active": true,
+    "createdAt": "2026-09-10T10:00:00.000Z"
+  },
+  {
+    "id": "emp-4",
+    "name": "Александр Ковалёв",
+    "role": "Водитель-экспедитор (МАЗ 10т)",
+    "phone": "+375 (29) 456-78-04",
+    "telegram": "@kovalev_trans",
+    "color": "#64748b",
+    "active": true,
+    "createdAt": "2026-09-12T11:00:00.000Z"
+  }
+]
