@@ -110,11 +110,78 @@ export async function onRequestPost(context) {
     const chatId = context.env.TELEGRAM_CHAT_ID || '-5230752915';
 
     if (botToken && chatId) {
-      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-        method: 'POST',
+      try {
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: textHtml,
+            parse_mode: 'HTML',
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: '📋 Открыть заявку в CRM',
+                    url: 'https://asma-lines-site.efimovich-w.workers.dev/crm.html'
+                  }
+                ]
+              ]
+            }
+          })
+        });
+      } catch (tgErr) {
+        console.warn('Telegram notification failed:', tgErr.message);
+      }
+    }
+
+    // 2. Persist lead into CRM Cloud Store (accessible by Telegram Web App)
+    try {
+      const storeRes = await fetch('https://extendsclass.com/api/json-storage/bin/becdbda');
+      let storeData = { leads: [] };
+      if (storeRes.ok) {
+        storeData = await storeRes.json();
+      }
+      if (!Array.isArray(storeData.leads)) storeData.leads = [];
+
+      const newLeadObj = {
+        id: 'lead-' + Date.now(),
+        leadNumber: String(storeData.leads.length + 101),
+        type: isPartner ? 'partner' : (isCargoOrder ? 'cargo' : 'contact'),
+        category: isPartner ? 'Сотрудничество' : (isCargoOrder ? 'Перевозка груза' : 'Обратная связь'),
+        status: 'new',
+        createdAt: new Date().toISOString(),
+        name: leadData.name,
+        contact: leadData.contact,
+        email: leadData.email,
+        route: routeStr || 'Маршрут по запросу',
+        distance: leadData.distance || '',
+        vehicle: leadData.vehicle || '',
+        weight: leadData.weight || '',
+        volume: leadData.volume || '',
+        price: leadData.price || '',
+        comment: leadData.comment !== '—' ? leadData.comment : '',
+        dispatcher: 'Иван',
+        notes: [
+          {
+            id: 'n-' + Date.now(),
+            author: 'Система',
+            text: `Заявка с сайта (${leadData.source})`,
+            time: new Date().toISOString()
+          }
+        ],
+        source: leadData.source
+      };
+
+      storeData.leads.unshift(newLeadObj);
+
+      await fetch('https://extendsclass.com/api/json-storage/bin/becdbda', {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text: textHtml, parse_mode: 'HTML' })
+        body: JSON.stringify(storeData)
       });
+    } catch (dbErr) {
+      console.warn('CRM cloud store sync error:', dbErr.message);
     }
 
     // 2. Send to PlanFix Webhook if PLANFIX_WEBHOOK_URL is configured

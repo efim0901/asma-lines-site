@@ -378,6 +378,14 @@ app.post('/api/lead', async (req, res) => {
 
     leads.unshift(savedLead);
     await writeJsonFile(LEADS_FILE, leads);
+
+    try {
+      await fetch(CRM_STORAGE_BIN, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leads })
+      });
+    } catch (binErr) {}
   } catch (dbErr) {
     console.error('Failed to persist lead in CRM database:', dbErr.message);
   }
@@ -475,43 +483,51 @@ app.post('/api/lead', async (req, res) => {
 });
 
 // ==================== CRM API ROUTES ====================
+const CRM_STORAGE_BIN = 'https://extendsclass.com/api/json-storage/bin/becdbda';
 
-// GET /api/crm/data - get all leads, employees and stats
-app.get('/api/crm/data', async (req, res) => {
+// GET /api/crm and /api/crm/data
+app.get(['/api/crm', '/api/crm/data'], async (req, res) => {
   try {
-    const leads = await readJsonFile(LEADS_FILE, []);
-    const employees = await readJsonFile(EMPLOYEES_FILE, []);
-
-    // Compute stats
-    const total = leads.length;
-    const newCount = leads.filter(l => l.status === 'new').length;
-    const processingCount = leads.filter(l => l.status === 'processing' || l.status === 'calculation').length;
-    const inTransitCount = leads.filter(l => l.status === 'in_transit').length;
-    const completedCount = leads.filter(l => l.status === 'completed').length;
-
-    let revenueSum = 0;
-    leads.forEach(l => {
-      if (l.status === 'completed' || l.status === 'in_transit') {
-        const p = parseFloat(String(l.price).replace(/[^\d.]/g, ''));
-        if (!isNaN(p)) revenueSum += p;
+    let leads = [];
+    try {
+      const storeRes = await fetch(CRM_STORAGE_BIN);
+      if (storeRes.ok) {
+        const storeData = await storeRes.json();
+        if (Array.isArray(storeData.leads)) leads = storeData.leads;
       }
-    });
+    } catch (e) {}
+
+    if (leads.length === 0) {
+      leads = await readJsonFile(LEADS_FILE, []);
+    }
 
     res.json({
       success: true,
       leads,
-      employees,
-      stats: {
-        total,
-        new: newCount,
-        processing: processingCount,
-        inTransit: inTransitCount,
-        completed: completedCount,
-        revenue: revenueSum > 0 ? `${Math.round(revenueSum).toLocaleString('ru-RU')} BYN` : '0 BYN'
-      }
+      user: { name: 'Иван', username: 'plombit', role: 'Диспетчер' }
     });
   } catch (err) {
     res.status(500).json({ error: 'CRM data retrieval failed: ' + err.message });
+  }
+});
+
+// POST /api/crm - update leads list
+app.post('/api/crm', async (req, res) => {
+  try {
+    const { leads } = req.body;
+    if (Array.isArray(leads)) {
+      await writeJsonFile(LEADS_FILE, leads);
+      try {
+        await fetch(CRM_STORAGE_BIN, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ leads })
+        });
+      } catch (e) {}
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

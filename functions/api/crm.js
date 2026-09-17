@@ -1,46 +1,8 @@
 // Cloudflare Pages Worker for CRM operations (/api/crm)
-
-const DEFAULT_EMPLOYEES = [
-  {
-    id: "emp-1",
-    name: "Иван Ефимович",
-    role: "Руководитель / Старший диспетчер",
-    phone: "+375 (29) 123-45-01",
-    telegram: "@ivan_asma",
-    color: "#1d4ed8",
-    active: true
-  },
-  {
-    id: "emp-2",
-    name: "Ольга Смирнова",
-    role: "Диспетчер-логист",
-    phone: "+375 (29) 234-56-02",
-    telegram: "@olga_dispatch",
-    color: "#0d9488",
-    active: true
-  },
-  {
-    id: "emp-3",
-    name: "Дмитрий Прокопенко",
-    role: "Диспетчер по междугороду",
-    phone: "+375 (29) 345-67-03",
-    telegram: "@dmitry_logist",
-    color: "#d97706",
-    active: true
-  },
-  {
-    id: "emp-4",
-    name: "Александр Ковалёв",
-    role: "Водитель-экспедитор (МАЗ 10т)",
-    phone: "+375 (29) 456-78-04",
-    telegram: "@kovalev_trans",
-    color: "#64748b",
-    active: true
-  }
-];
+const CLOUD_STORE_URL = 'https://extendsclass.com/api/json-storage/bin/becdbda';
 
 export async function onRequest(context) {
-  const { request, env } = context;
+  const { request } = context;
   const url = new URL(request.url);
 
   // Handle CORS preflight
@@ -48,7 +10,7 @@ export async function onRequest(context) {
     return new Response(null, {
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+        'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       }
     });
@@ -60,23 +22,133 @@ export async function onRequest(context) {
   };
 
   try {
+    // 1. GET - Return leads and active user (Ivan only)
     if (request.method === 'GET') {
-      // In Cloudflare Workers, return default template structure
-      // The frontend crm.js merges this with its local persistent indexedDB / localStorage cache
+      let leads = [];
+      try {
+        const storeRes = await fetch(CLOUD_STORE_URL);
+        if (storeRes.ok) {
+          const storeData = await storeRes.json();
+          if (Array.isArray(storeData.leads)) leads = storeData.leads;
+        }
+      } catch (err) {
+        console.warn('Failed to fetch from cloud store:', err.message);
+      }
+
       return new Response(JSON.stringify({
         success: true,
-        source: 'cloudflare_worker',
-        employees: DEFAULT_EMPLOYEES
+        leads: leads,
+        user: {
+          name: "Иван",
+          role: "Диспетчер",
+          username: "plombit"
+        }
       }), { headers: corsHeaders });
     }
 
-    if (request.method === 'POST') {
+    // 2. POST / PUT / PATCH - Update or Create lead
+    if (request.method === 'POST' || request.method === 'PATCH' || request.method === 'PUT') {
       const body = await request.json().catch(() => ({}));
-      return new Response(JSON.stringify({
-        success: true,
-        received: true,
-        data: body
-      }), { headers: corsHeaders });
+      const action = body.action || (url.pathname.includes('status') ? 'update_status' : (url.pathname.includes('note') ? 'add_note' : 'upsert'));
+
+      let storeData = { leads: [] };
+      try {
+        const storeRes = await fetch(CLOUD_STORE_URL);
+        if (storeRes.ok) storeData = await storeRes.json();
+      } catch (err) {}
+      if (!Array.isArray(storeData.leads)) storeData.leads = [];
+
+      if (action === 'update_status' && body.leadId) {
+        const lead = storeData.leads.find(l => l.id === body.leadId);
+        if (lead) {
+          lead.status = body.status;
+          if (!lead.notes) lead.notes = [];
+          lead.notes.unshift({
+            id: 'n-' + Date.now(),
+            author: 'Иван',
+            text: `Статус изменён на: ${body.statusLabel || body.status}`,
+            time: new Date().toISOString()
+          });
+        }
+      } else if (action === 'add_note' && body.leadId) {
+        const lead = storeData.leads.find(l => l.id === body.leadId);
+        if (lead) {
+          if (!lead.notes) lead.notes = [];
+          lead.notes.unshift({
+            id: 'n-' + Date.now(),
+            author: body.author || 'Иван',
+            text: body.text || '',
+            time: new Date().toISOString()
+          });
+        }
+      } else if (action === 'create_lead') {
+        const newLead = {
+          id: 'lead-' + Date.now(),
+          leadNumber: String(storeData.leads.length + 101),
+          type: body.type || 'cargo',
+          category: body.type === 'cargo' ? 'Перевозка груза' : (body.type === 'contact' ? 'Обратная связь' : 'Сотрудничество'),
+          status: 'new',
+          createdAt: new Date().toISOString(),
+          name: body.name || 'Клиент',
+          contact: body.contact || '',
+          email: body.email || '',
+          route: (body.fromCity && body.toCity) ? `${body.fromCity} → ${body.toCity}` : (body.route || 'Маршрут по запросу'),
+          distance: body.distance || '',
+          vehicle: body.vehicle || '',
+          weight: body.weight || '',
+          volume: body.volume || '',
+          price: body.price || '',
+          comment: body.comment || '',
+          dispatcher: 'Иван',
+          notes: [
+            {
+              id: 'n-' + Date.now(),
+              author: 'Иван',
+              text: 'Создано вручную диспетчером',
+              time: new Date().toISOString()
+            }
+          ],
+          source: 'manual_crm'
+        };
+        storeData.leads.unshift(newLead);
+      } else if (body.leadId && body.lead) {
+        // Direct lead update
+        const idx = storeData.leads.findIndex(l => l.id === body.leadId);
+        if (idx >= 0) {
+          storeData.leads[idx] = { ...storeData.leads[idx], ...body.lead };
+        }
+      }
+
+      // Save back to cloud store
+      await fetch(CLOUD_STORE_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(storeData)
+      });
+
+      return new Response(JSON.stringify({ success: true, leads: storeData.leads }), { headers: corsHeaders });
+    }
+
+    // 3. DELETE - Delete lead
+    if (request.method === 'DELETE') {
+      const urlParts = url.pathname.split('/');
+      const leadId = urlParts[urlParts.length - 1];
+
+      let storeData = { leads: [] };
+      try {
+        const storeRes = await fetch(CLOUD_STORE_URL);
+        if (storeRes.ok) storeData = await storeRes.json();
+      } catch (err) {}
+      if (Array.isArray(storeData.leads)) {
+        storeData.leads = storeData.leads.filter(l => l.id !== leadId);
+        await fetch(CLOUD_STORE_URL, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(storeData)
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true, leads: storeData.leads }), { headers: corsHeaders });
     }
 
     return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
