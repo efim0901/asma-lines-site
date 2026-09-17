@@ -514,18 +514,18 @@ app.get(['/api/crm', '/api/crm/data'], async (req, res) => {
 // POST /api/crm - update leads list
 app.post('/api/crm', async (req, res) => {
   try {
-    const { leads } = req.body;
+    const { leads, deletedIds } = req.body;
     if (Array.isArray(leads)) {
       await writeJsonFile(LEADS_FILE, leads);
       try {
         await fetch(CRM_STORAGE_BIN, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ leads })
+          body: JSON.stringify({ leads, deletedIds: deletedIds || [] })
         });
       } catch (e) {}
     }
-    res.json({ success: true });
+    res.json({ success: true, leads });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

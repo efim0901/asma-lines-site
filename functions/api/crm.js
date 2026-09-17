@@ -25,11 +25,16 @@ export async function onRequest(context) {
     // 1. GET - Return leads and active user (Ivan only)
     if (request.method === 'GET') {
       let leads = [];
+      let deletedIds = [];
       try {
         const storeRes = await fetch(CLOUD_STORE_URL);
         if (storeRes.ok) {
           const storeData = await storeRes.json();
-          if (Array.isArray(storeData.leads)) leads = storeData.leads;
+          if (Array.isArray(storeData.deletedIds)) deletedIds = storeData.deletedIds;
+          if (Array.isArray(storeData.leads)) {
+            const delSet = new Set(deletedIds);
+            leads = storeData.leads.filter(l => !delSet.has(l.id));
+          }
         }
       } catch (err) {
         console.warn('Failed to fetch from cloud store:', err.message);
@@ -38,6 +43,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({
         success: true,
         leads: leads,
+        deletedIds: deletedIds,
         user: {
           name: "Иван",
           role: "Диспетчер",
@@ -58,7 +64,10 @@ export async function onRequest(context) {
       } catch (err) {}
       if (!Array.isArray(storeData.leads)) storeData.leads = [];
 
-      if (action === 'update_status' && body.leadId) {
+      if (action === 'sync' && Array.isArray(body.leads)) {
+        storeData.leads = body.leads;
+        if (Array.isArray(body.deletedIds)) storeData.deletedIds = body.deletedIds;
+      } else if (action === 'update_status' && body.leadId) {
         const lead = storeData.leads.find(l => l.id === body.leadId);
         if (lead) {
           lead.status = body.status;

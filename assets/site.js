@@ -688,6 +688,10 @@ async function syncLeadToCrmCloud(payload) {
       data = await res.json();
     }
     if (!Array.isArray(data.leads)) data.leads = [];
+    if (Array.isArray(data.deletedIds) && data.deletedIds.length > 0) {
+      const delSet = new Set(data.deletedIds);
+      data.leads = data.leads.filter(l => !delSet.has(l.id));
+    }
 
     const isPartner = payload.source === 'website_partners' || Boolean(payload.company);
     const isCargo = !isPartner && Boolean(

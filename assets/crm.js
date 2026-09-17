@@ -9,6 +9,7 @@
   // Constants & Storage Config
   const CLOUD_FALLBACK_URL = 'https://extendsclass.com/api/json-storage/bin/becdbda';
   const CACHE_KEY = 'asma_crm_leads_v2';
+  const DELETED_KEY = 'asma_crm_deleted_leads_v1';
   const OPERATOR = { name: 'Иван', username: 'plombit', role: 'Диспетчер' };
 
   // Telegram WebApp Setup
@@ -24,6 +25,7 @@
 
   // App State
   let leads = [];
+  let deletedLeadIds = new Set();
   let currentFilter = 'new'; // 'new' | 'processing' | 'transit' | 'completed' | 'all'
   let searchQuery = '';
 
@@ -52,6 +54,7 @@
   init();
 
   async function init() {
+    loadDeletedIds();
     loadCachedLeads();
     setupEventListeners();
     await fetchLeads(false);
@@ -62,19 +65,41 @@
     }, 10000);
   }
 
+  function loadDeletedIds() {
+    try {
+      const raw = localStorage.getItem(DELETED_KEY);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) {
+          deletedLeadIds = new Set(arr);
+        }
+      }
+    } catch (e) {}
+  }
+
+  function saveDeletedIds() {
+    try {
+      localStorage.setItem(DELETED_KEY, JSON.stringify(Array.from(deletedLeadIds)));
+    } catch (e) {}
+  }
+
   function loadCachedLeads() {
     try {
       const raw = localStorage.getItem(CACHE_KEY);
       if (raw) {
-        leads = JSON.parse(raw);
-        render();
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          leads = parsed.filter(l => !deletedLeadIds.has(l.id));
+          render();
+        }
       }
     } catch (e) {}
   }
 
   function saveCache(data) {
     try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+      const filtered = (data || []).filter(l => !deletedLeadIds.has(l.id));
+      localStorage.setItem(CACHE_KEY, JSON.stringify(filtered));
     } catch (e) {}
   }
 
@@ -95,20 +120,30 @@
       const res = await fetch('/api/crm' + cacheBuster, { cache: 'no-store' });
       if (res.ok) {
         const json = await res.json();
-        if (Array.isArray(json.leads) && json.leads.length > 0) fetched = json.leads;
+        if (Array.isArray(json.deletedIds)) {
+          json.deletedIds.forEach(id => deletedLeadIds.add(id));
+          saveDeletedIds();
+        }
+        if (Array.isArray(json.leads)) {
+          fetched = json.leads;
+        }
       }
     } catch (e) {}
 
     // 2. Direct cloud storage (always with cache buster for Telegram Webview)
-    if (!fetched) {
-      try {
-        const cloudRes = await fetch(CLOUD_FALLBACK_URL + cacheBuster, { cache: 'no-store' });
-        if (cloudRes.ok) {
-          const cloudJson = await cloudRes.json();
-          if (Array.isArray(cloudJson.leads)) fetched = cloudJson.leads;
+    try {
+      const cloudRes = await fetch(CLOUD_FALLBACK_URL + cacheBuster, { cache: 'no-store' });
+      if (cloudRes.ok) {
+        const cloudJson = await cloudRes.json();
+        if (Array.isArray(cloudJson.deletedIds)) {
+          cloudJson.deletedIds.forEach(id => deletedLeadIds.add(id));
+          saveDeletedIds();
         }
-      } catch (e) {}
-    }
+        if (fetched === null && Array.isArray(cloudJson.leads)) {
+          fetched = cloudJson.leads;
+        }
+      }
+    } catch (e) {}
 
     if (btnRefresh) {
       setTimeout(() => { btnRefresh.style.transform = 'none'; }, 300);
@@ -116,15 +151,16 @@
 
     feedLoadingEl.style.display = 'none';
 
-    if (fetched) {
+    if (fetched !== null) {
+      const validLeads = fetched.filter(l => !deletedLeadIds.has(l.id));
       const prevCount = leads.length;
-      leads = fetched;
+      leads = validLeads;
       saveCache(leads);
       render();
 
       if (isUserRefresh) {
         showToast(`Заявки обновлены (${leads.length})`);
-      } else if (prevCount > 0 && fetched.length > prevCount) {
+      } else if (prevCount > 0 && validLeads.length > prevCount) {
         // New lead arrived in background
         showToast('🔔 Новая заявка поступила!');
         if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
@@ -137,24 +173,33 @@
   // Sync back to cloud storage
   async function syncLeadsToCloud() {
     saveCache(leads);
+    saveDeletedIds();
     renderCounts();
 
+    const payload = {
+      leads,
+      deletedIds: Array.from(deletedLeadIds)
+    };
+
+    // 1. Always directly save to Cloud Storage (guaranteed for Cloudflare Pages / Telegram WebApp)
+    try {
+      await fetch(CLOUD_FALLBACK_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.warn('Cloud fallback sync error:', err);
+    }
+
+    // 2. Also try local backend API
     try {
       await fetch('/api/crm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'sync', leads })
+        body: JSON.stringify({ action: 'sync', ...payload })
       });
-    } catch (e) {
-      // Direct PUT to cloud bin as fallback
-      try {
-        await fetch(CLOUD_FALLBACK_URL, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ leads })
-        });
-      } catch (err) {}
-    }
+    } catch (e) {}
   }
 
   // Event Listeners Setup
@@ -336,8 +381,12 @@
       cardEl.style.transform = 'scale(0.95)';
     }
 
-    // Filter out from memory
+    // Filter out from memory and register as permanently deleted
+    deletedLeadIds.add(leadId);
+    saveDeletedIds();
+
     leads = leads.filter(l => l.id !== leadId);
+    saveCache(leads);
 
     if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
     showToast(`🗑️ Заявка #${leadNum} удалена навсегда`);
