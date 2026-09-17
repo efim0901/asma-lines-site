@@ -916,3 +916,228 @@ body {
   transform: translateX(-50%) translateY(0);
   opacity: 1;
 }
+
+/* Access Gate Screen */
+.access-gate-container {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg-canvas, #0B0F17);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.access-gate-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--bg-card, #121824);
+  border: 1px solid var(--border-color, #1F2937);
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+
+.access-gate-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: inline-block;
+  animation: pulse 2s infinite ease-in-out;
+}
+
+.access-gate-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #F8FAFC;
+  margin-bottom: 10px;
+}
+
+.access-gate-desc {
+  font-size: 14px;
+  color: #94A3B8;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.access-gate-user-badge {
+  background: #1A2234;
+  border: 1px solid #334155;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.user-chip-label {
+  color: #94A3B8;
+}
+
+.user-chip-val {
+  color: #E2E8F0;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+}
+
+.access-gate-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-tg-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #24A1DE;
+  color: #FFFFFF;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.btn-tg-primary:hover {
+  background: #1B8BBE;
+}
+
+.gate-hint {
+  font-size: 12px;
+  color: #64748B;
+  margin-top: 6px;
+}
+
+/* Modal Wide & Access Management */
+.modal-card-wide {
+  max-width: 580px;
+}
+
+.access-add-box {
+  background: #1A2234;
+  border: 1px solid #283548;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.access-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #E2E8F0;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.access-inline-form .form-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 500px) {
+  .access-inline-form .form-row-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.access-inline-form select {
+  height: 38px;
+  background: #0B0F17;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  color: #F1F5F9;
+  padding: 0 8px;
+  font-size: 13px;
+  width: 100%;
+}
+
+.access-users-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.access-user-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #161F2E;
+  border: 1px solid #283548;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.access-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.access-user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #F8FAFC;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.access-user-meta {
+  font-size: 11px;
+  color: #94A3B8;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.access-user-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #6B1E2D;
+  color: #FAF9F5;
+  font-weight: 600;
+}
+
+.btn-remove-user {
+  background: transparent;
+  border: 1px solid #475569;
+  color: #EF4444;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-remove-user:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #EF4444;
+}
+
+.access-bot-info {
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: #0F172A;
+  border: 1px solid #1E293B;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #94A3B8;
+  line-height: 1.6;
+}
+
+.access-bot-info code {
+  color: #38BDF8;
+  background: #1E293B;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}

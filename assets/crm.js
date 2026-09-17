@@ -10,7 +10,27 @@
   const CLOUD_FALLBACK_URL = 'https://json.extendsclass.com/bin/becdbda';
   const CACHE_KEY = 'asma_crm_leads_v2';
   const DELETED_KEY = 'asma_crm_deleted_leads_v1';
-  const OPERATOR = { name: 'Иван', username: 'plombit', role: 'Диспетчер' };
+  const MASTER_ADMIN_USERNAME = 'plombit';
+  const MASTER_ADMIN_ID = '1014012851';
+
+  let authorizedUsers = [
+    {
+      id: '1014012851',
+      username: 'plombit',
+      name: 'Иван Ефимович',
+      role: 'Главный администратор',
+      isAdmin: true,
+      addedAt: '2026-09-17T10:00:00.000Z'
+    }
+  ];
+
+  let currentOperator = {
+    name: 'Иван',
+    username: 'plombit',
+    id: '1014012851',
+    role: 'Главный диспетчер',
+    isAdmin: true
+  };
 
   // Telegram WebApp Setup
   const tg = window.Telegram?.WebApp;
@@ -28,6 +48,7 @@
   let deletedLeadIds = new Set();
   let currentFilter = 'new'; // 'new' | 'processing' | 'transit' | 'completed' | 'all'
   let searchQuery = '';
+  let isAuthorized = false;
 
   // DOM Elements
   const leadsListEl = document.getElementById('leads-list');
@@ -42,6 +63,16 @@
   const modalAddLead = document.getElementById('modal-add-lead');
   const formNewLead = document.getElementById('form-new-lead');
   const toastEl = document.getElementById('toast');
+  const operatorNameDisplay = document.getElementById('operator-name-display');
+  const btnAccessMgmt = document.getElementById('btn-access-mgmt');
+  const modalAccessMgmt = document.getElementById('modal-access-mgmt');
+  const accessGateScreen = document.getElementById('access-gate-screen');
+  const gateTitle = document.getElementById('gate-title');
+  const gateDesc = document.getElementById('gate-desc');
+  const gateUserInfo = document.getElementById('gate-user-info');
+  const gateUserVal = document.getElementById('gate-user-val');
+  const accessUsersList = document.getElementById('access-users-list');
+  const formAddAccessUser = document.getElementById('form-add-access-user');
 
   // Count Elements
   const countNewEl = document.getElementById('count-new');
@@ -57,12 +88,120 @@
     loadDeletedIds();
     loadCachedLeads();
     setupEventListeners();
-    await fetchLeads(false);
 
-    // Auto-poll in background every 10 seconds for real-time dispatching
-    setInterval(() => {
-      fetchLeads(false);
-    }, 10000);
+    // Check Access First
+    await checkAuthorization();
+
+    if (isAuthorized) {
+      await fetchLeads(false);
+
+      // Auto-poll in background every 10 seconds for real-time dispatching
+      setInterval(() => {
+        fetchLeads(false);
+      }, 10000);
+    }
+  }
+
+  async function checkAuthorization() {
+    // 1. Fetch authorized users list from server / cloud
+    try {
+      const res = await fetch('/api/crm/access?_t=' + Date.now(), { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.users) && data.users.length > 0) {
+          authorizedUsers = data.users;
+        }
+      } else {
+        const cloudRes = await fetch(CLOUD_FALLBACK_URL + '?_t=' + Date.now(), { cache: 'no-store' });
+        if (cloudRes.ok) {
+          const cloudData = await cloudRes.json();
+          if (Array.isArray(cloudData.authorizedUsers) && cloudData.authorizedUsers.length > 0) {
+            authorizedUsers = cloudData.authorizedUsers;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Access check fetch notice:', e);
+    }
+
+    // 2. Identify Telegram user
+    const tgUser = tg?.initDataUnsafe?.user;
+    const urlParams = new URLSearchParams(window.location.search);
+    const devAuth = urlParams.get('auth');
+
+    if (tgUser) {
+      const tgUsername = (tgUser.username || '').toLowerCase().replace(/^@/, '');
+      const tgId = String(tgUser.id || '');
+      const tgFullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || tgUsername || 'Диспетчер';
+
+      // Check if master admin or in authorized list
+      const isMaster = tgUsername === MASTER_ADMIN_USERNAME || tgId === MASTER_ADMIN_ID;
+      const matched = authorizedUsers.find(u => {
+        const uName = (u.username || '').toLowerCase().replace(/^@/, '');
+        const uId = String(u.id || '');
+        return (uName && uName === tgUsername) || (uId && uId === tgId);
+      });
+
+      if (isMaster || matched) {
+        isAuthorized = true;
+        currentOperator = {
+          name: matched?.name || tgFullName || 'Иван',
+          username: tgUsername || 'plombit',
+          id: tgId,
+          role: matched?.role || (isMaster ? 'Главный администратор' : 'Диспетчер'),
+          isAdmin: isMaster || Boolean(matched?.isAdmin)
+        };
+        grantAccessUI();
+      } else {
+        // In Telegram but not in access list
+        isAuthorized = false;
+        denyAccessUI({
+          title: 'Доступ ограничен',
+          desc: 'Ваш Telegram-профиль не найден в списке диспетчеров ASMA Lines. Доступ к заявкам и рейсам закрыт.',
+          handle: tgUsername ? `@${tgUsername} (ID: ${tgId})` : `ID: ${tgId}`
+        });
+      }
+    } else if (devAuth === 'plombit' || window.location.hostname === 'localhost' || window.location.hostname.includes('run.app')) {
+      // Allow preview / dev testing
+      isAuthorized = true;
+      currentOperator = {
+        name: 'Иван Ефимович',
+        username: 'plombit',
+        id: '1014012851',
+        role: 'Главный администратор',
+        isAdmin: true
+      };
+      grantAccessUI();
+    } else {
+      // Outside Telegram in public browser
+      isAuthorized = false;
+      denyAccessUI({
+        title: 'Закрытая диспетчерская',
+        desc: 'Диспетчерская система управления заявками и рейсами ASMA Lines доступна исключительно через официальный Telegram-бот для авторизованных сотрудников.',
+        handle: null
+      });
+    }
+  }
+
+  function grantAccessUI() {
+    if (accessGateScreen) accessGateScreen.style.display = 'none';
+    if (operatorNameDisplay) operatorNameDisplay.textContent = currentOperator.name;
+    if (btnAccessMgmt) {
+      btnAccessMgmt.style.display = currentOperator.isAdmin ? 'inline-flex' : 'none';
+    }
+  }
+
+  function denyAccessUI({ title, desc, handle }) {
+    if (feedLoadingEl) feedLoadingEl.style.display = 'none';
+    if (accessGateScreen) {
+      accessGateScreen.style.display = 'flex';
+      if (gateTitle) gateTitle.textContent = title;
+      if (gateDesc) gateDesc.textContent = desc;
+      if (handle && gateUserInfo && gateUserVal) {
+        gateUserInfo.style.display = 'flex';
+        gateUserVal.textContent = handle;
+      }
+    }
   }
 
   function loadDeletedIds() {
@@ -238,12 +377,28 @@
     // Refresh
     btnRefresh.addEventListener('click', () => fetchLeads(true));
 
+    // Access Management Modal (Admin only)
+    if (btnAccessMgmt) {
+      btnAccessMgmt.addEventListener('click', openAccessModal);
+    }
+    if (formAddAccessUser) {
+      formAddAccessUser.addEventListener('submit', handleAddAccessUser);
+    }
+    if (modalAccessMgmt) {
+      modalAccessMgmt.addEventListener('click', (e) => {
+        if (e.target === modalAccessMgmt) closeAccessModal();
+      });
+    }
+
     // Modals
     btnAddLead.addEventListener('click', openAddModal);
     btnEmptyAdd.addEventListener('click', openAddModal);
 
     document.querySelectorAll('.modal-close-trigger').forEach(btn => {
-      btn.addEventListener('click', closeAddModal);
+      btn.addEventListener('click', () => {
+        closeAddModal();
+        closeAccessModal();
+      });
     });
 
     modalAddLead.addEventListener('click', (e) => {
@@ -253,6 +408,129 @@
     // New Lead Form Submit
     formNewLead.addEventListener('submit', handleCreateLead);
   }
+
+  function openAccessModal() {
+    if (!modalAccessMgmt) return;
+    renderAccessUsersList();
+    modalAccessMgmt.classList.add('open');
+    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+  }
+
+  function closeAccessModal() {
+    if (!modalAccessMgmt) return;
+    modalAccessMgmt.classList.remove('open');
+    if (formAddAccessUser) formAddAccessUser.reset();
+  }
+
+  function renderAccessUsersList() {
+    if (!accessUsersList) return;
+    if (authorizedUsers.length === 0) {
+      accessUsersList.innerHTML = '<div style="color:#64748B;font-size:12px;text-align:center;padding:12px;">Список пуст</div>';
+      return;
+    }
+
+    accessUsersList.innerHTML = authorizedUsers.map(u => {
+      const isMaster = (u.username && u.username.toLowerCase() === MASTER_ADMIN_USERNAME) ||
+                       (u.id && String(u.id) === MASTER_ADMIN_ID) ||
+                       Boolean(u.isAdmin);
+      const handleDisplay = u.username ? `@${u.username}` : `ID: ${u.id}`;
+      const targetVal = u.username || u.id;
+
+      return `
+        <div class="access-user-item">
+          <div class="access-user-info">
+            <div class="access-user-name">
+              <span>${escapeHtml(u.name || 'Диспетчер')}</span>
+              ${isMaster ? '<span class="access-user-badge">⭐ Владелец</span>' : `<span style="font-size:11px;color:#94A3B8;">(${escapeHtml(u.role || 'Диспетчер')})</span>`}
+            </div>
+            <div class="access-user-meta">${handleDisplay}</div>
+          </div>
+          ${!isMaster ? `
+            <button class="btn-remove-user" onclick="removeAccessUser('${escapeHtml(targetVal)}')">
+              Отозвать
+            </button>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function handleAddAccessUser(e) {
+    e.preventDefault();
+    const fd = new FormData(formAddAccessUser);
+    const rawHandle = (fd.get('userHandle') || '').trim();
+    const name = (fd.get('userName') || '').trim();
+    const role = (fd.get('userRole') || 'Диспетчер').trim();
+
+    if (!rawHandle) {
+      showToast('⚠️ Укажите @username или Telegram ID');
+      return;
+    }
+
+    const isId = /^\d+$/.test(rawHandle.replace(/^@/, ''));
+    const userPayload = {
+      id: isId ? rawHandle.replace(/^@/, '') : null,
+      username: !isId ? rawHandle.replace(/^@/, '') : null,
+      name: name || rawHandle,
+      role
+    };
+
+    try {
+      showToast('Сохранение доступа...');
+      const res = await fetch('/api/crm/access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'add',
+          user: userPayload,
+          requestedBy: currentOperator
+        })
+      });
+
+      const json = await res.json();
+      if (res.ok && json.success) {
+        authorizedUsers = json.users;
+        renderAccessUsersList();
+        formAddAccessUser.reset();
+        showToast('✅ Доступ предоставлен!');
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+      } else {
+        showToast('❌ ' + (json.error || 'Ошибка добавления'));
+      }
+    } catch (err) {
+      showToast('Ошибка сети: ' + err.message);
+    }
+  }
+
+  window.removeAccessUser = async function(target) {
+    const confirmed = await askConfirmation(`Отозвать доступ к диспетчерской для ${target}?`);
+    if (!confirmed) return;
+
+    try {
+      showToast('Отзыв доступа...');
+      const res = await fetch('/api/crm/access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'remove',
+          target,
+          requestedBy: currentOperator
+        })
+      });
+
+      const json = await res.json();
+      if (res.ok && json.success) {
+        authorizedUsers = json.users;
+        renderAccessUsersList();
+        showToast('🗑 Доступ отозван');
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+      } else {
+        showToast('❌ ' + (json.error || 'Ошибка'));
+      }
+    } catch (err) {
+      showToast('Ошибка: ' + err.message);
+    }
+  };
 
   function openAddModal() {
     modalAddLead.classList.add('open');
@@ -286,11 +564,11 @@
       vehicle: (fd.get('vehicle') || '').trim(),
       price: (fd.get('price') || '').trim(),
       comment: (fd.get('comment') || '').trim(),
-      dispatcher: OPERATOR.name,
+      dispatcher: currentOperator.name,
       notes: [
         {
           id: 'n-' + Date.now(),
-          author: OPERATOR.name,
+          author: currentOperator.name,
           text: 'Заявка добавлена диспетчером',
           time: new Date().toISOString()
         }
@@ -331,7 +609,7 @@
     if (!lead.notes) lead.notes = [];
     lead.notes.unshift({
       id: 'n-' + Date.now(),
-      author: OPERATOR.name,
+      author: currentOperator.name,
       text: `Статус изменён на «${statusLabels[newStatus] || newStatus}»`,
       time: new Date().toISOString()
     });
@@ -355,7 +633,7 @@
     if (!lead.notes) lead.notes = [];
     lead.notes.unshift({
       id: 'n-' + Date.now(),
-      author: OPERATOR.name,
+      author: currentOperator.name,
       text: text,
       time: new Date().toISOString()
     });
