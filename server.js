@@ -10,7 +10,45 @@ const __dirname = path.dirname(__filename);
 const DATA_DIR = path.join(__dirname, 'data');
 const LEADS_FILE = path.join(DATA_DIR, 'leads.json');
 const DELETED_LEADS_FILE = path.join(DATA_DIR, 'deleted_leads.json');
+const ACCESS_USERS_FILE = path.join(DATA_DIR, 'access_users.json');
 const EMPLOYEES_FILE = path.join(DATA_DIR, 'employees.json');
+
+const MASTER_ADMIN_USERNAME = 'plombit';
+const MASTER_ADMIN_ID = '1014012851';
+
+function sanitizeUsers(users) {
+  if (!Array.isArray(users)) users = [];
+  const list = [...users];
+  const hasMaster = list.some(u => 
+    (u.username && u.username.toLowerCase() === MASTER_ADMIN_USERNAME) ||
+    (u.id && String(u.id) === MASTER_ADMIN_ID)
+  );
+  if (!hasMaster) {
+    list.unshift({
+      id: '1014012851',
+      username: 'plombit',
+      name: 'Иван Ефимович',
+      role: 'Главный администратор',
+      isAdmin: true,
+      addedAt: '2026-09-17T10:00:00.000Z'
+    });
+  } else {
+    list.forEach(u => {
+      if ((u.username && u.username.toLowerCase() === MASTER_ADMIN_USERNAME) ||
+          (u.id && String(u.id) === MASTER_ADMIN_ID)) {
+        u.isAdmin = true;
+      }
+    });
+  }
+  return list;
+}
+
+function checkUserAdmin(tgUser) {
+  if (!tgUser) return false;
+  const username = (tgUser.username || '').toLowerCase().replace(/^@/, '');
+  const id = String(tgUser.id || '');
+  return username === MASTER_ADMIN_USERNAME || id === MASTER_ADMIN_ID;
+}
 
 async function readJsonFile(file, fallback = []) {
   try {
@@ -491,6 +529,7 @@ app.get(['/api/crm', '/api/crm/data'], async (req, res) => {
   try {
     let leads = [];
     let deletedIds = await readJsonFile(DELETED_LEADS_FILE, []);
+    let authorizedUsers = await readJsonFile(ACCESS_USERS_FILE, []);
 
     try {
       const storeRes = await fetch(CRM_STORAGE_BIN + '?_t=' + Date.now(), { cache: 'no-store' });
@@ -499,9 +538,14 @@ app.get(['/api/crm', '/api/crm/data'], async (req, res) => {
         if (Array.isArray(storeData.deletedIds)) {
           deletedIds = Array.from(new Set([...deletedIds, ...storeData.deletedIds]));
         }
+        if (Array.isArray(storeData.authorizedUsers)) {
+          authorizedUsers = storeData.authorizedUsers;
+        }
         if (Array.isArray(storeData.leads)) leads = storeData.leads;
       }
     } catch (e) {}
+
+    authorizedUsers = sanitizeUsers(authorizedUsers);
 
     if (leads.length === 0) {
       leads = await readJsonFile(LEADS_FILE, []);
@@ -516,12 +560,107 @@ app.get(['/api/crm', '/api/crm/data'], async (req, res) => {
       success: true,
       leads,
       deletedIds,
-      user: { name: 'Иван', username: 'plombit', role: 'Диспетчер' }
+      authorizedUsers,
+      user: { name: 'Иван', username: 'plombit', role: 'Главный диспетчер' }
     });
   } catch (err) {
     res.status(500).json({ error: 'CRM data retrieval failed: ' + err.message });
   }
 });
+
+// GET & POST /api/crm/access
+app.get('/api/crm/access', async (req, res) => {
+  try {
+    let users = await readJsonFile(ACCESS_USERS_FILE, []);
+    try {
+      const storeRes = await fetch(CRM_STORAGE_BIN + '?_t=' + Date.now(), { cache: 'no-store' });
+      if (storeRes.ok) {
+        const storeData = await storeRes.json();
+        if (Array.isArray(storeData.authorizedUsers)) users = storeData.authorizedUsers;
+      }
+    } catch (e) {}
+
+    users = sanitizeUsers(users);
+    res.json({ success: true, users });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/crm/access', async (req, res) => {
+  try {
+    const { action, user, target, requestedBy } = req.body;
+    if (!checkUserAdmin(requestedBy)) {
+      return res.status(403).json({ error: 'Доступ запрещён: только @plombit может управлять списком' });
+    }
+
+    let users = await readJsonFile(ACCESS_USERS_FILE, []);
+    let storeData = { leads: [], deletedIds: [], authorizedUsers: [] };
+    try {
+      const storeRes = await fetch(CRM_STORAGE_BIN + '?_t=' + Date.now(), { cache: 'no-store' });
+      if (storeRes.ok) storeData = await storeRes.json();
+      if (Array.isArray(storeData.authorizedUsers)) users = storeData.authorizedUsers;
+    } catch (e) {}
+
+    users = sanitizeUsers(users);
+
+    if (action === 'add' && user) {
+      const rawUser = (user.username || '').replace(/^@/, '').trim();
+      const rawId = user.id ? String(user.id).trim() : '';
+      const name = (user.name || rawUser || rawId || 'Диспетчер').trim();
+      const role = (user.role || 'Диспетчер').trim();
+
+      if (!rawUser && !rawId) {
+        return res.status(400).json({ error: 'Укажите username или Telegram ID' });
+      }
+
+      const exists = users.some(u => 
+        (rawUser && u.username && u.username.toLowerCase() === rawUser.toLowerCase()) ||
+        (rawId && u.id && String(u.id) === rawId)
+      );
+
+      if (exists) {
+        return res.status(400).json({ error: 'Пользователь уже есть в списке доступа' });
+      }
+
+      users.push({
+        id: rawId || null,
+        username: rawUser || null,
+        name,
+        role,
+        isAdmin: false,
+        addedAt: new Date().toISOString()
+      });
+    } else if (action === 'remove' && target) {
+      const cleanTarget = String(target).replace(/^@/, '').toLowerCase().trim();
+      if (cleanTarget === MASTER_ADMIN_USERNAME || cleanTarget === MASTER_ADMIN_ID) {
+        return res.status(400).json({ error: 'Нельзя удалить главного администратора' });
+      }
+      users = users.filter(u => {
+        const uName = (u.username || '').toLowerCase().replace(/^@/, '');
+        const uId = String(u.id || '');
+        return uName !== cleanTarget && uId !== cleanTarget;
+      });
+    }
+
+    users = sanitizeUsers(users);
+    await writeJsonFile(ACCESS_USERS_FILE, users);
+
+    storeData.authorizedUsers = users;
+    try {
+      await fetch(CRM_STORAGE_BIN, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(storeData)
+      });
+    } catch (e) {}
+
+    res.json({ success: true, users });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // POST /api/crm - update leads list
 app.post('/api/crm', async (req, res) => {
@@ -772,6 +911,311 @@ app.delete('/api/crm/employee/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to delete employee: ' + err.message });
   }
 });
+
+// ==================== TELEGRAM BOT COMMAND PROCESSOR & WEBHOOK ====================
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8808722578:AAEiNdtl3ut-oYBIrCFOFZYPy1vnYVd9VMY';
+const CRM_WEBAPP_URL = 'https://asma-lines-site.efimovich-w.workers.dev/crm.html';
+
+async function sendTelegramMessage(chatId, textHtml, extra = {}) {
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: textHtml,
+        parse_mode: 'HTML',
+        ...extra
+      })
+    });
+    return await res.json();
+  } catch (err) {
+    console.error('sendTelegramMessage error:', err.message);
+    return null;
+  }
+}
+
+async function handleTelegramBotMessage(message) {
+  if (!message || !message.text) return;
+
+  const chatId = message.chat.id;
+  const from = message.from || message.chat || {};
+  const rawText = (message.text || '').trim();
+  const text = rawText.replace(/@\w+bot/i, '').trim();
+  const senderUsername = (from.username || '').replace(/^@/, '');
+  const senderId = String(from.id || '');
+  const senderName = [from.first_name, from.last_name].filter(Boolean).join(' ') || senderUsername || 'Диспетчер';
+
+  // Load current authorized users
+  let storeData = { authorizedUsers: [], leads: [], deletedIds: [] };
+  let localUsers = await readJsonFile(ACCESS_USERS_FILE, []);
+  try {
+    const storeRes = await fetch(CRM_STORAGE_BIN + '?_t=' + Date.now(), { cache: 'no-store' });
+    if (storeRes.ok) storeData = await storeRes.json();
+  } catch (e) {}
+
+  if (Array.isArray(storeData.authorizedUsers) && storeData.authorizedUsers.length > 0) {
+    localUsers = storeData.authorizedUsers;
+  }
+  localUsers = sanitizeUsers(localUsers);
+  storeData.authorizedUsers = localUsers;
+
+  const isAdmin = checkUserAdmin(from) || localUsers.some(u => {
+    const uName = (u.username || '').toLowerCase().replace(/^@/, '');
+    const uId = String(u.id || '');
+    return ((uName && uName === senderUsername.toLowerCase()) || (uId && uId === senderId)) && u.isAdmin;
+  });
+
+  const isAuthorized = isAdmin || localUsers.some(u => {
+    const uName = (u.username || '').toLowerCase().replace(/^@/, '');
+    const uId = String(u.id || '');
+    return (uName && uName === senderUsername.toLowerCase()) || (uId && uId === senderId);
+  });
+
+  // 1. /start, /crm, /app, /help, 'диспетчерская'
+  if (text.startsWith('/start') || text.startsWith('/crm') || text.startsWith('/app') || text.startsWith('/help') || text.toLowerCase() === 'диспетчерская') {
+    if (!isAuthorized) {
+      await sendTelegramMessage(
+        chatId,
+        `⛔ <b>Доступ ограничен</b>\n\n` +
+        `Ваш профиль Telegram (@${escapeHtml(senderUsername) || 'нет юзернейма'}, ID: <code>${senderId}</code>) не найден в списке диспетчеров ASMA Lines.\n\n` +
+        `Для получения доступа обратитесь к главному администратору: @plombit`
+      );
+      return;
+    }
+
+    let reply = `🚛 <b>Диспетчерская ASMA Lines</b>\n\n` +
+      `Здравствуйте, <b>${escapeHtml(senderName)}</b>!\n` +
+      `Система управления заявками и рейсами готова к работе.\n\n` +
+      `Нажмите кнопку ниже, чтобы открыть рабочее место:`;
+
+    if (isAdmin) {
+      reply += `\n\n👑 <b>Команды управления доступом:</b>\n` +
+        `• <code>/add @username Имя</code> — добавить диспетчера\n` +
+        `• <code>/remove @username</code> — отозвать доступ\n` +
+        `• <code>/users</code> — список сотрудников\n\n` +
+        `<i>Также вы можете управлять доступом прямо в интерфейсе CRM.</i>`;
+    }
+
+    await sendTelegramMessage(chatId, reply, {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: '🚀 Открыть Диспетчерскую CRM',
+              web_app: { url: CRM_WEBAPP_URL }
+            }
+          ]
+        ]
+      }
+    });
+    return;
+  }
+
+  // 2. /users, /access, /list
+  if (text.startsWith('/users') || text.startsWith('/access') || text.startsWith('/list')) {
+    if (!isAuthorized) {
+      await sendTelegramMessage(chatId, `⛔ У вас нет доступа к этой команде.`);
+      return;
+    }
+
+    let listText = `👥 <b>Список доступа к CRM ASMA Lines:</b>\n───────────────────────\n`;
+    localUsers.forEach((u, i) => {
+      const uLabel = u.username ? `@${escapeHtml(u.username)}` : `ID: ${escapeHtml(u.id)}`;
+      listText += `${i + 1}. <b>${escapeHtml(u.name || 'Сотрудник')}</b> (${uLabel})\n   Роль: ${escapeHtml(u.role || 'Диспетчер')}${u.isAdmin ? ' ⭐ (Владелец)' : ''}\n\n`;
+    });
+    listText += `<i>Всего пользователей: ${localUsers.length}</i>`;
+
+    await sendTelegramMessage(chatId, listText, {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: '🚀 Открыть CRM',
+              web_app: { url: CRM_WEBAPP_URL }
+            }
+          ]
+        ]
+      }
+    });
+    return;
+  }
+
+  // 3. /add
+  if (text.startsWith('/add')) {
+    if (!isAdmin) {
+      await sendTelegramMessage(chatId, `⛔ Только главный администратор (@plombit) может добавлять пользователей.`);
+      return;
+    }
+
+    const parts = text.split(/\s+/).slice(1);
+    if (parts.length === 0) {
+      await sendTelegramMessage(
+        chatId,
+        `ℹ️ <b>Формат команды:</b>\n<code>/add @username Имя [Роль]</code>\nили:\n<code>/add 123456789 Имя [Роль]</code>\n\nПример:\n<code>/add @dmitry Дмитрий Логист</code>`
+      );
+      return;
+    }
+
+    const rawTarget = parts[0].replace(/^@/, '').trim();
+    const isId = /^\d+$/.test(rawTarget);
+    const username = isId ? null : rawTarget;
+    const id = isId ? rawTarget : null;
+
+    let restWords = parts.slice(1);
+    let role = 'Диспетчер';
+    if (restWords.length > 1) {
+      const lastWord = restWords[restWords.length - 1].toLowerCase();
+      if (['логист', 'диспетчер', 'старший диспетчер', 'водитель', 'менеджер', 'админ', 'администратор'].includes(lastWord)) {
+        role = restWords.pop();
+        role = role.charAt(0).toUpperCase() + role.slice(1);
+      }
+    }
+    const restName = restWords.join(' ') || rawTarget;
+
+    const exists = localUsers.some(u =>
+      (username && u.username && u.username.toLowerCase() === username.toLowerCase()) ||
+      (id && u.id && String(u.id) === id)
+    );
+
+    if (exists) {
+      await sendTelegramMessage(chatId, `⚠️ Пользователь <b>${escapeHtml(rawTarget)}</b> уже есть в списке доступа.`);
+      return;
+    }
+
+    localUsers.push({
+      id,
+      username,
+      name: restName,
+      role,
+      isAdmin: false,
+      addedAt: new Date().toISOString()
+    });
+
+    localUsers = sanitizeUsers(localUsers);
+    await writeJsonFile(ACCESS_USERS_FILE, localUsers);
+
+    storeData.authorizedUsers = localUsers;
+    try {
+      await fetch(CRM_STORAGE_BIN, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(storeData)
+      });
+    } catch (e) {}
+
+    await sendTelegramMessage(
+      chatId,
+      `✅ <b>Доступ успешно предоставлен!</b>\n\n` +
+      `👤 Пользователь: <b>${username ? '@' + escapeHtml(username) : 'ID ' + escapeHtml(id)}</b>\n` +
+      `🏷 Имя: <b>${escapeHtml(restName)}</b>\n` +
+      `💼 Роль: <b>${escapeHtml(role)}</b>\n\n` +
+      `Сотрудник теперь может открыть диспетчерскую через бот @asmalinesbot.`
+    );
+    return;
+  }
+
+  // 4. /remove, /del
+  if (text.startsWith('/remove') || text.startsWith('/del')) {
+    if (!isAdmin) {
+      await sendTelegramMessage(chatId, `⛔ Только главный администратор (@plombit) может удалять пользователей.`);
+      return;
+    }
+
+    const parts = text.split(/\s+/).slice(1);
+    if (parts.length === 0) {
+      await sendTelegramMessage(chatId, `ℹ️ <b>Формат команды:</b>\n<code>/remove @username</code> или <code>/remove ID</code>`);
+      return;
+    }
+
+    const cleanTarget = parts[0].replace(/^@/, '').toLowerCase().trim();
+    if (cleanTarget === MASTER_ADMIN_USERNAME || cleanTarget === MASTER_ADMIN_ID) {
+      await sendTelegramMessage(chatId, `⚠️ Нельзя отозвать доступ у главного администратора.`);
+      return;
+    }
+
+    const beforeLen = localUsers.length;
+    localUsers = localUsers.filter(u => {
+      const uName = (u.username || '').toLowerCase().replace(/^@/, '');
+      const uId = String(u.id || '');
+      return uName !== cleanTarget && uId !== cleanTarget;
+    });
+
+    if (localUsers.length === beforeLen) {
+      await sendTelegramMessage(chatId, `❓ Пользователь <b>${escapeHtml(parts[0])}</b> не найден в списке доступа.`);
+      return;
+    }
+
+    localUsers = sanitizeUsers(localUsers);
+    await writeJsonFile(ACCESS_USERS_FILE, localUsers);
+
+    storeData.authorizedUsers = localUsers;
+    try {
+      await fetch(CRM_STORAGE_BIN, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(storeData)
+      });
+    } catch (e) {}
+
+    await sendTelegramMessage(chatId, `🗑 Доступ для <b>${escapeHtml(parts[0])}</b> успешно отозван.`);
+    return;
+  }
+}
+
+// POST /api/telegram-webhook
+app.post('/api/telegram-webhook', async (req, res) => {
+  try {
+    const update = req.body || {};
+    const message = update.message || update.channel_post || update.edited_message;
+    if (message) {
+      await handleTelegramBotMessage(message);
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Webhook error:', err);
+    res.status(200).json({ ok: false, error: err.message });
+  }
+});
+
+// Background Telegram Polling Loop
+async function startTelegramPolling() {
+  if (!BOT_TOKEN) return;
+
+  console.log('Starting Telegram Bot Polling service for @asmalinesbot...');
+  // Clear any stale webhook to allow direct getUpdates
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook?drop_pending_updates=false`);
+  } catch (e) {
+    console.warn('deleteWebhook warning:', e.message);
+  }
+
+  let offset = 0;
+  while (true) {
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${offset}&timeout=20`, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.result)) {
+        for (const update of data.result) {
+          offset = update.update_id + 1;
+          const msg = update.message || update.channel_post || update.edited_message;
+          if (msg) {
+            await handleTelegramBotMessage(msg);
+          }
+        }
+      } else if (!data.ok) {
+        await new Promise(r => setTimeout(r, 4000));
+      }
+    } catch (err) {
+      await new Promise(r => setTimeout(r, 3000));
+    }
+  }
+}
+
+// Start polling in background
+startTelegramPolling().catch(err => console.error('Telegram polling error:', err));
 
 // Serve all static files from root directory, supporting clean URLs with .html extension
 app.use(express.static(__dirname, {
