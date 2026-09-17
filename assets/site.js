@@ -732,6 +732,28 @@ async function submitLead(payload, statusNode, successMessage) {
         })
       });
 
+      // Send email directly to Plomba@asma.planfix.com via FormSubmit HTTP API (for Cloudflare / static hosting)
+      fetch('https://formsubmit.co/ajax/Plomba@asma.planfix.com', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          _subject: `Новая заявка с сайта ASMA Lines: ${payload.name || 'Клиент'} (${payload.contact || ''})`,
+          'Имя': payload.name || 'Не указано',
+          'Телефон / Контакты': payload.contact || payload.phone || 'Не указан',
+          'Email': payload.email || '—',
+          'Маршрут': routeStr || 'Маршрут по запросу',
+          'Расстояние': payload.distance || '—',
+          'Транспорт': payload.vehicle || '—',
+          'Вес': payload.weight || '—',
+          'Расчет стоимости': payload.price || '—',
+          'Комментарий': payload.message || payload.comment || '—',
+          'Источник': payload.source || 'Форма сайта (Cloudflare)'
+        })
+      }).catch(e => console.error('PlanFix email dispatch error:', e));
+
       // If PlanFix Webhook URL is set globally on window (e.g. window.PLANFIX_WEBHOOK_URL), post to PlanFix as well
       const planfixWebhook = window.PLANFIX_WEBHOOK_URL || window.PLANFIX_FORM_URL;
       if (planfixWebhook) {
