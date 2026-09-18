@@ -1554,6 +1554,45 @@ body[data-theme='dark'] .cp-meta {
   color: rgba(248, 247, 239, 0.92);
   text-shadow: 0 1px 8px rgba(0,0,0,0.6);
 }
+.photo-band__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+.photo-band__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 211, 130, 0.35);
+  color: #FFD382;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 13px;
+  border-radius: 999px;
+  letter-spacing: 0.01em;
+}
+.photo-band__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+}
+.photo-band .btn-secondary-light {
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.photo-band .btn-secondary-light:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #FFFFFF;
+}
 
 .service-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
 .service-card {
@@ -4004,6 +4043,44 @@ body[data-theme='dark'] .partner-direct-link svg {
   font-size: 12.5px;
   color: var(--ink-soft);
   line-height: 1.45;
+}
+
+/* ------------------------------------------------------------
+   Global Dark Theme Palette Harmony & Convenience (ASMA Lines)
+   ------------------------------------------------------------ */
+body[data-theme='dark'] .partner-pillar-icon {
+  background: rgba(139, 37, 54, 0.25);
+  color: #FFD382;
+}
+
+body[data-theme='dark'] .partner-fleet-badge {
+  background: rgba(139, 37, 54, 0.28);
+  color: #FFD382;
+  border: 1px solid rgba(255, 211, 130, 0.22);
+}
+
+body[data-theme='dark'] .partner-fleet-chip:hover {
+  background: rgba(139, 37, 54, 0.25);
+  color: #FFD382;
+  border-color: rgba(255, 211, 130, 0.4);
+}
+
+body[data-theme='dark'] .partner-fleet-chip.is-active {
+  background: var(--burgundy-bright);
+  border-color: #FFD382;
+  color: #FFFFFF;
+}
+
+body[data-theme='dark'] .partner-direct-link:hover {
+  background: rgba(139, 37, 54, 0.25);
+  border-color: #FFD382;
+  color: #FFD382;
+}
+
+body[data-theme='dark'] .partner-form-card input:focus,
+body[data-theme='dark'] .partner-form-card textarea:focus {
+  border-color: #FFD382;
+  box-shadow: 0 0 0 3px rgba(255, 211, 130, 0.18);
 }
 
 

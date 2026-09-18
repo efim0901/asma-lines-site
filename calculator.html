@@ -309,6 +309,28 @@
   <section class="container note">
     <p><b>Важно:</b> расчёт даёт предварительный ориентир по стоимости на основе протяжённости фактического автодорожного маршрута. Финальная цена фиксируется менеджером компании после уточнения деталей рейса — точного адреса подачи, типа подвижного состава и условий погрузочно-разгрузочных работ.</p>
   </section>
+
+  <!-- Context-adapted Photo-band Footer for Calculator page -->
+  <section class="photo-band">
+    <div class="photo-band__bg" style="background-image:url('assets/img/footer-calc.svg?v=20260914h')"></div>
+    <div class="photo-band__overlay"></div>
+    <div class="photo-band__inner container">
+      <div class="photo-band__content">
+        <p class="kicker">Гарантия неизменности ставки</p>
+        <h2 class="display-2 mb-16">Понравился расчёт? Зафиксируйте стоимость на 48 часов</h2>
+        <p class="lede mb-20">Оформите предварительную заявку прямо сейчас — мы зафиксируем рассчитанную цену без скрытых доплат за километраж, непредвиденных простоев или сезонных коэффициентов.</p>
+        <div class="photo-band__badges">
+          <span class="photo-band__badge">✓ Фиксация цены на 48 часов</span>
+          <span class="photo-band__badge">✓ Подача авто точно к согласованному часу</span>
+          <span class="photo-band__badge">✓ Прозрачный ЭДО и полный пакет документов</span>
+        </div>
+        <div class="photo-band__actions">
+          <button type="button" class="btn btn-primary" onclick="var b=document.getElementById('btn-quick-consult'); if(b){b.click();} else { window.scrollTo({top: 400, behavior:'smooth'}); }">Забронировать по этой цене</button>
+          <a class="btn btn-secondary-light" href="contacts.html">Консультация с диспетчером</a>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer class="site-footer">
