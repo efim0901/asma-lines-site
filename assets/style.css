@@ -2039,6 +2039,15 @@ body[data-theme='dark'] .faq-aside .kicker { color: #FFD382; }
     text-decoration: none;
     box-shadow: 0 2px 8px rgba(139, 37, 54, 0.35);
   }
+  
+  /* Universal grid symmetry safeguard: odd last items span full width on 2-col tablet views */
+  .principles-grid > *:last-child:nth-child(odd),
+  .partner-pillars-grid > *:last-child:nth-child(odd),
+  .partner-fleet-grid > *:last-child:nth-child(odd),
+  .service-grid > *:last-child:nth-child(odd),
+  .popular-routes-grid > *:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
 }
 @media (min-width: 901px) {
   .nav-mobile-calc-btn {
