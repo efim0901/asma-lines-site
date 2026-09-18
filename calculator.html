@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<script>
+  (function(){try{var t=localStorage.getItem('asma-theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('theme-dark')}else{document.documentElement.setAttribute('data-theme','light');document.documentElement.classList.remove('theme-dark')}}catch(e){}})();
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Интерактивный расчёт стоимости перевозки от ASMA Lines. Укажите маршрут на карте — сервис покажет ориентир по стоимости.">
+<title>Расчёт стоимости — ASMA Lines</title>
+<link rel="canonical" href="https://asmalines.by/calculator.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ASMA Lines">
+<meta property="og:title" content="Расчёт стоимости — ASMA Lines">
+<meta property="og:description" content="Интерактивный предварительный расчёт стоимости перевозки от ASMA Lines.">
+<meta property="og:url" content="https://asmalines.by/calculator.html">
+<meta property="og:locale" content="ru_RU">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="assets/brand/asma-mark.svg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"></noscript>
+<link rel="preload" as="image" href="assets/img/calc-road.svg?v=20260914h" fetchpriority="high">
+<link rel="stylesheet" href="assets/style.css?v=20260914h">
+<script src="https://api-maps.yandex.ru/2.1/?apikey=2a23f2ea-ad6b-4554-af5f-4f6d8c5d760d&lang=ru_RU&load=package.full" type="text/javascript"></script>
+<link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css?v=20260914h">
+</head>
+<body>
+<header class="site-header">
+  <div class="container nav-inner">
+    <a class="brand" href="index.html" aria-label="ASMA Lines — на главную">
+      <img class="brand-logo" src="assets/brand/asma-mark.svg" alt="ASMA Lines" width="34" height="34">
+      <span>ASMA</span>
+    </a>
+    <nav id="main-nav">
+      <a href="index.html">Главная</a>
+      <a href="about.html">О компании</a>
+      <a href="services.html">Услуги</a>
+      <a href="partners.html">Партнёры</a>
+      <div class="nav-dropdown">
+        <button class="nav-link" type="button" aria-haspopup="true" aria-expanded="false">
+          Информация <span class="caret">▾</span>
+        </button>
+        <div class="nav-dropdown-menu">
+          <a href="faq.html">Частые вопросы</a>
+          <a href="privacy.html">Политика конфиденциальности</a>
+        </div>
+      </div>
+      <a href="contacts.html">Контакты</a>
+      <a href="contacts.html" class="nav-mobile-calc-btn">Связаться с диспетчером</a>
+    </nav>
+    <div class="nav-tools">
+      <button class="theme-toggle" type="button" aria-label="Переключить цветовую тему" title="Переключить тему">◐</button>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav" aria-label="Открыть меню">
+        <span class="menu-toggle-box"><span></span><span></span><span></span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero-photo hero-photo--inner">
+    <div class="hero-photo__bg" style="background-image:url('assets/img/calc-road.svg?v=20260914h')"></div>
+    <div class="hero-photo__overlay"></div>
+    <div class="hero-photo__inner container">
+      <div class="hero-photo__content">
+        <div class="hero-badge-pill">
+          <span class="hero-badge-dot" aria-hidden="true"></span>
+          <span>Интерактивный расчёт</span>
+          <span class="sep">·</span>
+          <span>Вся Беларусь</span>
+        </div>
+        <h1 class="display-1">Стоимость перевозки</h1>
+        <p class="lede">Введите любой населённый пункт Беларуси — от областного центра до деревни. Расстояние и маршрут определяются автоматически, стоимость рассчитывается мгновенно.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="container" style="padding-top: clamp(16px, 2.5vw, 24px); padding-bottom: 0;">
+    <div class="popular-routes">
+      <div class="popular-routes-title">Популярные направления из Гомеля (кликните для быстрой подстановки):</div>
+      <div class="popular-routes-grid" id="popular-routes-grid">
+        <button type="button" class="popular-route-pill" data-from="Гомель" data-to="Минск" data-km="310">
+          <span class="popular-route-name">Гомель → Минск</span>
+          <span class="popular-route-meta">310 км · от 590 р.</span>
+        </button>
+        <button type="button" class="popular-route-pill" data-from="Гомель" data-to="Брест" data-km="535">
+          <span class="popular-route-name">Гомель → Брест</span>
+          <span class="popular-route-meta">535 км · от 960 р.</span>
+        </button>
+        <button type="button" class="popular-route-pill" data-from="Гомель" data-to="Гродно" data-km="580">
+          <span class="popular-route-name">Гомель → Гродно</span>
+          <span class="popular-route-meta">580 км · от 1 040 р.</span>
+        </button>
+        <button type="button" class="popular-route-pill" data-from="Гомель" data-to="Могилёв" data-km="180">
+          <span class="popular-route-name">Гомель → Могилёв</span>
+          <span class="popular-route-meta">180 км · от 380 р.</span>
+        </button>
+        <button type="button" class="popular-route-pill" data-from="Гомель" data-to="Витебск" data-km="335">
+          <span class="popular-route-name">Гомель → Витебск</span>
+          <span class="popular-route-meta">335 км · от 630 р.</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <section class="section container calculator-layout" style="padding-top: clamp(14px, 2.2vw, 22px);">
+    <div class="print-header">
+      <div style="font-size:24px;font-weight:800;letter-spacing:2px;margin-bottom:4px;">ASMA LINES · ЛОГИСТИКА БЕЛАРУСЬ</div>
+      <div style="font-size:13px;color:var(--ink-soft);">Предварительный расчёт стоимости и коммерческое предложение</div>
+    </div>
+
+    <form id="calculator" class="calculator">
+      <div class="card-head">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
+          <span class="panel-badge">Точный калькулятор</span>
+          <span class="panel-badge secondary">Автоматический расчёт</span>
+        </div>
+        <h3 class="display-3" style="font-size:clamp(20px, 2.4vw, 24px);margin:0;">Параметры перевозки</h3>
+        <p style="margin-top:4px;">Расчёт обновляется в реальном времени при вводе любых параметров</p>
+      </div>
+
+      <div class="route-input-group">
+        <label for="calc-from" class="route-input-label">
+          <span class="route-dot origin"></span>
+          <span>Пункт отправления (откуда)</span>
+        </label>
+        <input name="from" id="calc-from" placeholder="Например: Гомель, Мозырь, Жлобин или деревня" autocomplete="off" minlength="2">
+      </div>
+
+      <div class="route-input-group">
+        <label for="calc-to" class="route-input-label">
+          <span class="route-dot dest"></span>
+          <span>Пункт назначения (куда)</span>
+        </label>
+        <input name="to" id="calc-to" placeholder="Например: Минск, Брест, Гродно или любой посёлок" autocomplete="off" minlength="2">
+      </div>
+      <p class="form-hint">Поиск работает по любому населённому пункту Беларуси — вплоть до деревень.</p>
+
+      <div class="distance-field-group">
+        <div class="distance-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <label for="calc-distance">Расстояние по дорогам, км</label>
+          <button type="button" class="btn-reset-distance" id="btn-reset-distance" title="Вернуть расстояние, рассчитанное по маршруту" hidden>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+            <span>К маршруту: <strong id="reset-km-label">310 км</strong></span>
+          </button>
+        </div>
+        <span class="range-row">
+          <input name="distance" id="calc-distance" type="number" min="1" max="2000" inputmode="numeric" placeholder="Например, 310">
+          <input name="distance-range" id="calc-distance-range" type="range" min="1" max="700" step="1" value="310" aria-label="Расстояние по ползунку">
+        </span>
+      </div>
+
+      <div class="weight-field-group">
+        <label for="calc-weight" class="weight-label">Вес груза, тонн</label>
+        <input name="weight" id="calc-weight" type="number" min="0.1" max="40" step="0.1" inputmode="decimal" placeholder="Например, 2.5">
+        <div class="weight-chips" role="group" aria-label="Быстрый выбор веса">
+          <button type="button" data-weight="0.5">0,5 т</button>
+          <button type="button" data-weight="1">1 т</button>
+          <button type="button" data-weight="2.5">2,5 т</button>
+          <button type="button" data-weight="5">5 т</button>
+          <button type="button" data-weight="10">10 т</button>
+          <button type="button" data-weight="20">20 т</button>
+        </div>
+      </div>
+
+      <div class="cargo-chips-group">
+        <fieldset class="cargo-chips">
+          <legend>Характер и условия перевозки</legend>
+          <label><input type="radio" name="cargo" value="standard" checked><span>Стандартный</span></label>
+          <label><input type="radio" name="cargo" value="fragile"><span>Хрупкий</span></label>
+          <label><input type="radio" name="cargo" value="temperature"><span>Температурный</span></label>
+        </fieldset>
+      </div>
+
+      <label class="check-label"><input name="loading" id="calc-loading" type="checkbox"> Нужна помощь с погрузкой / разгрузкой</label>
+
+      <input type="hidden" name="source" value="website_calculator">
+    </form>
+
+    <aside class="quote" aria-live="polite">
+      <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;padding-bottom:12px;">
+        <span class="panel-badge">Ориентир стоимости</span>
+        <span class="panel-badge secondary">Беларусь · Экспресс</span>
+      </div>
+
+      <div class="calc-map" id="calc-map-wrap">
+        <div id="calc-leaflet-map" class="calc-leaflet-map" role="img" aria-label="Карта Беларуси с отмеченным маршрутом"></div>
+        <p class="calc-hint" id="calc-hint">Начните вводить город, посёлок или деревню — любой населённый пункт Беларуси</p>
+      </div>
+
+      <p class="quote-label" id="quote-label">Заполните параметры перевозки</p>
+      <strong id="quote-total">—</strong>
+
+      <div class="quote-breakdown" id="quote-breakdown" hidden>
+        <div class="qd-row"><span>Подача</span><div class="qd-bar"><i id="qd-base"></i></div><b id="qd-base-v"></b></div>
+        <div class="qd-row"><span>Километраж</span><div class="qd-bar"><i id="qd-km"></i></div><b id="qd-km-v"></b></div>
+        <div class="qd-row"><span>Вес</span><div class="qd-bar"><i id="qd-t"></i></div><b id="qd-t-v"></b></div>
+      </div>
+      <p class="quote-multi" id="quote-multi" hidden></p>
+
+      <p id="quote-note">Укажите параметры перевозки, чтобы увидеть предварительный ориентир по стоимости.</p>
+      
+      <div class="quote-actions" id="quote-actions" hidden>
+        <button type="button" class="btn-calc-main" id="btn-quick-consult">Оформить заявку на этот маршрут</button>
+        <div class="quote-actions-row">
+          <button type="button" class="btn-calc-sec" id="btn-toggle-share" title="Отправить расчёт в мессенджер или на почту">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <span>В мессенджер / E-mail</span>
+          </button>
+          <button type="button" class="btn-calc-sec" id="btn-print-proposal" title="Открыть и распечатать коммерческое предложение (PDF)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            <span>КП / Печать (PDF)</span>
+          </button>
+        </div>
+
+        <!-- Popover options for Share / Messenger -->
+        <div class="quote-share-box" id="quote-share-box" hidden>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span class="quote-share-title">Отправить детали расчёта:</span>
+            <button type="button" id="close-share-box" style="font-size:16px;line-height:1;color:var(--ink-mute);padding:2px 6px;" aria-label="Скрыть">✕</button>
+          </div>
+          <div class="quote-share-links">
+            <a href="#" class="quote-share-btn" id="share-tg" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4L3 11l6 2m12-9l-4 17-8-6m12-11L9 13"/></svg>
+              <span>Telegram</span>
+            </a>
+            <a href="#" class="quote-share-btn" id="share-viber" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <span>Viber</span>
+            </a>
+            <a href="#" class="quote-share-btn" id="share-mail">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <span>E-mail</span>
+            </a>
+            <button type="button" class="quote-share-btn" id="share-copy">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span id="copy-btn-text">Скопировать</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <a id="quote-link" class="text-link hidden" href="contacts.html">Перейти на страницу контактов</a>
+    </aside>
+  </section>
+
+  <!-- Quick Consultation Modal -->
+  <div class="modal-backdrop" id="consult-modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <button type="button" class="modal-close" id="modal-close" aria-label="Закрыть окно">×</button>
+      <div class="card-head" style="margin-bottom:12px;">
+        <p class="kicker" style="margin-bottom:4px;">Оформление перевозки</p>
+        <h3 class="display-3">Быстрый заказ рейса</h3>
+        <p style="font-size:13px;color:var(--ink-soft);">Отправьте данные — заявка поступает в ПланФикс и диспетчеру в Telegram.</p>
+      </div>
+
+      <div class="modal-route-preview" id="modal-route-preview" style="margin-bottom:16px;">Маршрут не выбран</div>
+
+      <!-- Unified Order Form (Sends to PlanFix + Telegram) -->
+      <form id="consult-form" data-contact-form>
+        <input type="hidden" name="source" value="calculator_modal">
+        <input type="hidden" name="fromCity" id="modal-from-city" value="">
+        <input type="hidden" name="toCity" id="modal-to-city" value="">
+        <input type="hidden" name="distance" id="modal-distance" value="">
+        <input type="hidden" name="vehicle" id="modal-vehicle" value="">
+        <input type="hidden" name="weight" id="modal-weight" value="">
+        <input type="hidden" name="price" id="modal-price" value="">
+        <input type="hidden" name="route_details" id="modal-hidden-route" value="">
+        <div style="display:grid;gap:12px;">
+          <label style="font-weight:600;font-size:13px;">Ваше имя / Компания
+            <input required name="name" placeholder="Например: Артём (ООО «Вектор»)" autocomplete="name" style="margin-top:4px;">
+          </label>
+          <label style="font-weight:600;font-size:13px;">Телефон (Viber / Telegram)
+            <input required name="contact" type="tel" placeholder="+375 (29) 000-00-00" autocomplete="tel" style="margin-top:4px;">
+          </label>
+          <label style="font-weight:600;font-size:13px;">Комментарий к грузу (необязательно)
+            <textarea name="message" rows="2" placeholder="Уточните желаемую дату погрузки, габариты или особенности" style="margin-top:4px;"></textarea>
+          </label>
+          <button class="btn btn-primary" type="submit" style="width:100%;min-height:48px;font-weight:700;">Отправить заявку</button>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:4px;">
+            <p class="form-status" aria-live="polite" style="font-size:13px;margin:0;"></p>
+            <span class="form-privacy-badge">🔒 Конфиденциально</span>
+          </div>
+        </div>
+      </form>
+
+      <!-- Personal Operator Contact Link -->
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);text-align:center;">
+        <p style="font-size:12px;color:var(--ink-mute);margin-bottom:8px;">Есть вопросы по перевозке? Напишите напрямую диспетчеру:</p>
+        <a href="https://t.me/asmalinesbot" target="_blank" rel="noopener noreferrer" class="modal-operator-btn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4L3 11l6 2m12-9l-4 17-8-6m12-11L9 13"/></svg>
+          <span>Связаться лично с оператором в Telegram</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <section class="container note">
+    <p><b>Важно:</b> расчёт даёт предварительный ориентир по стоимости на основе протяжённости фактического автодорожного маршрута. Финальная цена фиксируется менеджером компании после уточнения деталей рейса — точного адреса подачи, типа подвижного состава и условий погрузочно-разгрузочных работ.</p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bar">
+      <a class="brand" href="index.html">
+        <img class="brand-logo" src="assets/brand/asma-mark.svg" alt="" width="28" height="28">
+        <span>ASMA</span>
+      </a>
+      <nav class="footer-nav">
+        <a href="about.html">О компании</a>
+        <a href="services.html">Услуги</a>
+        <a href="partners.html">Партнёры</a>
+        <a href="contacts.html">Контакты</a>
+      </nav>
+      <div class="footer-social">
+        <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1"/></svg></a>
+        <a href="#" aria-label="Telegram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 4L3 11l6 2m12-9l-4 17-8-6m12-11L9 13"/></svg></a>
+        <a href="#" aria-label="VK"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h4c.3 5 2.5 8 4 9V4h4v6c1.5-1 3-3.5 3.5-6h4c-.5 3-2 5.5-4 7 2 1.5 3.5 3.5 4 7h-4c-.5-2.5-2-4.5-3.5-5.5V20h-4c-3 0-6-3-8-9"/></svg></a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© <span data-year></span> ASMA Lines · Гомель, Беларусь</span>
+      <a href="privacy.html">Политика конфиденциальности</a>
+      <span>Юридические реквизиты будут опубликованы после регистрации</span>
+    </div>
+  </div>
+</footer>
+<script src="assets/vendor/leaflet/leaflet.js?v=20260914h" defer></script>
+<script src="assets/vehicles.js?v=20260914h" defer></script>
+<script src="assets/site.js?v=20260914h" defer></script>
+<script src="assets/calculator.js?v=20260914h" defer></script>
+</body>
+</html>

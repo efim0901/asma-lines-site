@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+  <script>
+    (function(){
+      try {
+        var t = localStorage.getItem('asma-theme');
+        var tgDark = window.Telegram?.WebApp?.colorScheme === 'dark';
+        if (t === 'dark' || (!t && tgDark) || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          document.documentElement.classList.add('theme-dark');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'light');
+          document.documentElement.classList.remove('theme-dark');
+        }
+      } catch(e) {}
+    })();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Диспетчерская CRM — ASMA Lines</title>
+  <meta name="description" content="Диспетчерская система управления заявками и рейсами ASMA Lines">
+  <meta name="theme-color" content="#6B1E2D">
+
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Typography matching asmalines.by -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap">
+
+  <link rel="icon" type="image/svg+xml" href="/assets/brand/asma-mark.svg">
+  <link rel="stylesheet" href="/assets/crm.css?v=20260917_v4">
+</head>
+<body class="crm-body">
+
+  <!-- Main App Shell -->
+  <div class="crm-shell">
+
+    <!-- Top Sticky Header -->
+    <header class="app-header" id="app-header">
+      <div class="header-container">
+        
+        <!-- Left: Brand & Navigation -->
+        <div class="header-left">
+          <a class="brand" href="/" title="Перейти на главную страницу ASMA Lines">
+            <img class="brand-logo" src="/assets/brand/asma-mark.svg" alt="ASMA Lines" width="34" height="34">
+            <div class="brand-text">
+              <span class="brand-name">ASMA</span>
+              <span class="brand-crm-tag">CRM</span>
+            </div>
+          </a>
+
+          <a href="/" class="btn-back-site desktop-only" title="На сайт компании">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            <span>На сайт</span>
+          </a>
+        </div>
+
+        <!-- Center: Live Status & Dispatcher (Desktop) -->
+        <div class="header-center desktop-only">
+          <div class="live-status-chip">
+            <span class="pulse-dot"></span>
+            <span class="live-text">Диспетчерская онлайн</span>
+          </div>
+        </div>
+
+        <!-- Right: Actions & Profile -->
+        <div class="header-right">
+          
+          <!-- Current Operator Badge -->
+          <div class="operator-pill" id="operator-pill" title="Текущий диспетчер">
+            <span class="status-dot"></span>
+            <span class="operator-name" id="operator-name-display">Иван</span>
+          </div>
+
+          <!-- Theme Toggle Button -->
+          <button class="theme-toggle" id="btn-theme-toggle" type="button" aria-label="Переключить тему" title="Переключить цветовую тему">
+            <span class="theme-icon">◐</span>
+          </button>
+
+          <!-- Admin Access Control Button -->
+          <button id="btn-access-mgmt" class="btn-icon" title="Управление доступом диспетчеров" aria-label="Доступ" style="display:none;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </button>
+
+          <!-- Refresh Button -->
+          <button id="btn-refresh" class="btn-icon" title="Обновить список заявок" aria-label="Обновить">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+          </button>
+
+          <!-- Create Lead CTA Button -->
+          <button id="btn-add-lead" class="btn-primary-lead desktop-only" title="Добавить новую заявку вручную">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            <span>Новая заявка</span>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Desktop Metrics Bar -->
+      <div class="metrics-bar desktop-only" id="metrics-bar">
+        <div class="metrics-inner">
+          <div class="metric-card">
+            <span class="metric-val" id="metric-total-leads">0</span>
+            <span class="metric-label">Всего заявок</span>
+          </div>
+          <div class="metric-card metric-card--new">
+            <span class="metric-val" id="metric-new-leads">0</span>
+            <span class="metric-label">Требуют ответа</span>
+          </div>
+          <div class="metric-card metric-card--processing">
+            <span class="metric-val" id="metric-processing-leads">0</span>
+            <span class="metric-label">В обработке</span>
+          </div>
+          <div class="metric-card metric-card--transit">
+            <span class="metric-val" id="metric-transit-leads">0</span>
+            <span class="metric-label">В рейсе</span>
+          </div>
+          <div class="metric-card metric-card--completed">
+            <span class="metric-val" id="metric-completed-leads">0</span>
+            <span class="metric-label">Выполнено</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search & Filters Row -->
+      <div class="toolbar-row">
+        <div class="toolbar-inner">
+          
+          <!-- Search Input -->
+          <div class="search-input-wrapper">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input type="text" id="lead-search" placeholder="Поиск заявки: имя клиента, телефон, город, #..." autocomplete="off">
+            <button id="btn-clear-search" class="btn-clear" style="display:none;" aria-label="Очистить поиск">✕</button>
+            <span class="search-shortcut desktop-only">/</span>
+          </div>
+
+          <!-- Status Filter Tabs -->
+          <nav class="tabs-nav" id="status-tabs" role="tablist">
+            <button class="tab-item active" data-status="new" role="tab" aria-selected="true">
+              <span class="tab-dot dot-new"></span>
+              <span>Новые</span>
+              <span class="tab-count" id="count-new">0</span>
+            </button>
+            <button class="tab-item" data-status="processing" role="tab" aria-selected="false">
+              <span class="tab-dot dot-processing"></span>
+              <span>В работе</span>
+              <span class="tab-count" id="count-processing">0</span>
+            </button>
+            <button class="tab-item" data-status="transit" role="tab" aria-selected="false">
+              <span class="tab-dot dot-transit"></span>
+              <span>В рейсе</span>
+              <span class="tab-count" id="count-transit">0</span>
+            </button>
+            <button class="tab-item" data-status="completed" role="tab" aria-selected="false">
+              <span class="tab-dot dot-completed"></span>
+              <span>Завершены</span>
+              <span class="tab-count" id="count-completed">0</span>
+            </button>
+            <button class="tab-item" data-status="all" role="tab" aria-selected="false">
+              <span>Все</span>
+              <span class="tab-count" id="count-all">0</span>
+            </button>
+          </nav>
+
+        </div>
+      </div>
+
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="content-feed">
+      <div class="feed-container">
+
+        <!-- Loading State -->
+        <div id="feed-loading" class="feed-state">
+          <div class="asma-spinner"></div>
+          <p class="state-text">Синхронизация с базой заявок...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="feed-empty" class="feed-state" style="display: none;">
+          <div class="empty-icon-box">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 12h-6l-2 3h-4l-2-3H2"/>
+              <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+            </svg>
+          </div>
+          <h3 class="empty-title">В этой категории пока нет заявок</h3>
+          <p class="empty-desc">Новые обращения с сайта или калькулятора появятся здесь мгновенно в реальном времени.</p>
+          <button class="btn-secondary" id="btn-empty-add">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Добавить заявку вручную</span>
+          </button>
+        </div>
+
+        <!-- Responsive Leads Grid -->
+        <div id="leads-list" class="leads-list">
+          <!-- Injected dynamically by crm.js -->
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Mobile Bottom Quick Action Floating Bar -->
+    <div class="mobile-quick-bar mobile-only">
+      <button class="mobile-fab-btn" id="btn-mobile-fab" onclick="document.getElementById('btn-add-lead').click()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        <span>Новая заявка</span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Access Denied Screen -->
+  <div id="access-gate-screen" class="access-gate-container" style="display: none;">
+    <div class="access-gate-card">
+      <div class="access-gate-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <h2 class="access-gate-title" id="gate-title">Закрытая диспетчерская</h2>
+      <p class="access-gate-desc" id="gate-desc">
+        Доступ к управлению заявками и рейсами ASMA Lines разрешён только авторизованным диспетчерам через официальный Telegram-бот.
+      </p>
+
+      <div class="access-gate-user-badge" id="gate-user-info" style="display: none;">
+        <span class="user-chip-label">Ваш профиль:</span>
+        <span class="user-chip-val" id="gate-user-val">@user (ID: ...)</span>
+      </div>
+
+      <div class="access-gate-actions">
+        <a href="https://t.me/asmalinesbot?start=crm" class="btn-tg-primary" target="_blank" rel="noopener">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.05-.2-.06-.05-.16-.03-.23-.02-.1.02-1.74 1.11-4.91 3.25-.46.32-.88.48-1.26.47-.42-.01-1.22-.24-1.82-.43-.73-.24-1.31-.37-1.26-.78.03-.21.32-.43.88-.66 3.46-1.5 5.76-2.49 6.92-2.97 3.3-1.38 3.99-1.62 4.43-1.63.1 0 .32.02.46.14.12.1.15.24.17.34.02.13.03.3.01.46z"/>
+          </svg>
+          <span>Войти через Telegram Бота</span>
+        </a>
+        <p class="gate-hint">Для запроса доступа обратитесь к администратору: <a href="https://t.me/plombit" target="_blank">@plombit</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Access Management -->
+  <div id="modal-access-mgmt" class="modal-overlay">
+    <div class="modal-card modal-card-wide">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <h3>Управление доступом диспетчеров</h3>
+        </div>
+        <button class="btn-close modal-close-trigger" aria-label="Закрыть">✕</button>
+      </div>
+      
+      <div class="modal-body">
+        <!-- Add User Form -->
+        <div class="access-add-box">
+          <h4 class="access-section-title">➕ Добавить сотрудника</h4>
+          <form id="form-add-access-user" class="access-inline-form">
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Telegram @username или ID:</label>
+                <input type="text" name="userHandle" required placeholder="@username или ID">
+              </div>
+              <div class="form-group">
+                <label>Имя сотрудника:</label>
+                <input type="text" name="userName" required placeholder="Напр. Дмитрий">
+              </div>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top:10px;">
+              <span>Предоставить доступ</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Users List -->
+        <div class="access-list-box">
+          <h4 class="access-section-title">👥 Список пользователей с доступом</h4>
+          <div id="access-users-list" class="access-users-container">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <div class="access-bot-info">
+          <p>💡 <b>Быстрые команды в Telegram-боте:</b></p>
+          <code>/add @username Имя</code> — выдать доступ<br>
+          <code>/remove @username</code> — отозвать доступ<br>
+          <code>/users</code> — список диспетчеров
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button type="button" class="btn-secondary modal-close-trigger">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Add New Lead -->
+  <div id="modal-add-lead" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          <h3>Новая заявка на перевозку</h3>
+        </div>
+        <button class="btn-close modal-close-trigger" aria-label="Закрыть">✕</button>
+      </div>
+      <form id="form-new-lead">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Тип обращения:</label>
+            <div class="type-selector">
+              <label class="type-opt">
+                <input type="radio" name="leadType" value="cargo" checked>
+                <span>🚛 Перевозка груза</span>
+              </label>
+              <label class="type-opt">
+                <input type="radio" name="leadType" value="contact">
+                <span>📩 Звонок / Вопрос</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Имя клиента / Фирма:</label>
+              <input type="text" name="name" required placeholder="Напр. Дмитрий или ООО БелСнаб">
+            </div>
+            <div class="form-group">
+              <label>Телефон клиента:</label>
+              <input type="tel" name="contact" required placeholder="+375 (29) ...">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Город погрузки (Откуда):</label>
+              <input type="text" name="fromCity" placeholder="Минск">
+            </div>
+            <div class="form-group">
+              <label>Город выгрузки (Куда):</label>
+              <input type="text" name="toCity" placeholder="Гомель">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Транспорт / Тоннаж:</label>
+              <input type="text" name="vehicle" placeholder="Тент 10т / 8.5 т">
+            </div>
+            <div class="form-group">
+              <label>Ставка (BYN):</label>
+              <input type="text" name="price" placeholder="850 BYN">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Комментарий / Особенности рейса:</label>
+            <textarea name="comment" rows="2" placeholder="Время погрузки, гидроборт, особенности упаковки..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-foot">
+          <button type="button" class="btn-secondary modal-close-trigger">Отмена</button>
+          <button type="submit" class="btn-primary">
+            <span>Сохранить в CRM</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- CRM Script -->
+  <script src="/assets/crm.js?v=20260917_v3"></script>
+</body>
+</html>

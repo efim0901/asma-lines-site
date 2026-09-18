@@ -1,0 +1,12 @@
+[
+  {
+    "id": "emp-1",
+    "name": "Иван",
+    "role": "Диспетчер",
+    "phone": "+375 (29) 777-77-77",
+    "telegram": "@plombit",
+    "color": "#6B1E2D",
+    "active": true,
+    "createdAt": "2026-09-01T08:00:00.000Z"
+  }
+]
