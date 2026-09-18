@@ -931,8 +931,25 @@
       els.shareMail.href = `mailto:?subject=${encodeURIComponent(`Заявка на перевозку ${fromTxt} — ${toTxt} (ASMA Lines)`)}&body=${encodeURIComponent(textMsg + '\n\nСайт: ' + window.location.href)}`;
     }
 
-    if (els.modalRoutePreview) {
-      els.modalRoutePreview.textContent = `${fromTxt} → ${toTxt} · ${km} км · ${weight} т · от ${Math.round(total).toLocaleString('ru-RU')} BYN`;
+    const cardFrom = document.getElementById('modal-card-from');
+    const cardTo = document.getElementById('modal-card-to');
+    const cardPrice = document.getElementById('modal-card-price');
+    const cardDist = document.getElementById('modal-card-dist');
+    const cardWeight = document.getElementById('modal-card-weight');
+    const cardVehicle = document.getElementById('modal-card-vehicle');
+
+    const formattedPrice = `от ${Math.round(total).toLocaleString('ru-RU')} BYN`;
+    if (cardFrom) cardFrom.textContent = fromTxt || 'Гомель';
+    if (cardTo) cardTo.textContent = toTxt || 'Минск';
+    if (cardPrice) {
+      const pNode = cardPrice.querySelector('.mrv-price-val') || cardPrice;
+      pNode.textContent = formattedPrice;
+    }
+    if (cardDist) cardDist.textContent = `${km} км`;
+    if (cardWeight) cardWeight.textContent = `${weight} т`;
+    if (cardVehicle) {
+      const vClass = weight <= 1.5 ? '1.5 т' : weight <= 3 ? '3 т' : weight <= 5 ? '5 т' : weight <= 10 ? '10 т' : '20 т (фура)';
+      cardVehicle.textContent = `Авто ${vClass}`;
     }
     if (els.modalHiddenRoute) {
       els.modalHiddenRoute.value = `${fromTxt} -> ${toTxt}, ${km}km, ${weight}t, est ${Math.round(total)} BYN`;

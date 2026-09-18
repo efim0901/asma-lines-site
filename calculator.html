@@ -265,18 +265,87 @@
 
   <!-- Quick Consultation Modal -->
   <div class="modal-backdrop" id="consult-modal" aria-hidden="true" role="dialog" aria-modal="true">
-    <div class="modal-card">
-      <button type="button" class="modal-close" id="modal-close" aria-label="Закрыть окно">×</button>
-      <div class="card-head" style="margin-bottom:12px;">
-        <p class="kicker" style="margin-bottom:4px;">Оформление перевозки</p>
-        <h3 class="display-3">Быстрый заказ рейса</h3>
-        <p style="font-size:13px;color:var(--ink-soft);">Отправьте данные — заявка поступает в ПланФикс и диспетчеру в Telegram.</p>
+    <div class="modal-card modal-order-window">
+      <!-- Modal Top Status & Close Row -->
+      <div class="modal-top-bar">
+        <div class="modal-badge">
+          <span class="modal-badge-pulse" aria-hidden="true"></span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span>Оформление перевозки</span>
+        </div>
+        <button type="button" class="modal-close-btn" id="modal-close" aria-label="Закрыть окно">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
 
-      <div class="modal-route-preview" id="modal-route-preview" style="margin-bottom:16px;">Маршрут не выбран</div>
+      <div class="modal-head-content">
+        <h3 class="modal-order-title">Быстрый заказ рейса</h3>
+        <p class="modal-order-subtitle">Подтвердим подачу машины, согласуем график и зафиксируем цену за 10–15 минут.</p>
+      </div>
+
+      <!-- Live Route Voucher / Specs Card -->
+      <div class="modal-route-voucher" id="modal-route-preview">
+        <div class="mrv-main">
+          <div class="mrv-route">
+            <div class="mrv-city-point mrv-origin">
+              <span class="mrv-dot mrv-dot-origin" aria-hidden="true"></span>
+              <span class="mrv-city-name" id="modal-card-from">Гомель</span>
+            </div>
+            <div class="mrv-arrow-divider" aria-hidden="true">
+              <span class="mrv-arrow-line"></span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </div>
+            <div class="mrv-city-point mrv-destination">
+              <span class="mrv-dot mrv-dot-dest" aria-hidden="true"></span>
+              <span class="mrv-city-name" id="modal-card-to">Минск</span>
+            </div>
+          </div>
+          <div class="mrv-price-pill" id="modal-card-price">
+            <span class="mrv-price-val">от 642 BYN</span>
+          </div>
+        </div>
+
+        <div class="mrv-tags">
+          <div class="mrv-tag">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span id="modal-card-dist">310 км</span>
+          </div>
+          <div class="mrv-tag">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+            <span id="modal-card-weight">2.5 т</span>
+          </div>
+          <div class="mrv-tag">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="1" y="3" width="15" height="13"></rect>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+              <circle cx="5.5" cy="18.5" r="2.5"></circle>
+              <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+            <span id="modal-card-vehicle">Авто 3 т</span>
+          </div>
+          <div class="mrv-tag mrv-tag-highlight">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Подача 24/7</span>
+          </div>
+        </div>
+      </div>
 
       <!-- Unified Order Form (Sends to PlanFix + Telegram) -->
-      <form id="consult-form" data-contact-form>
+      <form id="consult-form" class="modal-form" data-contact-form>
         <input type="hidden" name="source" value="calculator_modal">
         <input type="hidden" name="fromCity" id="modal-from-city" value="">
         <input type="hidden" name="toCity" id="modal-to-city" value="">
@@ -285,30 +354,80 @@
         <input type="hidden" name="weight" id="modal-weight" value="">
         <input type="hidden" name="price" id="modal-price" value="">
         <input type="hidden" name="route_details" id="modal-hidden-route" value="">
-        <div style="display:grid;gap:12px;">
-          <label style="font-weight:600;font-size:13px;">Ваше имя / Компания
-            <input required name="name" placeholder="Например: Артём (ООО «Вектор»)" autocomplete="name" style="margin-top:4px;">
-          </label>
-          <label style="font-weight:600;font-size:13px;">Телефон (Viber / Telegram)
-            <input required name="contact" type="tel" placeholder="+375 (29) 000-00-00" autocomplete="tel" style="margin-top:4px;">
-          </label>
-          <label style="font-weight:600;font-size:13px;">Комментарий к грузу (необязательно)
-            <textarea name="message" rows="2" placeholder="Уточните желаемую дату погрузки, габариты или особенности" style="margin-top:4px;"></textarea>
-          </label>
-          <button class="btn btn-primary" type="submit" style="width:100%;min-height:48px;font-weight:700;">Отправить заявку</button>
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:4px;">
-            <p class="form-status" aria-live="polite" style="font-size:13px;margin:0;"></p>
-            <span class="form-privacy-badge">🔒 Конфиденциально</span>
+        
+        <div class="modal-fields-stack">
+          <div class="modal-field-group">
+            <label class="modal-field-label" for="modal-input-name">
+              <span>Ваше имя или компания</span>
+              <span class="required-star" title="Обязательное поле">*</span>
+            </label>
+            <div class="modal-input-wrapper">
+              <input id="modal-input-name" required name="name" class="modal-text-input" placeholder="Например: Артём (ООО «Вектор»)" autocomplete="name">
+            </div>
           </div>
+
+          <div class="modal-field-group">
+            <label class="modal-field-label" for="modal-input-contact">
+              <span>Телефон (Viber / Telegram)</span>
+              <span class="required-star" title="Обязательное поле">*</span>
+            </label>
+            <div class="modal-input-wrapper">
+              <input id="modal-input-contact" required name="contact" type="tel" class="modal-text-input" placeholder="+375 (29) 000-00-00" autocomplete="tel">
+            </div>
+          </div>
+
+          <div class="modal-field-group">
+            <label class="modal-field-label" for="modal-input-message">
+              <span>Комментарий к грузу</span>
+              <span class="optional-badge">необязательно</span>
+            </label>
+            <div class="modal-input-wrapper">
+              <textarea id="modal-input-message" name="message" class="modal-textarea" rows="2" placeholder="Желаемая дата погрузки, габариты или особенности перевозки"></textarea>
+            </div>
+          </div>
+
+          <button class="modal-submit-btn" type="submit">
+            <span>Отправить заявку на перевозку</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+
+          <div class="modal-trust-bar">
+            <div class="modal-trust-item">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <span>Конфиденциально</span>
+            </div>
+            <div class="modal-trust-dot">•</div>
+            <div class="modal-trust-item">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>Ответ диспетчера за 10–15 минут</span>
+            </div>
+          </div>
+
+          <p class="form-status" aria-live="polite"></p>
         </div>
       </form>
 
       <!-- Personal Operator Contact Link -->
-      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);text-align:center;">
-        <p style="font-size:12px;color:var(--ink-mute);margin-bottom:8px;">Есть вопросы по перевозке? Напишите напрямую диспетчеру:</p>
-        <a href="https://t.me/asmalinesbot" target="_blank" rel="noopener noreferrer" class="modal-operator-btn">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4L3 11l6 2m12-9l-4 17-8-6m12-11L9 13"/></svg>
-          <span>Связаться лично с оператором в Telegram</span>
+      <div class="modal-alt-contact">
+        <div class="modal-divider-row">
+          <span class="modal-divider-line"></span>
+          <span class="modal-divider-text">или напишите в мессенджер</span>
+          <span class="modal-divider-line"></span>
+        </div>
+        <a href="https://t.me/asmalinesbot" target="_blank" rel="noopener noreferrer" class="modal-telegram-btn" id="modal-tg-direct-link">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+          </svg>
+          <span>Написать диспетчеру в Telegram</span>
         </a>
       </div>
     </div>
