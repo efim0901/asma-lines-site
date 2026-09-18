@@ -1,0 +1,86 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="pf_sky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0E080B"/>
+      <stop offset="35%" stop-color="#280C17"/>
+      <stop offset="70%" stop-color="#481423"/>
+      <stop offset="100%" stop-color="#12080C"/>
+    </linearGradient>
+    <radialGradient id="pf_glow" cx="65%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#8B2536" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#0E080B" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="pf_ground" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#22191E"/>
+      <stop offset="100%" stop-color="#0B0709"/>
+    </linearGradient>
+    <pattern id="pf_dots" width="36" height="36" patternUnits="userSpaceOnUse">
+      <circle cx="18" cy="18" r="1.2" fill="#E6A9B4" fill-opacity="0.14"/>
+    </pattern>
+    <filter id="pf_shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Sky Canvas -->
+  <rect width="1920" height="1080" fill="url(#pf_sky)"/>
+  <rect width="1920" height="1080" fill="url(#pf_dots)"/>
+  <rect width="1920" height="1080" fill="url(#pf_glow)"/>
+
+  <!-- Terminal Logistics Center Silhouette -->
+  <g fill="#1A1216" opacity="0.8">
+    <rect x="200" y="380" width="1500" height="240" rx="4"/>
+    <!-- Loading Dock Bays -->
+    <rect x="250" y="460" width="90" height="160" fill="#120B0E" stroke="#8B2536" stroke-width="2"/>
+    <rect x="380" y="460" width="90" height="160" fill="#120B0E" stroke="#8B2536" stroke-width="2"/>
+    <rect x="510" y="460" width="90" height="160" fill="#120B0E" stroke="#8B2536" stroke-width="2"/>
+    <rect x="640" y="460" width="90" height="160" fill="#120B0E" stroke="#8B2536" stroke-width="2"/>
+    <rect x="770" y="460" width="90" height="160" fill="#120B0E" stroke="#8B2536" stroke-width="2"/>
+  </g>
+
+  <!-- Terminal Ground -->
+  <path d="M 0 620 L 1920 620 L 1920 1080 L 0 1080 Z" fill="url(#pf_ground)"/>
+  <line x1="0" y1="618" x2="1920" y2="618" stroke="#8B2536" stroke-width="4"/>
+
+  <!-- Road Markings -->
+  <path d="M 0 810 L 1920 810" stroke="#FAF8F5" stroke-width="4" stroke-dasharray="65 40" opacity="0.4"/>
+  <line x1="0" y1="970" x2="1920" y2="970" stroke="#FFC048" stroke-width="3" opacity="0.45"/>
+
+  <!-- Vehicle 1: Euro Semi-Trailer (Center-Right) -->
+  <g transform="translate(1000, 450)" filter="url(#pf_shadow)">
+    <polygon points="680,240 1340,160 1340,360 680,290" fill="#FFF8E0" fill-opacity="0.38"/>
+    <ellipse cx="360" cy="305" rx="440" ry="24" fill="#000" opacity="0.85"/>
+
+    <!-- Semi-Trailer Box -->
+    <rect x="0" y="30" width="480" height="230" rx="6" fill="#221B20" stroke="#483A42" stroke-width="2.5"/>
+    <rect x="30" y="55" width="420" height="85" rx="5" fill="#120A0D" stroke="#8B2536" stroke-width="2"/>
+    <text x="50" y="106" fill="#FAF8F5" font-family="system-ui, sans-serif" font-size="32" font-weight="900" letter-spacing="4">ASMA FLEET</text>
+
+    <!-- Wheels -->
+    <circle cx="330" cy="285" r="25" fill="#0C0A0B" stroke="#523E48" stroke-width="4"/>
+    <circle cx="390" cy="285" r="25" fill="#0C0A0B" stroke="#523E48" stroke-width="4"/>
+    <circle cx="450" cy="285" r="25" fill="#0C0A0B" stroke="#523E48" stroke-width="4"/>
+
+    <!-- Tractor Cab -->
+    <path d="M475 285 L495 120 L525 80 L650 80 L685 130 L685 285 Z" fill="#6B1E2D" stroke="#8B2536" stroke-width="2"/>
+    <path d="M565 92 L645 92 L670 130 L565 130 Z" fill="#1A2A35" stroke="#486070" stroke-width="1.5"/>
+    <circle cx="540" cy="300" r="26" fill="#0C0A0B" stroke="#8B2536" stroke-width="5"/>
+    <circle cx="630" cy="300" r="26" fill="#0C0A0B" stroke="#8B2536" stroke-width="5"/>
+    <rect x="672" y="210" width="12" height="24" rx="2" fill="#FFFDF0"/>
+  </g>
+
+  <!-- Vehicle 2: Medium Distribution Truck (Center-Left) -->
+  <g transform="translate(560, 480)" filter="url(#pf_shadow)">
+    <polygon points="360,180 720,130 720,270 360,220" fill="#FFF8E0" fill-opacity="0.3"/>
+    <ellipse cx="200" cy="220" rx="260" ry="16" fill="#000" opacity="0.8"/>
+
+    <rect x="0" y="25" width="260" height="150" rx="5" fill="#282025" stroke="#4E3E47" stroke-width="2"/>
+    <circle cx="170" cy="195" r="18" fill="#0C0A0B" stroke="#523E48" stroke-width="3"/>
+    <circle cx="215" cy="195" r="18" fill="#0C0A0B" stroke="#523E48" stroke-width="3"/>
+
+    <path d="M255 195 L255 80 L275 50 L350 50 L370 85 L370 195 Z" fill="#6B1E2D" stroke="#8B2536" stroke-width="1.8"/>
+    <path d="M305 60 L345 60 L362 85 L305 85 Z" fill="#1A2A35"/>
+    <circle cx="330" cy="205" r="20" fill="#0C0A0B" stroke="#8B2536" stroke-width="4"/>
+    <rect x="362" y="140" width="8" height="16" rx="2" fill="#FFFDF0"/>
+  </g>
+</svg>

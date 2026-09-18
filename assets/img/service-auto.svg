@@ -1,0 +1,58 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sa_bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14080B"/>
+      <stop offset="45%" stop-color="#2D0F1B"/>
+      <stop offset="85%" stop-color="#521828"/>
+      <stop offset="100%" stop-color="#16080B"/>
+    </linearGradient>
+    <linearGradient id="sa_road" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#22171B"/>
+      <stop offset="100%" stop-color="#0B0709"/>
+    </linearGradient>
+    <linearGradient id="sa_beam" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#FFFDF0" stop-opacity="0.9"/>
+      <stop offset="35%" stop-color="#FFE0A0" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#8B2536" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="sa_shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#sa_bg)"/>
+
+  <!-- Highway Surface -->
+  <path d="M 0 480 L 1200 480 L 1200 800 L 0 800 Z" fill="url(#sa_road)"/>
+  <line x1="0" y1="478" x2="1200" y2="478" stroke="#8B2536" stroke-width="4"/>
+  <path d="M 0 630 L 1200 630" stroke="#FAF8F5" stroke-width="4" stroke-dasharray="50 35" opacity="0.4"/>
+  <line x1="0" y1="750" x2="1200" y2="750" stroke="#FFC048" stroke-width="3" opacity="0.45"/>
+
+  <!-- Speed Motion Light Trails -->
+  <path d="M -50 620 L 520 620" stroke="#FF2E50" stroke-width="6" opacity="0.75"/>
+  <path d="M 850 580 L 1300 590" stroke="url(#sa_beam)" stroke-width="18" opacity="0.8"/>
+
+  <!-- Main Euro Curtain-Side Truck -->
+  <g transform="translate(520, 320)" filter="url(#sa_shadow)">
+    <!-- Headlight Cone -->
+    <polygon points="500,200 1000,120 1000,280 500,240" fill="url(#sa_beam)" opacity="0.55"/>
+    <ellipse cx="280" cy="250" rx="340" ry="20" fill="#000" opacity="0.85"/>
+
+    <!-- Semi-Trailer Box -->
+    <rect x="0" y="25" width="380" height="180" rx="6" fill="#221A1E" stroke="#4B3842" stroke-width="2.5"/>
+    <rect x="25" y="45" width="330" height="65" rx="4" fill="#120A0D" stroke="#8B2536" stroke-width="1.8"/>
+    <text x="40" y="85" fill="#FAF8F5" font-family="system-ui, sans-serif" font-size="24" font-weight="900" letter-spacing="3">ASMA LINES</text>
+    <text x="40" y="102" fill="#E6A9B4" font-family="system-ui, sans-serif" font-size="10" font-weight="700" letter-spacing="1.5">АВТОМОБИЛЬНЫЕ ПЕРЕВОЗКИ</text>
+
+    <!-- Wheels -->
+    <circle cx="260" cy="225" r="21" fill="#0C0A0B" stroke="#523E48" stroke-width="4"/>
+    <circle cx="310" cy="225" r="21" fill="#0C0A0B" stroke="#523E48" stroke-width="4"/>
+
+    <!-- Tractor Cab -->
+    <path d="M375 225 L375 95 L400 60 L490 60 L515 100 L515 225 Z" fill="#6B1E2D" stroke="#8B2536" stroke-width="2"/>
+    <path d="M430 70 L485 70 L505 100 L430 100 Z" fill="#1A2D38" stroke="#486272" stroke-width="1.5"/>
+    <circle cx="420" cy="235" r="22" fill="#0C0A0B" stroke="#8B2536" stroke-width="4"/>
+    <circle cx="485" cy="235" r="22" fill="#0C0A0B" stroke="#8B2536" stroke-width="4"/>
+    <rect x="505" y="165" width="10" height="20" rx="2" fill="#FFFDF0"/>
+  </g>
+</svg>

@@ -1,0 +1,44 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="fq_sky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0E080B"/>
+      <stop offset="35%" stop-color="#260C16"/>
+      <stop offset="70%" stop-color="#421321"/>
+      <stop offset="100%" stop-color="#10080B"/>
+    </linearGradient>
+    <radialGradient id="fq_glow" cx="60%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#8B2536" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#0E080B" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fq_road" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#20181D"/>
+      <stop offset="100%" stop-color="#0B0709"/>
+    </linearGradient>
+    <pattern id="fq_dots" width="36" height="36" patternUnits="userSpaceOnUse">
+      <circle cx="18" cy="18" r="1.2" fill="#E6A9B4" fill-opacity="0.14"/>
+    </pattern>
+  </defs>
+
+  <!-- Sky Canvas -->
+  <rect width="1920" height="1080" fill="url(#fq_sky)"/>
+  <rect width="1920" height="1080" fill="url(#fq_dots)"/>
+  <rect width="1920" height="1080" fill="url(#fq_glow)"/>
+
+  <!-- Overhead Highway Gantry Sign with Info / FAQ Badge -->
+  <g transform="translate(1080, 240)" opacity="0.85">
+    <path d="M 0 280 L 0 60 L 480 60 L 480 280" stroke="#8B2536" stroke-width="4" fill="none"/>
+    <rect x="60" y="80" width="360" height="110" rx="8" fill="#180E13" stroke="#8B2536" stroke-width="2.5"/>
+    <text x="90" y="125" fill="#FAF8F5" font-family="system-ui, sans-serif" font-size="22" font-weight="900" letter-spacing="2">ASMA LOGISTICS · FAQ</text>
+    <text x="90" y="155" fill="#E6A9B4" font-family="system-ui, sans-serif" font-size="13" font-weight="700" letter-spacing="1">ОТВЕТЫ НА ВОПРОСЫ О ПЕРЕВОЗКАХ</text>
+    
+    <!-- Sign Lanterns -->
+    <circle cx="120" cy="205" r="5" fill="#FFC048"/>
+    <circle cx="360" cy="205" r="5" fill="#FFC048"/>
+  </g>
+
+  <!-- Highway Road Curve -->
+  <path d="M 0 630 Q 960 590 1920 560 L 1920 1080 L 0 1080 Z" fill="url(#fq_road)"/>
+  <path d="M 0 630 Q 960 590 1920 560" stroke="#8B2536" stroke-width="4.5"/>
+  <path d="M 0 780 Q 960 740 1920 710" stroke="#FAF8F5" stroke-width="3.5" stroke-dasharray="60 40" opacity="0.4"/>
+  <path d="M 0 940 Q 960 900 1920 870" stroke="#FFC048" stroke-width="2.5" opacity="0.45"/>
+</svg>

@@ -1,0 +1,57 @@
+<svg width="1920" height="800" viewBox="0 0 1920 800" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="rr_sky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0C0709"/>
+      <stop offset="40%" stop-color="#220B14"/>
+      <stop offset="75%" stop-color="#3F121F"/>
+      <stop offset="100%" stop-color="#0E070A"/>
+    </linearGradient>
+    <radialGradient id="rr_glow" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#8B2536" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#0C0709" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="rr_road" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1E161A"/>
+      <stop offset="100%" stop-color="#090607"/>
+    </linearGradient>
+    <pattern id="rr_dots" width="36" height="36" patternUnits="userSpaceOnUse">
+      <circle cx="18" cy="18" r="1.2" fill="#E6A9B4" fill-opacity="0.14"/>
+    </pattern>
+    <filter id="rr_shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <rect width="1920" height="800" fill="url(#rr_sky)"/>
+  <rect width="1920" height="800" fill="url(#rr_dots)"/>
+  <rect width="1920" height="800" fill="url(#rr_glow)"/>
+
+  <!-- Route Line Vector Spline across Sky -->
+  <g opacity="0.6">
+    <path d="M 150 500 Q 550 220 960 380 T 1770 240" fill="none" stroke="#FF2E50" stroke-width="4" stroke-dasharray="12 8"/>
+    <!-- Glowing Route Milestone Nodes -->
+    <g transform="translate(150, 500)">
+      <circle cx="0" cy="0" r="16" fill="#0C0709" stroke="#8B2536" stroke-width="3"/>
+      <circle cx="0" cy="0" r="6" fill="#FFC048"/>
+      <text x="-24" y="-24" fill="#FAF8F5" font-family="system-ui, sans-serif" font-size="12" font-weight="700">БРЕСТ</text>
+    </g>
+    <g transform="translate(680, 290)">
+      <circle cx="0" cy="0" r="16" fill="#0C0709" stroke="#8B2536" stroke-width="3"/>
+      <circle cx="0" cy="0" r="6" fill="#FFC048"/>
+      <text x="-22" y="-24" fill="#FAF8F5" font-family="system-ui, sans-serif" font-size="12" font-weight="700">МИНСК</text>
+    </g>
+    <g transform="translate(1420, 310)">
+      <circle cx="0" cy="0" r="22" fill="#0C0709" stroke="#8B2536" stroke-width="3.5" filter="url(#rr_shadow)"/>
+      <circle cx="0" cy="0" r="8" fill="#FF2E50"/>
+      <text x="-32" y="-28" fill="#FAF8F5" font-family="system-ui, sans-serif" font-size="13" font-weight="900" letter-spacing="1">ГОМЕЛЬ · HQ</text>
+    </g>
+  </g>
+
+  <!-- Highway Surface -->
+  <path d="M 0 450 L 1920 450 L 1920 800 L 0 800 Z" fill="url(#rr_road)"/>
+  <line x1="0" y1="448" x2="1920" y2="448" stroke="#8B2536" stroke-width="4"/>
+
+  <!-- Road Markings -->
+  <path d="M 0 620 L 1920 620" stroke="#FAF8F5" stroke-width="4" stroke-dasharray="70 45" opacity="0.4"/>
+  <line x1="0" y1="740" x2="1920" y2="740" stroke="#FFC048" stroke-width="3" opacity="0.45"/>
+</svg>

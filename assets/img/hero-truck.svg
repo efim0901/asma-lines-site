@@ -1,0 +1,153 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="ht_sky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F080A"/>
+      <stop offset="30%" stop-color="#240D16"/>
+      <stop offset="65%" stop-color="#421422"/>
+      <stop offset="100%" stop-color="#12080B"/>
+    </linearGradient>
+    <radialGradient id="ht_glow1" cx="70%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#8B2536" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#641624" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#0F080A" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ht_glow2" cx="30%" cy="60%" r="45%">
+      <stop offset="0%" stop-color="#8B2536" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#0F080A" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ht_road" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1F171B"/>
+      <stop offset="40%" stop-color="#151012"/>
+      <stop offset="100%" stop-color="#0A0708"/>
+    </linearGradient>
+    <linearGradient id="ht_beam" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#FFFDF0" stop-opacity="0.95"/>
+      <stop offset="25%" stop-color="#FFEBB0" stop-opacity="0.6"/>
+      <stop offset="65%" stop-color="#E6A9B4" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#8B2536" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ht_redtrail" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF1A44" stop-opacity="0"/>
+      <stop offset="70%" stop-color="#FF2E50" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#FFA8B6" stop-opacity="1"/>
+    </linearGradient>
+    <linearGradient id="ht_cab" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6B1E2D"/>
+      <stop offset="50%" stop-color="#8B2536"/>
+      <stop offset="100%" stop-color="#4E1521"/>
+    </linearGradient>
+    <linearGradient id="ht_trailer" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1E181C"/>
+      <stop offset="50%" stop-color="#2D232A"/>
+      <stop offset="100%" stop-color="#161114"/>
+    </linearGradient>
+    <pattern id="ht_dots" width="36" height="36" patternUnits="userSpaceOnUse">
+      <circle cx="18" cy="18" r="1.2" fill="#E6A9B4" fill-opacity="0.12"/>
+    </pattern>
+    <filter id="ht_drop" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="1920" height="1080" fill="url(#ht_sky)"/>
+  <rect width="1920" height="1080" fill="url(#ht_dots)"/>
+  <rect width="1920" height="1080" fill="url(#ht_glow1)"/>
+  <rect width="1920" height="1080" fill="url(#ht_glow2)"/>
+
+  <!-- Network Map Constellation Overlay -->
+  <g opacity="0.32" stroke="#E6A9B4" stroke-width="1.2">
+    <circle cx="1020" cy="360" r="300" stroke-dasharray="8 6" fill="none"/>
+    <circle cx="1020" cy="360" r="480" stroke-dasharray="4 8" fill="none" opacity="0.4"/>
+    <line x1="200" y1="360" x2="1750" y2="360" stroke="#8B2536" stroke-width="2"/>
+    <line x1="620" y1="200" x2="1020" y2="360"/>
+    <line x1="1420" y1="220" x2="1020" y2="360"/>
+    <line x1="1020" y1="360" x2="1320" y2="480"/>
+    <line x1="450" y1="420" x2="1020" y2="360"/>
+  </g>
+
+  <!-- Glowing Regional Nodes -->
+  <g transform="translate(620, 200)">
+    <circle cx="0" cy="0" r="14" fill="#0F080A" stroke="#E6A9B4" stroke-width="2"/>
+    <circle cx="0" cy="0" r="5" fill="#E6A9B4"/>
+    <text x="-22" y="-22" fill="#F8F7EF" font-family="system-ui, sans-serif" font-size="12" font-weight="700" opacity="0.8">МИНСК</text>
+  </g>
+  <g transform="translate(1320, 480)">
+    <circle cx="0" cy="0" r="22" fill="#0F080A" stroke="#8B2536" stroke-width="3" filter="url(#ht_drop)"/>
+    <circle cx="0" cy="0" r="8" fill="#FF2E50"/>
+    <text x="-32" y="-28" fill="#FAF8F5" font-family="system-ui, sans-serif" font-size="13" font-weight="900" letter-spacing="1">ГОМЕЛЬ · HQ</text>
+  </g>
+
+  <!-- Highway Ground Surface -->
+  <path d="M0 620 L1920 620 L1920 1080 L0 1080 Z" fill="url(#ht_road)"/>
+  <line x1="0" y1="618" x2="1920" y2="618" stroke="#8B2536" stroke-width="4"/>
+  <line x1="0" y1="626" x2="1920" y2="626" stroke="#3D252E" stroke-width="1.5"/>
+
+  <!-- Road Dividers & Markings -->
+  <path d="M0 820 L1920 820" stroke="#FAF8F5" stroke-width="4" stroke-dasharray="70 45" opacity="0.4"/>
+  <line x1="0" y1="980" x2="1920" y2="980" stroke="#FFC048" stroke-width="3" opacity="0.45"/>
+
+  <!-- Light Streaks / Speed Motion Lines -->
+  <path d="M-100 800 L950 800" stroke="url(#ht_redtrail)" stroke-width="8"/>
+  <path d="M-50 812 L780 812" stroke="url(#ht_redtrail)" stroke-width="4"/>
+  <path d="M1360 760 L2100 770" stroke="url(#ht_beam)" stroke-width="24" opacity="0.85"/>
+
+  <!-- Heavy Euro Semi-Trailer Truck (Right Side) -->
+  <g transform="translate(1020, 450)" filter="url(#ht_drop)">
+    <!-- Volumetric Headlight Cone -->
+    <polygon points="690,250 1380,160 1380,380 690,300" fill="url(#ht_beam)" opacity="0.6"/>
+
+    <!-- Truck Shadow -->
+    <ellipse cx="380" cy="315" rx="460" ry="26" fill="#000000" opacity="0.85"/>
+
+    <!-- Semi-Trailer Box -->
+    <rect x="0" y="30" width="500" height="240" rx="8" fill="url(#ht_trailer)" stroke="#4A3842" stroke-width="3"/>
+
+    <!-- Trailer Vertical Ribs -->
+    <line x1="100" y1="30" x2="100" y2="270" stroke="#33272D" stroke-width="2"/>
+    <line x1="200" y1="30" x2="200" y2="270" stroke="#33272D" stroke-width="2"/>
+    <line x1="300" y1="30" x2="300" y2="270" stroke="#33272D" stroke-width="2"/>
+    <line x1="400" y1="30" x2="400" y2="270" stroke="#33272D" stroke-width="2"/>
+
+    <!-- ASMA Lines Brand Panel on Trailer -->
+    <rect x="35" y="60" width="430" height="90" rx="6" fill="#120A0D" stroke="#8B2536" stroke-width="2"/>
+    <text x="60" y="112" fill="#FAF8F5" font-family="system-ui, sans-serif" font-size="34" font-weight="900" letter-spacing="4">ASMA LINES</text>
+    <text x="60" y="134" fill="#E6A9B4" font-family="system-ui, sans-serif" font-size="12" font-weight="700" letter-spacing="2">БЕЛАРУСЬ · ГРУЗОПЕРЕВОЗКИ</text>
+
+    <!-- Trailer Underrun Bar & Triple Axles -->
+    <rect x="65" y="270" width="230" height="24" rx="2" fill="#120E11" stroke="#382A32" stroke-width="2"/>
+    <!-- Triple Axle Wheels -->
+    <g>
+      <circle cx="340" cy="290" r="26" fill="#0C0A0B" stroke="#524049" stroke-width="5"/>
+      <circle cx="340" cy="290" r="10" fill="#2D232A"/>
+      <circle cx="400" cy="290" r="26" fill="#0C0A0B" stroke="#524049" stroke-width="5"/>
+      <circle cx="400" cy="290" r="10" fill="#2D232A"/>
+      <circle cx="460" cy="290" r="26" fill="#0C0A0B" stroke="#524049" stroke-width="5"/>
+      <circle cx="460" cy="290" r="10" fill="#2D232A"/>
+    </g>
+
+    <!-- Tractor Cab Base & Fairing -->
+    <path d="M495 270 L495 120 L530 80 L660 80 L695 130 L695 270 Z" fill="url(#ht_cab)" stroke="#8B2536" stroke-width="2"/>
+
+    <!-- Windshield & Side Window -->
+    <path d="M575 92 L655 92 L680 135 L575 135 Z" fill="#182A36" stroke="#4A6575" stroke-width="2"/>
+    <path d="M580 96 L650 96 L675 130 L580 130 Z" fill="#2C4858" opacity="0.8"/>
+    <rect x="525" y="98" width="42" height="37" rx="3" fill="#182A36" stroke="#4A6575" stroke-width="1.5"/>
+
+    <!-- Cab Chrome Grille & Bumper -->
+    <rect x="635" y="160" width="55" height="95" rx="3" fill="#221B1E" stroke="#8B2536" stroke-width="2"/>
+    <line x1="642" y1="180" x2="682" y2="180" stroke="#8B2536" stroke-width="2"/>
+    <line x1="642" y1="200" x2="682" y2="200" stroke="#8B2536" stroke-width="2"/>
+    <line x1="642" y1="220" x2="682" y2="220" stroke="#8B2536" stroke-width="2"/>
+
+    <!-- Dual Front Axle Wheels -->
+    <circle cx="560" cy="290" r="28" fill="#0C0A0B" stroke="#682230" stroke-width="6"/>
+    <circle cx="560" cy="290" r="11" fill="#8B2536"/>
+    <circle cx="650" cy="290" r="28" fill="#0C0A0B" stroke="#682230" stroke-width="6"/>
+    <circle cx="650" cy="290" r="11" fill="#8B2536"/>
+
+    <!-- High-Intensity LED Headlights -->
+    <rect x="682" y="215" width="12" height="26" rx="3" fill="#FFFDF0"/>
+    <circle cx="688" cy="228" r="8" fill="#FFF8D0"/>
+  </g>
+</svg>
