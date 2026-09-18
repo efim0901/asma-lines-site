@@ -4083,5 +4083,389 @@ body[data-theme='dark'] .partner-form-card textarea:focus {
   box-shadow: 0 0 0 3px rgba(255, 211, 130, 0.18);
 }
 
+/* ============================================================
+   Streamlined Express Calculator Widget & Compact City Catalog
+   ============================================================ */
+.express-calc-widget {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+  padding: 24px;
+  margin-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transition: all 0.25s var(--ease);
+}
+
+.express-calc-inputs {
+  display: grid;
+  grid-template-columns: 1fr 48px 1fr;
+  align-items: center;
+  gap: 16px;
+}
+
+.express-select-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.express-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.route-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.route-dot.origin { background: #10B981; }
+.route-dot.dest { background: var(--burgundy-bright, #8B2536); }
+
+.express-swap-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface-subtle);
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-end;
+  margin-bottom: 2px;
+  transition: all 0.2s var(--ease);
+}
+
+.express-swap-btn:hover {
+  background: var(--burgundy-bright);
+  border-color: var(--burgundy-bright);
+  color: #FFFFFF;
+  transform: rotate(180deg);
+}
+
+.express-corridors-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px dashed var(--line);
+  padding-top: 14px;
+}
+
+.ecb-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-mute);
+  white-space: nowrap;
+}
+
+.ecb-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.corridor-pill {
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--r-full);
+  padding: 5px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.18s var(--ease);
+}
+
+.corridor-pill:hover {
+  background: var(--brand-soft);
+  border-color: var(--burgundy);
+  color: var(--burgundy);
+}
+
+.express-metrics-bar {
+  display: grid;
+  grid-template-columns: 1.3fr repeat(4, 1fr);
+  gap: 12px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 16px 20px;
+}
+
+.em-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.em-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-mute);
+}
+
+.em-route-str {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.em-arrow { color: var(--burgundy); }
+
+.em-corridor {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+
+.em-label {
+  font-size: 11px;
+  color: var(--ink-mute);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.em-val {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.em-col.highlight {
+  background: rgba(139, 37, 54, 0.08);
+  border-radius: var(--r-sm);
+  padding: 6px 12px;
+  margin: -6px -12px;
+}
+
+body[data-theme='dark'] .em-col.highlight {
+  background: rgba(139, 37, 54, 0.35);
+  border: 1px solid rgba(255, 211, 130, 0.3);
+}
+
+.em-val-price {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--burgundy-text, var(--burgundy));
+}
+
+.express-actions-bar {
+  display: flex;
+  gap: 14px;
+}
+
+.express-actions-bar .btn {
+  flex: 1;
+  justify-content: center;
+  min-height: 48px;
+}
+
+@media (max-width: 768px) {
+  .express-calc-inputs {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .express-swap-btn {
+    align-self: center;
+    transform: rotate(90deg);
+  }
+  .express-metrics-bar {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .route-title-col {
+    grid-column: 1 / -1;
+  }
+  .express-actions-bar {
+    flex-direction: column;
+  }
+}
+
+/* ============================================================
+   Floating Contact Widget with Attention Ring
+   ============================================================ */
+.floating-contact-widget {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.floating-contact-trigger {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--burgundy-bright, #8B2536);
+  color: #FFD382;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(107, 30, 45, 0.45);
+  transition: transform 0.22s var(--ease), background 0.22s var(--ease);
+}
+
+.floating-contact-trigger:hover {
+  transform: scale(1.08);
+  background: var(--burgundy-deep, #681A28);
+}
+
+.floating-contact-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(139, 37, 54, 0.65);
+  pointer-events: none;
+  animation: contactRingPulse 2.2s infinite cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+body[data-theme='dark'] .floating-contact-ring {
+  border-color: rgba(255, 211, 130, 0.7);
+}
+
+@keyframes contactRingPulse {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.85;
+  }
+  70% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+
+.floating-contact-card {
+  position: absolute;
+  bottom: 72px;
+  right: 0;
+  width: 310px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 18px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px) scale(0.95);
+  transition: all 0.22s var(--ease);
+  z-index: 10000;
+}
+
+.floating-contact-card.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.fcc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+
+.fcc-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.fcc-close {
+  background: none;
+  border: none;
+  color: var(--ink-mute);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+}
+
+.fcc-close:hover {
+  color: var(--burgundy);
+  background: var(--brand-soft);
+}
+
+.fcc-desc {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0 0 14px;
+  line-height: 1.45;
+}
+
+.fcc-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fcc-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.18s var(--ease);
+}
+
+.fcc-btn-call {
+  background: var(--burgundy-bright, #8B2536);
+  color: #FFFFFF;
+}
+
+.fcc-btn-call:hover {
+  background: var(--burgundy-deep, #681A28);
+}
+
+.fcc-btn-tg {
+  background: #2AABEE;
+  color: #FFFFFF;
+}
+
+.fcc-btn-tg:hover {
+  background: #229ED9;
+}
+
+.fcc-btn-calc {
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.fcc-btn-calc:hover {
+  border-color: var(--burgundy);
+  color: var(--burgundy);
+  background: var(--brand-soft);
+}
+
 
 

@@ -152,130 +152,11 @@ if (reducedMotion || !('IntersectionObserver' in window)) {
 }
 
 /* ------------------------------------------------------------
-   Route Constructor & Network Coverage Component (Variants 3 + 4)
+   Express Route Calculator Component
    ------------------------------------------------------------ */
 function initRouteConstructorAndNetwork() {
   const panel = document.getElementById("geography-network-section");
   if (!panel) return;
-
-  const CITIES_MASTER = [
-    // Гомельская область
-    { name: "Гомель", region: "Гомельская" },
-    { name: "Мозырь", region: "Гомельская" },
-    { name: "Жлобин", region: "Гомельская" },
-    { name: "Светлогорск", region: "Гомельская" },
-    { name: "Речица", region: "Гомельская" },
-    { name: "Калинковичи", region: "Гомельская" },
-    { name: "Рогачёв", region: "Гомельская" },
-    { name: "Добруш", region: "Гомельская" },
-    { name: "Житковичи", region: "Гомельская" },
-    { name: "Хойники", region: "Гомельская" },
-    { name: "Петриков", region: "Гомельская" },
-    { name: "Ельск", region: "Гомельская" },
-    { name: "Буда-Кошелёво", region: "Гомельская" },
-    { name: "Ветка", region: "Гомельская" },
-    { name: "Чечерск", region: "Гомельская" },
-    { name: "Лельчицы", region: "Гомельская" },
-    { name: "Наровля", region: "Гомельская" },
-    { name: "Лоев", region: "Гомельская" },
-    { name: "Корма", region: "Гомельская" },
-
-    // Минская область
-    { name: "Минск", region: "Минская" },
-    { name: "Борисов", region: "Минская" },
-    { name: "Солигорск", region: "Минская" },
-    { name: "Молодечно", region: "Минская" },
-    { name: "Жодино", region: "Минская" },
-    { name: "Слуцк", region: "Минская" },
-    { name: "Дзержинск", region: "Минская" },
-    { name: "Вилейка", region: "Минская" },
-    { name: "Марьина Горка", region: "Минская" },
-    { name: "Столбцы", region: "Минская" },
-    { name: "Смолевичи", region: "Минская" },
-    { name: "Несвиж", region: "Минская" },
-    { name: "Фаниполь", region: "Минская" },
-    { name: "Заславль", region: "Минская" },
-    { name: "Любань", region: "Минская" },
-    { name: "Крупки", region: "Минская" },
-    { name: "Клецк", region: "Минская" },
-    { name: "Логойск", region: "Минская" },
-    { name: "Березино", region: "Минская" },
-    { name: "Червень", region: "Минская" },
-
-    // Брестская область
-    { name: "Брест", region: "Брестская" },
-    { name: "Барановичи", region: "Брестская" },
-    { name: "Пинск", region: "Брестская" },
-    { name: "Кобрин", region: "Брестская" },
-    { name: "Берёза", region: "Брестская" },
-    { name: "Лунинец", region: "Брестская" },
-    { name: "Ивацевичи", region: "Брестская" },
-    { name: "Пружаны", region: "Брестская" },
-    { name: "Иваново", region: "Брестская" },
-    { name: "Дрогичин", region: "Брестская" },
-    { name: "Ганцевичи", region: "Брестская" },
-    { name: "Жабинка", region: "Брестская" },
-    { name: "Столин", region: "Брестская" },
-    { name: "Микашевичи", region: "Брестская" },
-    { name: "Белоозёрск", region: "Брестская" },
-    { name: "Каменец", region: "Брестская" },
-    { name: "Малорита", region: "Брестская" },
-    { name: "Ляховичи", region: "Брестская" },
-
-    // Гродненская область
-    { name: "Гродно", region: "Гродненская" },
-    { name: "Лида", region: "Гродненская" },
-    { name: "Слоним", region: "Гродненская" },
-    { name: "Волковыск", region: "Гродненская" },
-    { name: "Сморгонь", region: "Гродненская" },
-    { name: "Новогрудок", region: "Гродненская" },
-    { name: "Мосты", region: "Гродненская" },
-    { name: "Щучин", region: "Гродненская" },
-    { name: "Ошмяны", region: "Гродненская" },
-    { name: "Скидель", region: "Гродненская" },
-    { name: "Островец", region: "Гродненская" },
-    { name: "Дятлово", region: "Гродненская" },
-    { name: "Ивье", region: "Гродненская" },
-    { name: "Зельва", region: "Гродненская" },
-    { name: "Кореличи", region: "Гродненская" },
-    { name: "Свислочь", region: "Гродненская" },
-
-    // Витебская область
-    { name: "Витебск", region: "Витебская" },
-    { name: "Орша", region: "Витебская" },
-    { name: "Новополоцк", region: "Витебская" },
-    { name: "Полоцк", region: "Витебская" },
-    { name: "Поставы", region: "Витебская" },
-    { name: "Глубокое", region: "Витебская" },
-    { name: "Лепель", region: "Витебская" },
-    { name: "Городок", region: "Витебская" },
-    { name: "Браслав", region: "Витебская" },
-    { name: "Толочин", region: "Витебская" },
-    { name: "Чашники", region: "Витебская" },
-    { name: "Миоры", region: "Витебская" },
-    { name: "Сенно", region: "Витебская" },
-    { name: "Верхнедвинск", region: "Витебская" },
-    { name: "Дубровно", region: "Витебская" },
-
-    // Могилёвская область
-    { name: "Могилёв", region: "Могилёвская" },
-    { name: "Бобруйск", region: "Могилёвская" },
-    { name: "Горки", region: "Могилёвская" },
-    { name: "Осиповичи", region: "Могилёвская" },
-    { name: "Кричев", region: "Могилёвская" },
-    { name: "Быхов", region: "Могилёвская" },
-    { name: "Климовичи", region: "Могилёвская" },
-    { name: "Шклов", region: "Могилёвская" },
-    { name: "Костюковичи", region: "Могилёвская" },
-    { name: "Мстиславль", region: "Могилёвская" },
-    { name: "Чаусы", region: "Могилёвская" },
-    { name: "Белыничи", region: "Могилёвская" },
-    { name: "Кировск", region: "Могилёвская" },
-    { name: "Чериков", region: "Могилёвская" },
-    { name: "Славгород", region: "Могилёвская" },
-    { name: "Круглое", region: "Могилёвская" },
-    { name: "Кличев", region: "Могилёвская" }
-  ];
 
   // Verified road route distances, times, and highways
   const ROUTE_MATRIX = {
@@ -388,66 +269,10 @@ function initRouteConstructorAndNetwork() {
   const leadVal = document.getElementById("summaryLeadVal");
   const costVal = document.getElementById("summaryCostVal");
   const calcLink = document.getElementById("routeCalcDirectLink");
-  
-  const originHubsWrap = document.getElementById("originQuickHubs");
-  const destHubsWrap = document.getElementById("destQuickHubs");
-  
-  const searchInput = document.getElementById("networkCitySearch");
-  const clearSearch = document.getElementById("clearSearchBtn");
-  const searchResult = document.getElementById("searchResultCard");
-  const srcName = document.getElementById("srcCityName");
-  const srcRegion = document.getElementById("srcCityRegion");
-  const srcDesc = document.getElementById("srcCityDesc");
-  const srcBtn = document.getElementById("srcSelectBtn");
-  
-  const regionTabs = panel.querySelectorAll(".region-tab");
-  const citiesGrid = document.getElementById("networkCitiesGrid");
   const corridorsList = document.getElementById("popularCorridorsList");
 
-  let activeRegion = "all";
-  let activeSearchQuery = "";
-  let selectedSearchCity = null;
-
-  // Render City Chips in Column 2
-  function renderCityChips() {
-    if (!citiesGrid) return;
-    citiesGrid.innerHTML = "";
-
-    const currentDest = destSelect ? destSelect.value : "";
-    const filtered = CITIES_MASTER.filter(c => {
-      const matchRegion = activeRegion === "all" || c.region === activeRegion;
-      const matchSearch = !activeSearchQuery || c.name.toLowerCase().includes(activeSearchQuery) || c.region.toLowerCase().includes(activeSearchQuery);
-      return matchRegion && matchSearch;
-    });
-
-    if (filtered.length === 0) {
-      citiesGrid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px 10px; color:var(--ink-mute); font-size:13px;">Город не найден в фильтре. ASMA Lines выполняет доставку в любой населённый пункт РБ — свяжитесь с диспетчером.</div>`;
-      return;
-    }
-
-    filtered.forEach(city => {
-      const chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = `city-catalog-chip ${city.name === currentDest ? "is-selected" : ""}`;
-      chip.setAttribute("data-city", city.name);
-      chip.setAttribute("title", `Выбрать город ${city.name}`);
-      chip.innerHTML = `<span class="chip-name">${city.name}</span>`;
-
-      chip.addEventListener("click", () => {
-        if (destSelect) {
-          ensureOptionExists(destSelect, city.name);
-          destSelect.value = city.name;
-          updateRoute();
-          highlightCityChip(city.name);
-          scrollGentlyToConstructor();
-        }
-      });
-
-      citiesGrid.appendChild(chip);
-    });
-  }
-
   function ensureOptionExists(selectEl, cityName) {
+    if (!selectEl) return;
     let exists = false;
     for (let i = 0; i < selectEl.options.length; i++) {
       if (selectEl.options[i].value === cityName) {
@@ -460,28 +285,6 @@ function initRouteConstructorAndNetwork() {
       opt.value = cityName;
       opt.textContent = cityName;
       selectEl.appendChild(opt);
-    }
-  }
-
-  function highlightCityChip(cityName) {
-    const chips = citiesGrid ? citiesGrid.querySelectorAll(".city-catalog-chip") : [];
-    chips.forEach(c => {
-      if (c.getAttribute("data-city") === cityName) {
-        c.classList.add("is-selected");
-      } else {
-        c.classList.remove("is-selected");
-      }
-    });
-  }
-
-  function scrollGentlyToConstructor() {
-    if (window.innerWidth <= 900) {
-      const summaryCard = document.getElementById("routeSummaryCard");
-      const box = document.getElementById("routeBuilderPanel");
-      const target = summaryCard || box;
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      }
     }
   }
 
@@ -531,20 +334,6 @@ function initRouteConstructorAndNetwork() {
     if (calcLink) {
       calcLink.href = `calculator.html?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
     }
-
-    // Update quick buttons states
-    if (originHubsWrap) {
-      originHubsWrap.querySelectorAll(".quick-hub-btn").forEach(btn => {
-        btn.classList.toggle("is-active", btn.dataset.city === from);
-      });
-    }
-    if (destHubsWrap) {
-      destHubsWrap.querySelectorAll(".quick-hub-btn").forEach(btn => {
-        btn.classList.toggle("is-active", btn.dataset.city === to);
-      });
-    }
-
-    highlightCityChip(to);
   }
 
   // Swap Direction
@@ -563,92 +352,6 @@ function initRouteConstructorAndNetwork() {
   if (originSelect) originSelect.addEventListener("change", updateRoute);
   if (destSelect) destSelect.addEventListener("change", updateRoute);
 
-  // Quick Hub buttons inside inputs
-  if (originHubsWrap) {
-    originHubsWrap.addEventListener("click", (e) => {
-      const btn = e.target.closest(".quick-hub-btn");
-      if (!btn) return;
-      originSelect.value = btn.dataset.city;
-      updateRoute();
-    });
-  }
-  if (destHubsWrap) {
-    destHubsWrap.addEventListener("click", (e) => {
-      const btn = e.target.closest(".quick-hub-btn");
-      if (!btn) return;
-      destSelect.value = btn.dataset.city;
-      updateRoute();
-    });
-  }
-
-  // Regional Filter Tabs
-  regionTabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-      regionTabs.forEach(t => {
-        t.classList.remove("is-active");
-        t.setAttribute("aria-selected", "false");
-      });
-      tab.classList.add("is-active");
-      tab.setAttribute("aria-selected", "true");
-      activeRegion = tab.dataset.region || "all";
-      renderCityChips();
-    });
-  });
-
-  // Search Input in Column 2
-  if (searchInput) {
-    searchInput.addEventListener("input", (e) => {
-      const q = e.target.value.trim().toLowerCase();
-      activeSearchQuery = q;
-      if (clearSearch) clearSearch.hidden = !q;
-
-      // Find best single match for direct card
-      if (q.length >= 2) {
-        const found = CITIES_MASTER.find(c => c.name.toLowerCase().startsWith(q) || c.name.toLowerCase().includes(q));
-        if (found) {
-          selectedSearchCity = found;
-          if (searchResult) {
-            searchResult.hidden = false;
-            if (srcName) srcName.textContent = found.name;
-            if (srcRegion) srcRegion.textContent = `${found.region} обл.`;
-          }
-        } else {
-          if (searchResult) searchResult.hidden = true;
-          selectedSearchCity = null;
-        }
-      } else {
-        if (searchResult) searchResult.hidden = true;
-        selectedSearchCity = null;
-      }
-
-      renderCityChips();
-    });
-  }
-
-  if (clearSearch) {
-    clearSearch.addEventListener("click", () => {
-      if (searchInput) {
-        searchInput.value = "";
-        activeSearchQuery = "";
-        clearSearch.hidden = true;
-        if (searchResult) searchResult.hidden = true;
-        renderCityChips();
-        searchInput.focus();
-      }
-    });
-  }
-
-  if (srcBtn) {
-    srcBtn.addEventListener("click", () => {
-      if (selectedSearchCity && destSelect) {
-        ensureOptionExists(destSelect, selectedSearchCity.name);
-        destSelect.value = selectedSearchCity.name;
-        updateRoute();
-        scrollGentlyToConstructor();
-      }
-    });
-  }
-
   // Popular Corridors Click
   if (corridorsList) {
     corridorsList.addEventListener("click", (e) => {
@@ -662,13 +365,11 @@ function initRouteConstructorAndNetwork() {
         originSelect.value = f;
         destSelect.value = t;
         updateRoute();
-        scrollGentlyToConstructor();
       }
     });
   }
 
   // Initial populate & setup
-  renderCityChips();
   updateRoute();
 }
 
@@ -982,3 +683,79 @@ document.querySelectorAll('[data-partners-form]').forEach((partnersForm) => {
     }
   });
 });
+
+/* Auto-inject floating contact ring widget at bottom-right */
+function initFloatingContactWidget() {
+  if (document.getElementById("floatingContactWidget")) return;
+
+  const container = document.createElement("div");
+  container.id = "floatingContactWidget";
+  container.className = "floating-contact-widget";
+  container.innerHTML = `
+    <div class="floating-contact-card" id="floatingContactCard" aria-hidden="true">
+      <div class="fcc-header">
+        <div class="fcc-title">Быстрая связь</div>
+        <button type="button" class="fcc-close" id="fccCloseBtn" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="fcc-body">
+        <p class="fcc-desc">Дежурный логист ASMA Lines на связи. Выберите удобный способ:</p>
+        <div class="fcc-links">
+          <a href="tel:+375291234567" class="fcc-btn fcc-btn-call">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span>Позвонить +375 29 123-45-67</span>
+          </a>
+          <a href="https://t.me/asmalinesbot" target="_blank" rel="noopener" class="fcc-btn fcc-btn-tg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+            <span>Написать в Telegram</span>
+          </a>
+          <a href="calculator.html" class="fcc-btn fcc-btn-calc">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+            <span>Рассчитать перевозку</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <button type="button" class="floating-contact-trigger" id="floatingContactTrigger" aria-label="Быстрая связь" title="Связаться с логистом">
+      <span class="floating-contact-ring"></span>
+      <span class="floating-contact-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </span>
+    </button>
+  `;
+
+  document.body.appendChild(container);
+
+  const trigger = document.getElementById("floatingContactTrigger");
+  const card = document.getElementById("floatingContactCard");
+  const closeBtn = document.getElementById("fccCloseBtn");
+
+  if (trigger && card) {
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      card.classList.toggle("is-open");
+      card.setAttribute("aria-hidden", !card.classList.contains("is-open"));
+    });
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        card.classList.remove("is-open");
+        card.setAttribute("aria-hidden", "true");
+      });
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!container.contains(e.target)) {
+        card.classList.remove("is-open");
+        card.setAttribute("aria-hidden", "true");
+      }
+    });
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initFloatingContactWidget);
+} else {
+  initFloatingContactWidget();
+}

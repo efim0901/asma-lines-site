@@ -135,252 +135,145 @@
     <div class="network-section__bg"></div>
     <div class="network-section__overlay"></div>
     <div class="network-section__inner container">
-        <div class="network-header text-center">
-          <p class="kicker">География перевозок</p>
-          <h2 class="display-2">Грузоперевозки по всей Беларуси</h2>
-          <p class="lede">Ежедневные рейсы по всей Беларуси: 6 областей, более 70 городов и подача транспорта от 2 часов. Выберите маршрут или укажите нужный город.</p>
-          
+      
+      <!-- Streamlined Header -->
+      <div class="network-header text-center">
+        <p class="kicker">География и экспресс-расчёт</p>
+        <h2 class="display-2">Быстрый расчёт перевозки по Беларуси</h2>
+        <p class="lede">Выберите пункты отправления и назначения — система моментально рассчитает расстояние, время в пути и ориентировочную ставку.</p>
+      </div>
 
+      <!-- Compact Express Route Constructor Widget -->
+      <div class="express-calc-widget" id="routeBuilderPanel">
+        
+        <!-- Row 1: Destination Selector Bar -->
+        <div class="express-calc-inputs">
+          <div class="express-select-group">
+            <label for="routeOriginSelect" class="express-label">
+              <span class="route-dot origin"></span> Откуда
+            </label>
+            <div class="custom-select-wrap">
+              <select id="routeOriginSelect" class="route-select" aria-label="Пункт отправления">
+                <option value="Гомель" selected>Гомель</option>
+                <option value="Минск">Минск</option>
+                <option value="Брест">Брест</option>
+                <option value="Гродно">Гродно</option>
+                <option value="Витебск">Витебск</option>
+                <option value="Могилёв">Могилёв</option>
+                <option value="Барановичи">Барановичи</option>
+                <option value="Бобруйск">Бобруйск</option>
+                <option value="Пинск">Пинск</option>
+                <option value="Мозырь">Мозырь</option>
+                <option value="Полоцк">Полоцк</option>
+                <option value="Орша">Орша</option>
+                <option value="Лида">Лида</option>
+                <option value="Борисов">Борисов</option>
+                <option value="Солигорск">Солигорск</option>
+                <option value="Жлобин">Жлобин</option>
+                <option value="Светлогорск">Светлогорск</option>
+                <option value="Речица">Речица</option>
+                <option value="Сморгонь">Сморгонь</option>
+                <option value="Кобрин">Кобрин</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Swap Button -->
+          <button type="button" id="btnSwapRoute" class="express-swap-btn" title="Поменять города местами" aria-label="Поменять пункты отправления и назначения местами">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4"/>
+            </svg>
+          </button>
+
+          <div class="express-select-group">
+            <label for="routeDestSelect" class="express-label">
+              <span class="route-dot dest"></span> Куда
+            </label>
+            <div class="custom-select-wrap">
+              <select id="routeDestSelect" class="route-select" aria-label="Пункт назначения">
+                <option value="Минск" selected>Минск</option>
+                <option value="Гомель">Гомель</option>
+                <option value="Брест">Брест</option>
+                <option value="Гродно">Гродно</option>
+                <option value="Витебск">Витебск</option>
+                <option value="Могилёв">Могилёв</option>
+                <option value="Барановичи">Барановичи</option>
+                <option value="Бобруйск">Бобруйск</option>
+                <option value="Пинск">Пинск</option>
+                <option value="Мозырь">Мозырь</option>
+                <option value="Полоцк">Полоцк</option>
+                <option value="Орша">Орша</option>
+                <option value="Лида">Лида</option>
+                <option value="Борисов">Борисов</option>
+                <option value="Солигорск">Солигорск</option>
+                <option value="Жлобин">Жлобин</option>
+                <option value="Светлогорск">Светлогорск</option>
+                <option value="Речица">Речица</option>
+                <option value="Сморгонь">Сморгонь</option>
+                <option value="Кобрин">Кобрин</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        <!-- Main 2-Column Module: Route Builder (Variant 3) + Coverage Catalog (Variant 4) -->
-        <div class="network-main-grid">
-          <!-- Column 1: Fast Route Constructor -->
-          <div class="route-builder-panel" id="routeBuilderPanel">
-            <div class="panel-header">
-              <div class="panel-title-wrap">
-                <span class="panel-badge">Маршрут</span>
-                <h3 class="panel-title">Расчёт стоимости и сроков</h3>
-              </div>
-              <span class="panel-hint">Выберите города или кликните в списке справа</span>
-            </div>
+        <!-- Row 2: Popular Corridors Shortcuts -->
+        <div class="express-corridors-bar">
+          <span class="ecb-title">Популярные маршруты:</span>
+          <div class="ecb-list" id="popularCorridorsList">
+            <button type="button" class="corridor-pill" data-from="Гомель" data-to="Минск">Гомель ⇄ Минск</button>
+            <button type="button" class="corridor-pill" data-from="Минск" data-to="Брест">Минск ⇄ Брест</button>
+            <button type="button" class="corridor-pill" data-from="Минск" data-to="Гродно">Минск ⇄ Гродно</button>
+            <button type="button" class="corridor-pill" data-from="Витебск" data-to="Минск">Витебск ⇄ Минск</button>
+            <button type="button" class="corridor-pill" data-from="Гомель" data-to="Могилёв">Гомель ⇄ Могилёв</button>
+          </div>
+        </div>
 
-            <!-- Route Inputs -->
-            <div class="route-inputs-wrapper">
-              <div class="route-input-group">
-                <label for="routeOriginSelect" class="route-input-label">
-                  <span class="route-dot origin"></span> Откуда
-                </label>
-                <div class="custom-select-wrap">
-                  <select id="routeOriginSelect" class="route-select" aria-label="Пункт отправления">
-                    <option value="Гомель" selected>Гомель</option>
-                    <option value="Минск">Минск</option>
-                    <option value="Брест">Брест</option>
-                    <option value="Гродно">Гродно</option>
-                    <option value="Витебск">Витебск</option>
-                    <option value="Могилёв">Могилёв</option>
-                    <option value="Барановичи">Барановичи</option>
-                    <option value="Бобруйск">Бобруйск</option>
-                    <option value="Пинск">Пинск</option>
-                    <option value="Мозырь">Мозырь</option>
-                    <option value="Полоцк">Полоцк</option>
-                    <option value="Орша">Орша</option>
-                    <option value="Лида">Лида</option>
-                    <option value="Борисов">Борисов</option>
-                    <option value="Солигорск">Солигорск</option>
-                    <option value="Жлобин">Жлобин</option>
-                    <option value="Светлогорск">Светлогорск</option>
-                    <option value="Речица">Речица</option>
-                    <option value="Сморгонь">Сморгонь</option>
-                    <option value="Кобрин">Кобрин</option>
-                  </select>
-                </div>
-                <!-- Origin Quick Hubs -->
-                <div class="route-quick-hubs" id="originQuickHubs">
-                  <span class="quick-hub-label">Быстро:</span>
-                  <button type="button" class="quick-hub-btn is-active" data-city="Гомель">Гомель</button>
-                  <button type="button" class="quick-hub-btn" data-city="Минск">Минск</button>
-                  <button type="button" class="quick-hub-btn" data-city="Брест">Брест</button>
-                  <button type="button" class="quick-hub-btn" data-city="Гродно">Гродно</button>
-                </div>
-              </div>
-
-              <!-- Reversible swap button -->
-              <div class="route-swap-container">
-                <button type="button" id="btnSwapRoute" class="route-swap-btn" title="Поменять города местами" aria-label="Поменять пункты отправления и назначения местами">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4"/>
-                  </svg>
-                </button>
-              </div>
-
-              <div class="route-input-group">
-                <label for="routeDestSelect" class="route-input-label">
-                  <span class="route-dot dest"></span> Куда
-                </label>
-                <div class="custom-select-wrap">
-                  <select id="routeDestSelect" class="route-select" aria-label="Пункт назначения">
-                    <option value="Минск" selected>Минск</option>
-                    <option value="Гомель">Гомель</option>
-                    <option value="Брест">Брест</option>
-                    <option value="Гродно">Гродно</option>
-                    <option value="Витебск">Витебск</option>
-                    <option value="Могилёв">Могилёв</option>
-                    <option value="Барановичи">Барановичи</option>
-                    <option value="Бобруйск">Бобруйск</option>
-                    <option value="Пинск">Пинск</option>
-                    <option value="Мозырь">Мозырь</option>
-                    <option value="Полоцк">Полоцк</option>
-                    <option value="Орша">Орша</option>
-                    <option value="Лида">Лида</option>
-                    <option value="Борисов">Борисов</option>
-                    <option value="Солигорск">Солигорск</option>
-                    <option value="Жлобин">Жлобин</option>
-                    <option value="Светлогорск">Светлогорск</option>
-                    <option value="Речица">Речица</option>
-                    <option value="Сморгонь">Сморгонь</option>
-                    <option value="Кобрин">Кобрин</option>
-                  </select>
-                </div>
-                <!-- Dest Quick Hubs -->
-                <div class="route-quick-hubs" id="destQuickHubs">
-                  <span class="quick-hub-label">Быстро:</span>
-                  <button type="button" class="quick-hub-btn is-active" data-city="Минск">Минск</button>
-                  <button type="button" class="quick-hub-btn" data-city="Гомель">Гомель</button>
-                  <button type="button" class="quick-hub-btn" data-city="Витебск">Витебск</button>
-                  <button type="button" class="quick-hub-btn" data-city="Могилёв">Могилёв</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Live Route Summary Card -->
-            <div class="route-summary-card" id="routeSummaryCard">
-              <div class="summary-top-bar">
-                <div class="summary-route-name">
-                  <span id="routeOriginBadge">Гомель</span>
-                  <span class="summary-arrow">⟶</span>
-                  <span id="routeDestBadge">Минск</span>
-                </div>
-                <span class="summary-corridor-tag" id="routeCorridorTag">Магистраль М-5 · Экспресс</span>
-              </div>
-
-              <!-- Metric counters -->
-              <div class="summary-metrics-grid">
-                <div class="summary-metric">
-                  <span class="sm-label">Расстояние</span>
-                  <strong class="sm-value" id="summaryDistanceVal">310 км</strong>
-                </div>
-                <div class="summary-metric">
-                  <span class="sm-label">Время в пути</span>
-                  <strong class="sm-value" id="summaryTimeVal">~3.5 – 4.5 ч</strong>
-                </div>
-                <div class="summary-metric">
-                  <span class="sm-label">Подача авто</span>
-                  <strong class="sm-value" id="summaryLeadVal">от 2 часов</strong>
-                </div>
-                <div class="summary-metric highlight">
-                  <span class="sm-label">Ориентир ставки</span>
-                  <strong class="sm-value" id="summaryCostVal">от 595 BYN</strong>
-                </div>
-              </div>
-
-              <!-- Fleet availability tags -->
-              <div class="summary-fleet-block">
-                <span class="fleet-block-title">Доступный транспорт на линии:</span>
-                <div class="fleet-tags-row">
-                  <span class="fleet-tag"><span class="fleet-icon">🚛</span> Тенты до 20т (86-92 м³)</span>
-                  <span class="fleet-tag"><span class="fleet-icon">❄️</span> Рефрижераторы (-20..+20°C)</span>
-                  <span class="fleet-tag"><span class="fleet-icon">📦</span> Изотермы и фургоны</span>
-                  <span class="fleet-tag"><span class="fleet-icon">🚐</span> Экспресс до 3.5-5т</span>
-                </div>
-              </div>
-
-              <!-- Actions -->
-              <div class="summary-actions">
-                <a href="calculator.html?from=Гомель&to=Минск" id="routeCalcDirectLink" class="btn btn-primary btn-block">
-                  Рассчитать точную стоимость рейса →
-                </a>
-                <a href="contacts.html" class="btn btn-outline-light btn-block">
-                  Заказать обратный звонок диспетчера
-                </a>
-              </div>
-            </div>
+        <!-- Row 3: Instant Metrics Output Bar -->
+        <div class="express-metrics-bar" id="routeSummaryCard">
+          <div class="em-col route-title-col">
+            <span class="em-tag">Маршрут</span>
+            <strong class="em-route-str">
+              <span id="routeOriginBadge">Гомель</span>
+              <span class="em-arrow">⟶</span>
+              <span id="routeDestBadge">Минск</span>
+            </strong>
+            <span class="em-corridor" id="routeCorridorTag">Магистраль М-5</span>
           </div>
 
-          <!-- Column 2: Network Coverage & Cities Search (Variant 4) -->
-          <div class="network-catalog-panel">
-            <div class="panel-header">
-              <div class="panel-title-wrap">
-                <span class="panel-badge secondary">Каталог</span>
-                <h3 class="panel-title">Города доставки</h3>
-              </div>
-              <span class="panel-hint">Выберите город для добавления в маршрут</span>
-            </div>
-
-            <!-- City Live Search Box -->
-            <div class="network-search-box">
-              <div class="search-input-wrap">
-                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <input type="text" id="networkCitySearch" class="network-search-input" placeholder="Поиск города..." aria-label="Поиск города">
-                <button type="button" id="clearSearchBtn" class="clear-search-btn" title="Очистить поиск" hidden>✕</button>
-              </div>
-
-              <!-- Search Match Result Card (Shown when searching) -->
-              <div id="searchResultCard" class="search-result-card" hidden>
-                <div class="src-icon">✓</div>
-                <div class="src-info">
-                  <div class="src-header">
-                    <strong class="src-name" id="srcCityName">Полоцк</strong>
-                    <span class="src-region" id="srcCityRegion">Витебская обл.</span>
-                  </div>
-                </div>
-                <button type="button" class="btn btn-sm btn-primary" id="srcSelectBtn">Выбрать в маршрут</button>
-              </div>
-            </div>
-
-            <!-- Regional Filter Tabs -->
-            <div class="network-region-tabs" role="tablist" aria-label="Фильтр городов по областям">
-              <button type="button" class="region-tab is-active" data-region="all" role="tab" aria-selected="true">Все города</button>
-              <button type="button" class="region-tab" data-region="Гомельская" role="tab" aria-selected="false">Гомельская</button>
-              <button type="button" class="region-tab" data-region="Минская" role="tab" aria-selected="false">Минская</button>
-              <button type="button" class="region-tab" data-region="Брестская" role="tab" aria-selected="false">Брестская</button>
-              <button type="button" class="region-tab" data-region="Гродненская" role="tab" aria-selected="false">Гродненская</button>
-              <button type="button" class="region-tab" data-region="Витебская" role="tab" aria-selected="false">Витебская</button>
-              <button type="button" class="region-tab" data-region="Могилёвская" role="tab" aria-selected="false">Могилёвская</button>
-            </div>
-
-            <!-- Cities Grid -->
-            <div class="network-cities-grid" id="networkCitiesGrid" aria-live="polite">
-              <!-- Dynamically populated via JS for best responsiveness and search filtering -->
-            </div>
-
-            <!-- Popular Express Corridors in 1 Click -->
-            <div class="popular-corridors-section">
-              <span class="corridors-title">Популярные регулярные магистрали:</span>
-              <div class="corridors-pills-list" id="popularCorridorsList">
-                <button type="button" class="corridor-pill" data-from="Минск" data-to="Гомель">
-                  <span class="cp-route">Минск ⇄ Гомель</span>
-                  <span class="cp-meta">М-5 · 310 км · Ежедневно</span>
-                </button>
-                <button type="button" class="corridor-pill" data-from="Минск" data-to="Брест">
-                  <span class="cp-route">Минск ⇄ Брест</span>
-                  <span class="cp-meta">М-1 · 350 км · Ежедневно</span>
-                </button>
-                <button type="button" class="corridor-pill" data-from="Минск" data-to="Гродно">
-                  <span class="cp-route">Минск ⇄ Гродно</span>
-                  <span class="cp-meta">М-6 · 290 км · Ежедневно</span>
-                </button>
-                <button type="button" class="corridor-pill" data-from="Минск" data-to="Витебск">
-                  <span class="cp-route">Минск ⇄ Витебск</span>
-                  <span class="cp-meta">М-3 · 290 км · Ежедневно</span>
-                </button>
-                <button type="button" class="corridor-pill" data-from="Гомель" data-to="Брест">
-                  <span class="cp-route">Гомель ⇄ Брест</span>
-                  <span class="cp-meta">М-10 · 530 км · Ежедневно</span>
-                </button>
-                <button type="button" class="corridor-pill" data-from="Гомель" data-to="Мозырь">
-                  <span class="cp-route">Гомель ⇄ Мозырь</span>
-                  <span class="cp-meta">Р-31 / М-10 · 135 км · День в день</span>
-                </button>
-              </div>
-            </div>
+          <div class="em-col">
+            <span class="em-label">Расстояние</span>
+            <strong class="em-val" id="summaryDistanceVal">310 км</strong>
           </div>
+
+          <div class="em-col">
+            <span class="em-label">Время в пути</span>
+            <strong class="em-val" id="summaryTimeVal">~3.5 – 4.5 ч</strong>
+          </div>
+
+          <div class="em-col">
+            <span class="em-label">Подача авто</span>
+            <strong class="em-val" id="summaryLeadVal">от 2 часов</strong>
+          </div>
+
+          <div class="em-col highlight">
+            <span class="em-label">Ориентир цены</span>
+            <strong class="em-val-price" id="summaryCostVal">от 595 BYN</strong>
+          </div>
+        </div>
+
+        <!-- Row 4: Single Clear Primary Action Row -->
+        <div class="express-actions-bar">
+          <a href="calculator.html?from=Гомель&to=Минск" id="routeCalcDirectLink" class="btn btn-primary btn-lg">
+            Рассчитать точную стоимость рейса →
+          </a>
+          <a href="contacts.html" class="btn btn-secondary-light">
+            Заказать звонок диспетчера
+          </a>
         </div>
       </div>
-    </section>
+
+    </div>
+  </section>
 
   <section class="section container">
     <div class="section-head">
