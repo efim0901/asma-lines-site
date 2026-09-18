@@ -81,7 +81,15 @@
 
   <div class="container" style="padding-top: clamp(16px, 2.5vw, 24px); padding-bottom: 0;">
     <div class="popular-routes">
-      <div class="popular-routes-title">Популярные направления из Гомеля (кликните для быстрой подстановки):</div>
+      <div class="popular-routes-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <div class="popular-routes-title" style="margin-bottom:0;display:inline-flex;align-items:center;gap:6px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span>Популярные направления из Гомеля</span>
+        </div>
+        <span class="ecb-hint">Быстрый выбор</span>
+      </div>
       <div class="popular-routes-grid" id="popular-routes-grid">
         <button type="button" class="popular-route-pill" data-from="Гомель" data-to="Минск" data-km="310">
           <span class="popular-route-name">Гомель → Минск</span>
@@ -132,7 +140,7 @@
           <span class="route-dot origin"></span>
           <span>Пункт отправления (откуда)</span>
         </label>
-        <input name="from" id="calc-from" placeholder="Например: Гомель, Мозырь, Жлобин или деревня" autocomplete="off" minlength="2">
+        <input name="from" id="calc-from" value="Гомель" placeholder="Например: Гомель, Мозырь, Жлобин или деревня" autocomplete="off" minlength="2">
       </div>
 
       <div class="route-input-group">
@@ -140,7 +148,7 @@
           <span class="route-dot dest"></span>
           <span>Пункт назначения (куда)</span>
         </label>
-        <input name="to" id="calc-to" placeholder="Например: Минск, Брест, Гродно или любой посёлок" autocomplete="off" minlength="2">
+        <input name="to" id="calc-to" value="Минск" placeholder="Например: Минск, Брест, Гродно или любой посёлок" autocomplete="off" minlength="2">
       </div>
       <p class="form-hint">Поиск работает по любому населённому пункту Беларуси — вплоть до деревень.</p>
 
@@ -156,18 +164,18 @@
           </button>
         </div>
         <span class="range-row">
-          <input name="distance" id="calc-distance" type="number" min="1" max="2000" inputmode="numeric" placeholder="Например, 310">
+          <input name="distance" id="calc-distance" type="number" min="1" max="2000" inputmode="numeric" value="310" placeholder="Например, 310">
           <input name="distance-range" id="calc-distance-range" type="range" min="1" max="700" step="1" value="310" aria-label="Расстояние по ползунку">
         </span>
       </div>
 
       <div class="weight-field-group">
         <label for="calc-weight" class="weight-label">Вес груза, тонн</label>
-        <input name="weight" id="calc-weight" type="number" min="0.1" max="40" step="0.1" inputmode="decimal" placeholder="Например, 2.5">
+        <input name="weight" id="calc-weight" type="number" min="0.1" max="40" step="0.1" inputmode="decimal" value="2.5" placeholder="Например, 2.5">
         <div class="weight-chips" role="group" aria-label="Быстрый выбор веса">
           <button type="button" data-weight="0.5">0,5 т</button>
           <button type="button" data-weight="1">1 т</button>
-          <button type="button" data-weight="2.5">2,5 т</button>
+          <button type="button" data-weight="2.5" class="is-active">2,5 т</button>
           <button type="button" data-weight="5">5 т</button>
           <button type="button" data-weight="10">10 т</button>
           <button type="button" data-weight="20">20 т</button>
@@ -331,6 +339,18 @@
       </div>
     </div>
   </section>
+
+  <!-- Floating Mobile Quick Summary & Order Bar -->
+  <div class="calc-mobile-bar" id="calc-mobile-bar" aria-live="polite">
+    <div class="calc-mobile-bar-inner">
+      <div class="calc-mobile-bar-info">
+        <span class="calc-mobile-bar-route" id="mobile-bar-route">Гомель → Минск</span>
+        <span class="calc-mobile-bar-meta" id="mobile-bar-meta">310 км · 2,5 т</span>
+      </div>
+      <div class="calc-mobile-bar-price" id="mobile-bar-price">от 590 BYN</div>
+      <button type="button" class="btn-mobile-bar-cta" id="mobile-bar-cta">Заказать</button>
+    </div>
+  </div>
 </main>
 
 <footer class="site-footer">

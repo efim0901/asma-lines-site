@@ -218,13 +218,36 @@
 
         <!-- Row 2: Popular Corridors Shortcuts -->
         <div class="express-corridors-bar">
-          <span class="ecb-title">Популярные маршруты:</span>
-          <div class="ecb-list" id="popularCorridorsList">
-            <button type="button" class="corridor-pill" data-from="Гомель" data-to="Минск">Гомель ⇄ Минск</button>
-            <button type="button" class="corridor-pill" data-from="Минск" data-to="Брест">Минск ⇄ Брест</button>
-            <button type="button" class="corridor-pill" data-from="Минск" data-to="Гродно">Минск ⇄ Гродно</button>
-            <button type="button" class="corridor-pill" data-from="Витебск" data-to="Минск">Витебск ⇄ Минск</button>
-            <button type="button" class="corridor-pill" data-from="Гомель" data-to="Могилёв">Гомель ⇄ Могилёв</button>
+          <div class="ecb-header">
+            <span class="ecb-title">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              <span>Популярные маршруты</span>
+            </span>
+            <span class="ecb-hint">Экспресс-доставка</span>
+          </div>
+          <div class="ecb-list" id="popularCorridorsList" role="group" aria-label="Популярные маршруты">
+            <button type="button" class="corridor-pill" data-from="Гомель" data-to="Минск" aria-pressed="false">
+              <span class="cp-route">Гомель ⇄ Минск</span>
+              <span class="cp-km">310 км</span>
+            </button>
+            <button type="button" class="corridor-pill" data-from="Минск" data-to="Брест" aria-pressed="false">
+              <span class="cp-route">Минск ⇄ Брест</span>
+              <span class="cp-km">350 км</span>
+            </button>
+            <button type="button" class="corridor-pill" data-from="Минск" data-to="Гродно" aria-pressed="false">
+              <span class="cp-route">Минск ⇄ Гродно</span>
+              <span class="cp-km">290 км</span>
+            </button>
+            <button type="button" class="corridor-pill" data-from="Витебск" data-to="Минск" aria-pressed="false">
+              <span class="cp-route">Витебск ⇄ Минск</span>
+              <span class="cp-km">290 км</span>
+            </button>
+            <button type="button" class="corridor-pill" data-from="Гомель" data-to="Могилёв" aria-pressed="false">
+              <span class="cp-route">Гомель ⇄ Могилёв</span>
+              <span class="cp-km">180 км</span>
+            </button>
           </div>
         </div>
 

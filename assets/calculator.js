@@ -51,6 +51,11 @@
     modalRoutePreview: document.querySelector('#modal-route-preview'),
     modalHiddenRoute: document.querySelector('#modal-hidden-route'),
     consultForm: document.querySelector('#consult-form'),
+    mobileBar: document.querySelector('#calc-mobile-bar'),
+    mobileBarRoute: document.querySelector('#mobile-bar-route'),
+    mobileBarMeta: document.querySelector('#mobile-bar-meta'),
+    mobileBarPrice: document.querySelector('#mobile-bar-price'),
+    mobileBarCta: document.querySelector('#mobile-bar-cta'),
   };
 
   function isDarkTheme() {
@@ -70,15 +75,21 @@
       mapEl.innerHTML = '';
       const BY_CENTER = [53.55, 28.0];
       const BY_BOUNDS = window.L.latLngBounds([50.9, 22.6], [56.4, 33.1]);
+      const isTouch = window.matchMedia('(pointer: coarse)').matches || ('ontouchstart' in window);
       map = window.L.map(mapEl, {
         zoomControl: true,
         attributionControl: false,
         scrollWheelZoom: false,
+        dragging: !isTouch,
+        tap: false,
         minZoom: 6,
         maxZoom: 18,
       }).setView(BY_CENTER, 7);
       map.setMaxBounds(BY_BOUNDS.pad(0.2));
       setupTiles(0);
+      setTimeout(triggerInvalidate, 80);
+      setTimeout(triggerInvalidate, 400);
+      setTimeout(triggerInvalidate, 1000);
     } catch (err) {
       console.warn('Leaflet fallback init error:', err);
     }
@@ -159,6 +170,7 @@
   setTimeout(triggerInvalidate, 350);
   setTimeout(triggerInvalidate, 1000);
   window.addEventListener('resize', triggerInvalidate);
+  window.addEventListener('orientationchange', triggerInvalidate);
   window.addEventListener('load', triggerInvalidate);
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) triggerInvalidate();
@@ -548,6 +560,7 @@
       if (els.actions) els.actions.hidden = true;
       els.breakdown.hidden = true;
       els.multi.hidden = true;
+      if (els.mobileBar) els.mobileBar.hidden = true;
       shownTotal = 0;
       return;
     }
@@ -558,6 +571,13 @@
 
     tweenTotal(shownTotal, total);
     shownTotal = total;
+
+    if (els.mobileBar) {
+      els.mobileBar.hidden = false;
+      if (els.mobileBarRoute) els.mobileBarRoute.textContent = `${fromTxt} → ${toTxt}`;
+      if (els.mobileBarMeta) els.mobileBarMeta.textContent = `${km} км · ${weight} т`;
+      if (els.mobileBarPrice) els.mobileBarPrice.textContent = `от ${Math.round(total).toLocaleString('ru-RU')} BYN`;
+    }
 
     const basePart = RATES.base, kmPart = km * RATES.perKm, tPart = weight * RATES.perTonne;
     const subtotal = basePart + kmPart + tPart || 1;
@@ -582,6 +602,16 @@
     if (els.actions) els.actions.hidden = false;
 
     updateShareLinks(fromTxt, toTxt, km, weight, total, extras);
+
+    const curFrom = fromTxt.toLowerCase();
+    const curTo = toTxt.toLowerCase();
+    document.querySelectorAll('.popular-route-pill').forEach((btn) => {
+      const bf = (btn.dataset.from || '').toLowerCase();
+      const bt = (btn.dataset.to || '').toLowerCase();
+      const isActive = (curFrom === bf && curTo === bt) || (curFrom === bt && curTo === bf);
+      btn.classList.toggle('is-active', isActive);
+      btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
   }
 
   let fromPlace = null;
@@ -1035,10 +1065,38 @@
           els.range.style.setProperty('--fill', `${(Number(km) / Number(els.range.max)) * 100}%`);
         }
       }
+      if (!els.weight.value || Number(els.weight.value) <= 0) {
+        els.weight.value = '2.5';
+      }
       handleCityInput('from');
       handleCityInput('to');
       recalc();
     });
+  }
+
+  // Mobile Sticky Summary Bar CTA & Interaction
+  if (els.mobileBarCta) {
+    els.mobileBarCta.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openModal();
+    });
+  }
+  if (els.mobileBar) {
+    els.mobileBar.addEventListener('click', () => {
+      openModal();
+    });
+
+    if ('IntersectionObserver' in window) {
+      const quoteEl = document.querySelector('.calculator-layout .quote');
+      if (quoteEl) {
+        const quoteObserver = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            els.mobileBar.classList.toggle('is-quote-visible', entry.isIntersecting);
+          });
+        }, { threshold: 0.25 });
+        quoteObserver.observe(quoteEl);
+      }
+    }
   }
 
   if (els.btnResetDistance) {
@@ -1081,8 +1139,15 @@
         if (urlFrom) handleCityInput('from');
         if (urlTo) handleCityInput('to');
       }, 120);
+    } else if (els.from && els.to && els.from.value && els.to.value) {
+      // If default cities are present (Gomel -> Minsk), initialize map route smoothly
+      setTimeout(() => {
+        handleCityInput('from');
+        handleCityInput('to');
+      }, 140);
     }
   } catch (_) {}
 
   recalc();
+  setTimeout(triggerInvalidate, 200);
 })();

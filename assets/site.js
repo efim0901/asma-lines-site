@@ -334,6 +334,16 @@ function initRouteConstructorAndNetwork() {
     if (calcLink) {
       calcLink.href = `calculator.html?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
     }
+
+    if (corridorsList) {
+      corridorsList.querySelectorAll(".corridor-pill").forEach((btn) => {
+        const f = btn.dataset.from;
+        const t = btn.dataset.to;
+        const isActive = (from === f && to === t) || (from === t && to === f);
+        btn.classList.toggle("is-active", isActive);
+        btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+      });
+    }
   }
 
   // Swap Direction
