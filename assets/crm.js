@@ -13,6 +13,15 @@
   const MASTER_ADMIN_USERNAME = 'plombit';
   const MASTER_ADMIN_ID = '1014012851';
 
+  function getCrmHeaders(extraHeaders = {}) {
+    const initData = window.Telegram?.WebApp?.initData || '';
+    return {
+      'Content-Type': 'application/json',
+      'X-Telegram-Init-Data': initData,
+      ...extraHeaders
+    };
+  }
+
   let authorizedUsers = [
     {
       id: '1014012851',
@@ -145,12 +154,24 @@
   async function checkAuthorization() {
     // 1. Fetch authorized users list from server / cloud
     try {
-      const res = await fetch('/api/crm/access?_t=' + Date.now(), { cache: 'no-store' });
+      const res = await fetch('/api/crm/access?_t=' + Date.now(), {
+        headers: getCrmHeaders(),
+        cache: 'no-store'
+      });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.users) && data.users.length > 0) {
           authorizedUsers = data.users;
         }
+      } else if (res.status === 401 || res.status === 403) {
+        const errJson = await res.json().catch(() => ({}));
+        isAuthorized = false;
+        denyAccessUI({
+          title: 'Доступ ограничен',
+          desc: errJson.error || 'Ваш Telegram-аккаунт не найден в списке разрешённых сотрудников ASMA Lines.',
+          handle: tg?.initDataUnsafe?.user?.username ? `@${tg.initDataUnsafe.user.username}` : `ID: ${tg?.initDataUnsafe?.user?.id || 'Неизвестен'}`
+        });
+        return;
       } else {
         const cloudRes = await fetch(CLOUD_FALLBACK_URL + '?_t=' + Date.now(), { cache: 'no-store' });
         if (cloudRes.ok) {
@@ -294,7 +315,10 @@
 
     // 1. Try local API
     try {
-      const res = await fetch('/api/crm' + cacheBuster, { cache: 'no-store' });
+      const res = await fetch('/api/crm' + cacheBuster, {
+        headers: getCrmHeaders(),
+        cache: 'no-store'
+      });
       if (res.ok) {
         const json = await res.json();
         if (Array.isArray(json.deletedIds)) {
@@ -310,6 +334,15 @@
         if (Array.isArray(json.leads)) {
           fetched = json.leads;
         }
+      } else if (res.status === 401 || res.status === 403) {
+        const errJson = await res.json().catch(() => ({}));
+        isAuthorized = false;
+        denyAccessUI({
+          title: 'Доступ ограничен',
+          desc: errJson.error || 'Ваш Telegram-профиль не найден в списке разрешённых сотрудников.',
+          handle: tg?.initDataUnsafe?.user?.username ? `@${tg.initDataUnsafe.user.username}` : `ID: ${tg?.initDataUnsafe?.user?.id || 'Неизвестен'}`
+        });
+        return;
       }
     } catch (e) {}
 
@@ -378,7 +411,7 @@
     try {
       const res = await fetch('/api/crm', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getCrmHeaders(),
         body: JSON.stringify(payload)
       });
       if (res.ok) {
@@ -609,7 +642,7 @@
     try {
       const res = await fetch('/api/crm/access', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getCrmHeaders(),
         body: JSON.stringify({
           action: 'add',
           user: newUser,
@@ -698,7 +731,7 @@
     try {
       const res = await fetch('/api/crm/access', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getCrmHeaders(),
         body: JSON.stringify({
           action: 'remove',
           target: cleanTarget,
@@ -915,7 +948,10 @@
 
     // Call DELETE API if available
     try {
-      fetch(`/api/crm/lead/${encodeURIComponent(leadId)}`, { method: 'DELETE' }).catch(() => {});
+      fetch(`/api/crm/lead/${encodeURIComponent(leadId)}`, {
+        method: 'DELETE',
+        headers: getCrmHeaders()
+      }).catch(() => {});
     } catch (e) {}
   };
 

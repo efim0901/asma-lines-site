@@ -1,5 +1,6 @@
 // Cloudflare Pages Function: /api/crm/access
 const CLOUD_STORE_URL = 'https://json.extendsclass.com/bin/becdbda';
+const DEFAULT_TELEGRAM_BOT_TOKEN = '8808722578:AAEYNIMN8P7LG8IYtUOsytw6yWO1bEBLlLI';
 const DEFAULT_MASTER_ADMIN_USERNAME = 'plombit';
 const DEFAULT_MASTER_ADMIN_ID = '1014012851';
 
@@ -12,6 +13,79 @@ const DEFAULT_AUTHORIZED_USERS = [
     addedAt: '2026-09-17T10:00:00.000Z'
   }
 ];
+
+async function verifyTelegramInitData(initDataRaw, botToken) {
+  if (!initDataRaw || !botToken) return { valid: false, reason: 'Missing initData or botToken' };
+
+  try {
+    const params = new URLSearchParams(initDataRaw);
+    const hash = params.get('hash');
+    if (!hash) return { valid: false, reason: 'Missing hash' };
+
+    params.delete('hash');
+
+    const dataCheckArr = [];
+    for (const [key, value] of params.entries()) {
+      dataCheckArr.push(`${key}=${value}`);
+    }
+    dataCheckArr.sort();
+    const dataCheckString = dataCheckArr.join('\n');
+
+    const encoder = new TextEncoder();
+    
+    // Step 1: secret_key = HMAC-SHA256("WebAppData", botToken)
+    const webAppDataKey = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode('WebAppData'),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    const secretKeyBuffer = await crypto.subtle.sign(
+      'HMAC',
+      webAppDataKey,
+      encoder.encode(botToken)
+    );
+
+    // Step 2: calculated_hash = HMAC-SHA256(secret_key, dataCheckString)
+    const secretKey = await crypto.subtle.importKey(
+      'raw',
+      secretKeyBuffer,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    const signatureBuffer = await crypto.subtle.sign(
+      'HMAC',
+      secretKey,
+      encoder.encode(dataCheckString)
+    );
+
+    const calculatedHash = Array.from(new Uint8Array(signatureBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    if (calculatedHash.toLowerCase() !== hash.toLowerCase()) {
+      return { valid: false, reason: 'HMAC signature mismatch' };
+    }
+
+    const authDate = parseInt(params.get('auth_date') || '0', 10);
+    const now = Math.floor(Date.now() / 1000);
+    if (authDate && (now - authDate > 86400 * 2)) {
+      return { valid: false, reason: 'Telegram session expired (> 48h)' };
+    }
+
+    let user = null;
+    const userStr = params.get('user');
+    if (userStr) {
+      try { user = JSON.parse(userStr); } catch (e) {}
+    }
+
+    return { valid: true, user, authDate };
+  } catch (err) {
+    return { valid: false, reason: err.message };
+  }
+}
 
 function sanitizeUsers(users, masterUsername = DEFAULT_MASTER_ADMIN_USERNAME, masterId = DEFAULT_MASTER_ADMIN_ID) {
   if (!Array.isArray(users)) users = [];
@@ -38,12 +112,13 @@ export async function onRequest(context) {
 
   const masterAdminUsername = (env?.MASTER_ADMIN_USERNAME || DEFAULT_MASTER_ADMIN_USERNAME).toLowerCase().replace(/^@/, '');
   const masterAdminId = String(env?.MASTER_ADMIN_ID || DEFAULT_MASTER_ADMIN_ID);
+  const botToken = env?.TELEGRAM_BOT_TOKEN || DEFAULT_TELEGRAM_BOT_TOKEN;
 
   const corsHeaders = {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Telegram-Init-Data, X-TG-Init-Data'
   };
 
   if (request.method === 'OPTIONS') {
@@ -59,6 +134,49 @@ export async function onRequest(context) {
 
     storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers, masterAdminUsername, masterAdminId);
 
+    // Check authorization header
+    const initData = request.headers.get('X-Telegram-Init-Data') ||
+                     request.headers.get('X-TG-Init-Data') ||
+                     (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+
+    const url = new URL(request.url);
+    const host = url.hostname;
+    const isDevHost = host === 'localhost' || host.includes('ais-dev-') || host.includes('ais-pre-');
+
+    let callerUser = null;
+    let isMasterCaller = false;
+
+    if (initData) {
+      const authResult = await verifyTelegramInitData(initData, botToken);
+      if (!authResult.valid) {
+        return new Response(JSON.stringify({ error: `Доступ запрещён: подпись Telegram недействительна (${authResult.reason})` }), {
+          status: 401,
+          headers: corsHeaders
+        });
+      }
+      callerUser = authResult.user;
+      const callerUsername = (callerUser?.username || '').toLowerCase().replace(/^@/, '');
+      const callerId = String(callerUser?.id || '');
+      isMasterCaller = callerUsername === masterAdminUsername || callerId === masterAdminId;
+
+      const isAllowed = isMasterCaller || storeData.authorizedUsers.some(u => 
+        (u.username && u.username.toLowerCase() === callerUsername) ||
+        (u.id && String(u.id) === callerId)
+      );
+
+      if (!isAllowed) {
+        return new Response(JSON.stringify({ error: 'Доступ ограничен: ваш аккаунт отсутствует в списке разрешённых' }), {
+          status: 403,
+          headers: corsHeaders
+        });
+      }
+    } else if (!isDevHost) {
+      return new Response(JSON.stringify({ error: 'Доступ запрещён: требуется запуск через Telegram Mini App с валидной подписью' }), {
+        status: 401,
+        headers: corsHeaders
+      });
+    }
+
     if (request.method === 'GET') {
       return new Response(JSON.stringify({
         success: true,
@@ -68,17 +186,10 @@ export async function onRequest(context) {
 
     if (request.method === 'POST') {
       const body = await request.json().catch(() => ({}));
-      const { action, user, target, requestedBy } = body;
+      const { action, user, target } = body;
 
-      const reqUser = (requestedBy?.username || '').toLowerCase().replace(/^@/, '');
-      const reqId = String(requestedBy?.id || '');
-
-      const isAdmin = requestedBy?.isAdmin ||
-                      reqUser === masterAdminUsername ||
-                      reqId === masterAdminId;
-
-      if (!isAdmin) {
-        return new Response(JSON.stringify({ error: `Доступ запрещён: требуется роль администратора (@${masterAdminUsername})` }), {
+      if (initData && !isMasterCaller) {
+        return new Response(JSON.stringify({ error: `Изменение доступа разрешено только главному администратору (@${masterAdminUsername})` }), {
           status: 403,
           headers: corsHeaders
         });
