@@ -165,14 +165,38 @@
       <!-- Form Panel -->
       <div class="partner-form-card" data-reveal>
         <div class="card-head">
+          <div class="partner-card-status">
+            <span class="partner-status-dot"></span>
+            <span>Приём заявок активен · Ответ логиста за 10–15 минут</span>
+          </div>
           <h3 class="display-3">Предложить сотрудничество</h3>
-          <p>Заполните краткую анкету перевозчика — дежурный логист свяжется с вами в течение 15 минут.</p>
+          <p>Приглашаем к партнёрству перевозчиков, владельцев транспорта и грузовладельцев. Выберите формат работы и заполните анкету — оперативно согласуем условия и регулярные загрузки.</p>
         </div>
 
         <form data-partners-form>
-          <!-- Quick Fleet Selector Chips -->
-          <div class="partner-fleet-chips-wrap">
-            <span class="partner-chips-label">Тип вашего транспорта:</span>
+          <!-- Role Switcher -->
+          <div class="partner-roles-wrap">
+            <span class="partner-chips-label">Формат сотрудничества:</span>
+            <div class="partner-role-tabs" id="partnerRoleTabs">
+              <button type="button" class="partner-role-tab is-active" data-role="carrier">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                <span>Перевозчик / Водитель</span>
+              </button>
+              <button type="button" class="partner-role-tab" data-role="shipper">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                <span>Грузовладелец / Заказчик</span>
+              </button>
+              <button type="button" class="partner-role-tab" data-role="forwarder">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span>Экспедитор / Диспетчер</span>
+              </button>
+            </div>
+            <input type="hidden" name="partner_role" id="partnerRoleInput" value="Перевозчик / Владелец авто">
+          </div>
+
+          <!-- Carrier Quick Chips (Default) -->
+          <div class="partner-fleet-chips-wrap" id="carrierFleetChipsWrap">
+            <span class="partner-chips-label">Тип вашего транспорта (выберите нужный):</span>
             <div class="partner-fleet-chips" id="partnerFleetChips">
               <button type="button" class="partner-fleet-chip" data-fleet="Тент 20 т (86-92 м³)">Тент 20 т</button>
               <button type="button" class="partner-fleet-chip" data-fleet="Рефрижератор 20 т">Рефрижератор</button>
@@ -180,6 +204,20 @@
               <button type="button" class="partner-fleet-chip" data-fleet="Бус / до 3.5 т">Бус (до 3.5 т)</button>
               <button type="button" class="partner-fleet-chip" data-fleet="Изотермический фургон">Изотерма</button>
               <button type="button" class="partner-fleet-chip" data-fleet="Открытый борт / Площадка">Борт / Площадка</button>
+              <button type="button" class="partner-fleet-chip" data-fleet="Машина с гидробортом">С гидробортом</button>
+            </div>
+          </div>
+
+          <!-- Shipper Quick Chips (Hidden initially) -->
+          <div class="partner-fleet-chips-wrap" id="shipperChipsWrap" style="display: none;">
+            <span class="partner-chips-label">Характер ваших грузов:</span>
+            <div class="partner-fleet-chips" id="partnerShipperChips">
+              <button type="button" class="partner-fleet-chip" data-fleet="Паллетный груз">Паллетный груз</button>
+              <button type="button" class="partner-fleet-chip" data-fleet="Сборные партии (LTL)">Сборные партии (LTL)</button>
+              <button type="button" class="partner-fleet-chip" data-fleet="Оборудование / Станки">Оборудование / Станки</button>
+              <button type="button" class="partner-fleet-chip" data-fleet="Температурный режим">Температурный режим</button>
+              <button type="button" class="partner-fleet-chip" data-fleet="Строительные материалы">Строительные материалы</button>
+              <button type="button" class="partner-fleet-chip" data-fleet="Торговая дистрибуция">Торговая дистрибуция</button>
             </div>
           </div>
 
@@ -196,29 +234,56 @@
 
           <div class="partner-form-grid">
             <label>
-              Телефон / Telegram *
-              <input required name="contact" autocomplete="tel" placeholder="+375 (29) 000-00-00">
+              Телефон / Мессенджер *
+              <input required name="contact" autocomplete="tel" placeholder="+375 (29) 000-00-00 (Viber / TG)">
             </label>
             <label>
-              Транспорт и базирование
-              <input id="partnerTransportInput" name="direction" placeholder="Например: Тент 20т, базирование в Гомеле">
+              Email для документов
+              <input type="email" name="email" autocomplete="email" placeholder="partner@company.by">
+            </label>
+          </div>
+
+          <div class="partner-form-grid">
+            <label style="grid-column: 1 / -1;">
+              <span id="labelTransportOrRoutes">Транспорт, базирование и направления *</span>
+              <input required id="partnerTransportInput" name="direction" placeholder="Например: Тент 20т, базирование в Гомеле, рейсы в Минск и по Беларуси">
             </label>
           </div>
 
           <label>
-            Дополнительно (маршруты, регулярность, условия)
-            <textarea name="message" rows="3" placeholder="Укажите приоритетные направления (например: Гомель — Минск — Брест), количество свободных машин или пожелания по рейсам"></textarea>
+            Дополнительно (пожелания по ставкам, график, условия)
+            <textarea name="message" rows="3" placeholder="Укажите приоритетные маршруты, количество свободных машин, регулярность отгрузок или особые требования"></textarea>
           </label>
+
+          <!-- Guarantees Micro-Strip -->
+          <div class="partner-guarantees-strip">
+            <div class="partner-guarantee-item">
+              <span class="pgi-icon">⚡️</span>
+              <div class="pgi-text"><strong>Ответ за 10–15 мин</strong><span>Дежурный логист на связи</span></div>
+            </div>
+            <div class="partner-guarantee-item">
+              <span class="pgi-icon">💳</span>
+              <div class="pgi-text"><strong>Выплаты за 3–5 дней</strong><span>Оплата без скрытых задержек</span></div>
+            </div>
+            <div class="partner-guarantee-item">
+              <span class="pgi-icon">📄</span>
+              <div class="pgi-text"><strong>Договор и ЭДО</strong><span>Прозрачные партнёрские условия</span></div>
+            </div>
+          </div>
 
           <input type="hidden" name="source" value="website_partners">
 
-          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-top: 8px;">
-            <button class="btn btn-primary" type="submit" style="min-height: 48px; padding: 12px 28px; font-weight: 700;">
-              Отправить анкету перевозчика
+          <div class="partner-form-submit-row">
+            <button class="btn btn-primary" type="submit" id="partnerSubmitBtn" style="min-height: 50px; padding: 12px 28px; font-weight: 700; font-size: 14.5px;">
+              Отправить анкету перевозчика →
             </button>
-            <span class="form-privacy-badge">
-              🔒 Конфиденциальность гарантирована
-            </span>
+            <div class="partner-alt-tg">
+              <span>или сразу в Telegram:</span>
+              <a href="https://t.me/asmalinesbot" target="_blank" rel="noopener" class="partner-tg-btn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+                <span>@asmalinesbot</span>
+              </a>
+            </div>
           </div>
 
           <p class="form-status" aria-live="polite" style="margin-top: 14px;"></p>
@@ -236,9 +301,9 @@
             <span>+375 (29) 600-00-00</span>
           </a>
 
-          <a class="partner-direct-link" href="https://t.me/" target="_blank" rel="noopener">
+          <a class="partner-direct-link" href="https://t.me/asmalinesbot" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4L3 11l6 2m12-9l-4 17-8-6m12-11L9 13"/></svg>
-            <span>Telegram: @asmalines_logistics</span>
+            <span>Telegram: @asmalinesbot</span>
           </a>
 
           <a class="partner-direct-link" href="mailto:partners@asmalines.by">
@@ -272,7 +337,7 @@
       <div class="photo-band__content">
         <p class="kicker">Для владельцев автопарков и водителей</p>
         <h2 class="display-2 mb-16">Постоянная загрузка вашего автопарка без холостых пробегов</h2>
-        <p class="lede mb-20">Обеспечиваем регулярными рейсами по Беларуси, России и СНГ. Гарантированная выплата в течение 3–5 банковских дней, помощь с обратными загрузками и топливная поддержка.</p>
+        <p class="lede mb-20">Обеспечиваем регулярными рейсами и постоянными загрузками по всей Беларуси. Гарантированная выплата в течение 3–5 банковских дней, помощь с обратными рейсами и круглосуточная поддержка диспетчера.</p>
         <div class="photo-band__badges">
           <span class="photo-band__badge">✓ Оплата без задержек за 3–5 дней</span>
           <span class="photo-band__badge">✓ Прямой диспетчер на связи 24/7</span>

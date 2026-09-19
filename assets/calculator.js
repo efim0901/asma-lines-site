@@ -1099,6 +1099,7 @@
     });
   }
   if (els.mobileBar) {
+    document.body.classList.add('has-calc-mobile-bar');
     els.mobileBar.addEventListener('click', () => {
       openModal();
     });
@@ -1108,7 +1109,9 @@
       if (quoteEl) {
         const quoteObserver = new IntersectionObserver((entries) => {
           entries.forEach((entry) => {
-            els.mobileBar.classList.toggle('is-quote-visible', entry.isIntersecting);
+            const isQuoteVisible = entry.isIntersecting;
+            els.mobileBar.classList.toggle('is-quote-visible', isQuoteVisible);
+            document.body.classList.toggle('calc-bar-hidden', isQuoteVisible);
           });
         }, { threshold: 0.25 });
         quoteObserver.observe(quoteEl);

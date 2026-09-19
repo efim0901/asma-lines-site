@@ -531,17 +531,20 @@ async function submitLead(payload, statusNode, successMessage) {
           'Источник': 'Калькулятор на сайте ASMA Lines'
         };
       } else if (isPartner) {
-        emailSubject = `🤝 СОТРУДНИЧЕСТВО: ${payload.company || payload.contact_name || 'Партнёр'} (${payload.contact || ''})`;
+        const partnerRole = payload.partner_role || payload.role || 'Партнёр';
+        emailSubject = `🤝 СОТРУДНИЧЕСТВО [${partnerRole}]: ${payload.company || payload.contact_name || 'Партнёр'} (${payload.contact || ''})`;
         emailFormData = {
           _subject: emailSubject,
-          'Категория': 'Заявка на партнерство / сотрудничество',
-          'Компания': payload.company || '—',
+          'Категория': `Заявка на сотрудничество (${partnerRole})`,
+          'Формат сотрудничества': partnerRole,
+          'Компания / ИП': payload.company || '—',
           'Контактное лицо': payload.contact_name || payload.name || 'Не указано',
           'Телефон / Контакты': payload.contact || payload.phone || 'Не указан',
+          'Email': payload.email || '—',
           'Направление / Автопарк': payload.direction || '—',
-          'Сообщение': payload.message || '—',
+          'Сообщение / Условия': payload.message || '—',
           'Время отправки': nowStr,
-          'Источник': 'Раздел Партнерам'
+          'Источник': 'Раздел Партнерам (Анкета)'
         };
       } else {
         emailSubject = `📩 ОБРАТНАЯ СВЯЗЬ: ${payload.name || 'Клиент'} (${payload.contact || ''})`;
@@ -649,17 +652,59 @@ document.querySelectorAll('[data-contact-form]').forEach((formElem) => {
 
 /* partners form */
 document.querySelectorAll('[data-partners-form]').forEach((partnersForm) => {
+  const roleTabs = partnersForm.querySelectorAll('.partner-role-tab');
+  const roleInput = partnersForm.querySelector('#partnerRoleInput');
+  const carrierChips = partnersForm.querySelector('#carrierFleetChipsWrap');
+  const shipperChips = partnersForm.querySelector('#shipperChipsWrap');
+  const transportLabel = partnersForm.querySelector('#labelTransportOrRoutes');
+  const transportInput = partnersForm.querySelector('#partnerTransportInput');
+  const submitBtn = partnersForm.querySelector('#partnerSubmitBtn');
   const chips = partnersForm.querySelectorAll('.partner-fleet-chip');
-  const input = partnersForm.querySelector('#partnerTransportInput');
+
+  if (roleTabs.length) {
+    roleTabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        roleTabs.forEach((t) => t.classList.remove('is-active'));
+        tab.classList.add('is-active');
+        const role = tab.getAttribute('data-role');
+
+        if (role === 'carrier') {
+          if (roleInput) roleInput.value = 'Перевозчик / Владелец авто';
+          if (carrierChips) carrierChips.style.display = 'block';
+          if (shipperChips) shipperChips.style.display = 'none';
+          if (transportLabel) transportLabel.textContent = 'Транспорт, базирование и направления *';
+          if (transportInput) transportInput.placeholder = 'Например: Тент 20т, базирование в Гомеле, рейсы в Минск и по Беларуси';
+          if (submitBtn) submitBtn.textContent = 'Отправить анкету перевозчика →';
+        } else if (role === 'shipper') {
+          if (roleInput) roleInput.value = 'Грузовладелец / Заказчик перевозок';
+          if (carrierChips) carrierChips.style.display = 'none';
+          if (shipperChips) shipperChips.style.display = 'block';
+          if (transportLabel) transportLabel.textContent = 'Маршруты и характер регулярных отгрузок *';
+          if (transportInput) transportInput.placeholder = 'Например: Регулярные рейсы Минск — Гомель, паллеты, 2 раза в неделю';
+          if (submitBtn) submitBtn.textContent = 'Отправить заявку грузовладельца →';
+        } else if (role === 'forwarder') {
+          if (roleInput) roleInput.value = 'Экспедитор / Диспетчер';
+          if (carrierChips) carrierChips.style.display = 'block';
+          if (shipperChips) shipperChips.style.display = 'none';
+          if (transportLabel) transportLabel.textContent = 'Специализация и приоритетные направления *';
+          if (transportInput) transportInput.placeholder = 'Например: Сборные грузы, тенты и рефы по Беларуси';
+          if (submitBtn) submitBtn.textContent = 'Предложить экспедиторское партнёрство →';
+        }
+      });
+    });
+  }
 
   chips.forEach((chip) => {
     chip.addEventListener('click', () => {
-      chips.forEach((c) => c.classList.remove('is-active'));
+      const parentWrap = chip.closest('.partner-fleet-chips-wrap');
+      if (parentWrap) {
+        parentWrap.querySelectorAll('.partner-fleet-chip').forEach((c) => c.classList.remove('is-active'));
+      }
       chip.classList.add('is-active');
       const val = chip.getAttribute('data-fleet');
-      if (input && val) {
-        input.value = val;
-        input.focus();
+      if (transportInput && val) {
+        transportInput.value = val;
+        transportInput.focus();
       }
     });
   });
@@ -671,17 +716,19 @@ document.querySelectorAll('[data-partners-form]').forEach((partnersForm) => {
     const origText = btn ? btn.textContent : '';
     if (btn) {
       btn.disabled = true;
-      btn.textContent = 'Отправка…';
+      btn.textContent = 'Отправка анкеты…';
     }
     const statusNode = partnersForm.querySelector('.form-status');
     const ok = await submitLead({
+      partner_role: data.get('partner_role') || 'Перевозчик',
       company: data.get('company') || '',
       contact_name: data.get('contact_name') || '',
       contact: data.get('contact') || '',
+      email: data.get('email') || '',
       direction: data.get('direction') || '',
       message: data.get('message') || '',
       source: 'website_partners',
-    }, statusNode, 'Спасибо! Мы свяжемся с вами для обсуждения взаимовыгодного сотрудничества.');
+    }, statusNode, 'Спасибо! Анкета принята. Дежурный логист свяжется с вами в течение 10–15 минут для обсуждения условий сотрудничества.');
     
     if (btn) {
       btn.disabled = false;
