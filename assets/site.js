@@ -547,16 +547,17 @@ async function submitLead(payload, statusNode, successMessage) {
           'Источник': 'Раздел Партнерам (Анкета)'
         };
       } else {
-        emailSubject = `📩 ОБРАТНАЯ СВЯЗЬ: ${payload.name || 'Клиент'} (${payload.contact || ''})`;
+        emailSubject = `📩 ЗАЯВКА [${payload.topic || 'Перевозка'}]: ${payload.name || 'Клиент'} (${payload.contact || ''})`;
         emailFormData = {
           _subject: emailSubject,
-          'Категория': 'Заявка на обратную связь (Консультация / Вопрос)',
-          'Имя / Клиент': payload.name || 'Не указано',
+          'Категория': payload.topic ? `Заявка: ${payload.topic}` : 'Заявка на перевозку / обратная связь',
+          'Имя / Организация': payload.name || 'Не указано',
           'Телефон / Контакты': payload.contact || payload.phone || 'Не указан',
           'Email': payload.email || '—',
-          'Текст обращения': payload.message || payload.comment || 'Заказ обратного звонка',
+          'Удобный способ связи': payload.preferred_channel || 'Звонок',
+          'Маршрут и детали': payload.message || payload.comment || '—',
           'Время отправки': nowStr,
-          'Источник': 'Форма обратной связи (Контакты)'
+          'Источник': payload.source === 'website_contacts' ? 'Форма заявки (Контакты)' : (payload.source || 'Сайт')
         };
       }
 
@@ -616,7 +617,10 @@ document.querySelectorAll('[data-contact-form]').forEach((formElem) => {
     const ok = await submitLead({
       name: data.get('name') || '',
       contact: data.get('contact') || '',
+      email: data.get('email') || '',
       message: data.get('message') || '',
+      topic: data.get('topic') || '',
+      preferred_channel: data.get('preferred_channel') || '',
       fromCity: data.get('fromCity') || undefined,
       toCity: data.get('toCity') || undefined,
       distance: data.get('distance') || undefined,
@@ -626,7 +630,7 @@ document.querySelectorAll('[data-contact-form]').forEach((formElem) => {
       price: data.get('price') || undefined,
       route_details: data.get('route_details') || undefined,
       source: data.get('source') || 'website_contacts',
-    }, statusNode, 'Заявка принята! Диспетчер свяжется с вами в течение 15 минут.');
+    }, statusNode, 'Заявка принята! Диспетчер свяжется с вами в течение 10–15 минут.');
     
     if (btn) {
       btn.disabled = false;
@@ -634,6 +638,20 @@ document.querySelectorAll('[data-contact-form]').forEach((formElem) => {
     }
     if (ok) {
       formElem.reset();
+      // Reset topic chips to first item
+      const topicChips = formElem.querySelectorAll('.contact-topic-chip');
+      if (topicChips.length) {
+        topicChips.forEach((c, idx) => c.classList.toggle('is-active', idx === 0));
+        const topicInput = formElem.querySelector('#contactFormTopic');
+        if (topicInput) topicInput.value = topicChips[0].dataset.topic || '';
+      }
+      // Reset channel chips to first item
+      const channelChips = formElem.querySelectorAll('.channel-chip');
+      if (channelChips.length) {
+        channelChips.forEach((c, idx) => c.classList.toggle('is-active', idx === 0));
+        const channelInput = formElem.querySelector('#contactFormChannel');
+        if (channelInput) channelInput.value = channelChips[0].dataset.channel || '';
+      }
       const modal = formElem.closest('.modal-backdrop');
       if (modal) {
         setTimeout(() => {
@@ -647,6 +665,43 @@ document.querySelectorAll('[data-contact-form]').forEach((formElem) => {
         }, 2200);
       }
     }
+  });
+});
+
+/* Contact form topic chips & communication channel chips */
+document.querySelectorAll('.contact-topic-chip').forEach((chip) => {
+  chip.addEventListener('click', () => {
+    const parent = chip.closest('.contact-topic-chips');
+    if (!parent) return;
+    parent.querySelectorAll('.contact-topic-chip').forEach(c => c.classList.remove('is-active'));
+    chip.classList.add('is-active');
+    const input = document.getElementById('contactFormTopic');
+    if (input) input.value = chip.dataset.topic || '';
+    
+    // Context-sensitive placeholder for message textarea
+    const msg = document.getElementById('contactFormMessage');
+    if (msg) {
+      if (chip.dataset.topic === 'Срочная подача машины') {
+        msg.placeholder = 'Срочный маршрут (откуда — куда), желаемое время подачи, требования к авто (тент/реф/бус)';
+      } else if (chip.dataset.topic === 'Договор / Юрлицо') {
+        msg.placeholder = 'Реквизиты компании, планируемые регулярные направления и ориентировочный объём';
+      } else if (chip.dataset.topic === 'Консультация логиста') {
+        msg.placeholder = 'Ваш вопрос дежурному логисту (габариты груза, документы, особые условия)';
+      } else {
+        msg.placeholder = 'Откуда — куда (например: Гомель → Минск), вес/объём груза, желаемая дата подачи';
+      }
+    }
+  });
+});
+
+document.querySelectorAll('.channel-chip').forEach((chip) => {
+  chip.addEventListener('click', () => {
+    const parent = chip.closest('.channel-chips');
+    if (!parent) return;
+    parent.querySelectorAll('.channel-chip').forEach(c => c.classList.remove('is-active'));
+    chip.classList.add('is-active');
+    const input = document.getElementById('contactFormChannel');
+    if (input) input.value = chip.dataset.channel || '';
   });
 });
 
