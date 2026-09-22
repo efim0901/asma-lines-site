@@ -5997,5 +5997,110 @@ body[data-theme='dark'] .contact-tile-icon {
   height: 20px;
 }
 
+/* ==========================================================================
+   Regional Corridors SEO Section Grid
+   ========================================================================== */
+.geo-corridors-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+}
+
+@media (max-width: 900px) {
+  .geo-corridors-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 580px) {
+  .geo-corridors-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.geo-corridor-card {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.geo-corridor-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--burgundy);
+  box-shadow: 0 6px 18px rgba(107, 30, 45, 0.08);
+}
+
+body[data-theme='dark'] .geo-corridor-card {
+  background: #1A1F29;
+  border-color: #2D3748;
+  color: #F8FAFC;
+}
+
+body[data-theme='dark'] .geo-corridor-card:hover {
+  border-color: #FFD382;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.gcc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.gcc-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--brand-soft);
+  color: var(--burgundy);
+}
+
+body[data-theme='dark'] .gcc-badge {
+  background: rgba(255, 211, 130, 0.15);
+  color: #FFD382;
+}
+
+.gcc-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+body[data-theme='dark'] .gcc-time {
+  color: #94A3B8;
+}
+
+.gcc-route {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--ink);
+}
+
+body[data-theme='dark'] .gcc-route {
+  color: #FFFFFF;
+}
+
+.gcc-info {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+body[data-theme='dark'] .gcc-info {
+  color: #94A3B8;
+}
+
 
 
