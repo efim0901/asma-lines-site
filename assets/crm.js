@@ -88,6 +88,11 @@
   let leads = [];
   let deletedLeadIds = new Set();
   let currentFilter = 'new'; // 'new' | 'processing' | 'transit' | 'completed' | 'all'
+  let currentView = 'grid'; // 'grid' | 'kanban'
+  try {
+    const savedView = localStorage.getItem('asma-crm-view');
+    if (savedView === 'grid' || savedView === 'kanban') currentView = savedView;
+  } catch (e) {}
   let searchQuery = '';
   let isAuthorized = false;
 
@@ -121,6 +126,8 @@
   const formChangePin = document.getElementById('form-change-pin');
   const displayCurrentPin = document.getElementById('display-current-pin');
   const inputNewPin = document.getElementById('input-new-pin');
+  const btnViewGrid = document.getElementById('btn-view-grid');
+  const btnViewKanban = document.getElementById('btn-view-kanban');
   let currentAccessPin = '2026';
   try {
     const savedPin = localStorage.getItem('asma_crm_pin');
@@ -581,17 +588,99 @@
     }
   }
 
+  // View Mode Switcher
+  function setViewMode(mode) {
+    currentView = mode;
+    try {
+      localStorage.setItem('asma-crm-view', mode);
+    } catch (e) {}
+
+    if (btnViewGrid) btnViewGrid.classList.toggle('active', mode === 'grid');
+    if (btnViewKanban) btnViewKanban.classList.toggle('active', mode === 'kanban');
+
+    if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
+    render();
+  }
+
+  // Quick filter helper
+  function setStatusFilter(status) {
+    currentFilter = status;
+    if (tabsNav) {
+      tabsNav.querySelectorAll('.tab-item').forEach(t => {
+        t.classList.toggle('active', t.dataset.status === status);
+      });
+    }
+    document.querySelectorAll('.metric-card[data-status-filter]').forEach(c => {
+      c.classList.toggle('active-filter', c.getAttribute('data-status-filter') === status);
+    });
+    if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
+    render();
+  }
+
+  // Global Phone Copy Helper
+  window.copyPhone = function (e, phone) {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    if (!phone) return;
+    const clean = phone.trim();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(clean).then(() => {
+        showToast('✓ Телефон скопирован: ' + clean);
+      }).catch(() => {
+        showToast('Телефон: ' + clean);
+      });
+    } else {
+      showToast('Телефон: ' + clean);
+    }
+    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+  };
+
   // Event Listeners Setup
   function setupEventListeners() {
+    // Desktop View Switcher
+    if (btnViewGrid) {
+      btnViewGrid.addEventListener('click', () => setViewMode('grid'));
+    }
+    if (btnViewKanban) {
+      btnViewKanban.addEventListener('click', () => setViewMode('kanban'));
+    }
+
     // Status Tabs
-    tabsNav.addEventListener('click', (e) => {
-      const tab = e.target.closest('.tab-item');
-      if (!tab) return;
-      tabsNav.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      currentFilter = tab.dataset.status;
-      if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
-      render();
+    if (tabsNav) {
+      tabsNav.addEventListener('click', (e) => {
+        const tab = e.target.closest('.tab-item');
+        if (!tab) return;
+        tabsNav.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentFilter = tab.dataset.status;
+
+        // Sync active highlight on metric cards
+        document.querySelectorAll('.metric-card[data-status-filter]').forEach(c => {
+          c.classList.toggle('active-filter', c.getAttribute('data-status-filter') === currentFilter);
+        });
+
+        if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
+        render();
+      });
+    }
+
+    // Clickable Desktop Metric Cards
+    document.querySelectorAll('.metric-card[data-status-filter]').forEach(card => {
+      card.addEventListener('click', () => {
+        const status = card.getAttribute('data-status-filter');
+        if (status) setStatusFilter(status);
+      });
+    });
+
+    // Window Resize (Handle desktop <-> mobile layout shift)
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        render();
+      }, 150);
     });
 
     // Search Filter
@@ -631,17 +720,34 @@
 
     // Keyboard Shortcuts (Desktop)
     document.addEventListener('keydown', (e) => {
-      // Don't trigger when typing in inputs/textareas
       const isInputActive = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
-      if (e.key === '/' && !isInputActive) {
-        e.preventDefault();
-        searchInput?.focus();
-      } else if (e.key === 'Escape') {
+      if (e.key === 'Escape') {
         closeAddModal();
         closeAccessModal();
-      } else if ((e.key === 'n' || e.key === 'т') && !isInputActive && !e.ctrlKey && !e.metaKey) {
+        return;
+      }
+      if (isInputActive) return;
+
+      if (e.key === '/' || e.code === 'Slash') {
+        e.preventDefault();
+        searchInput?.focus();
+      } else if ((e.key === 'n' || e.key === 'N' || e.key === 'т' || e.key === 'Т') && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         openAddModal();
+      } else if (e.key === '1') {
+        setStatusFilter('new');
+      } else if (e.key === '2') {
+        setStatusFilter('processing');
+      } else if (e.key === '3') {
+        setStatusFilter('transit');
+      } else if (e.key === '4') {
+        setStatusFilter('completed');
+      } else if (e.key === '5' || e.key === '0') {
+        setStatusFilter('all');
+      } else if (e.altKey && e.key === '1') {
+        setViewMode('grid');
+      } else if (e.altKey && e.key === '2') {
+        setViewMode('kanban');
       }
     });
 
@@ -1100,9 +1206,23 @@
   function render() {
     renderCounts();
 
-    // Filter leads
-    let filtered = leads;
+    // Check if desktop Kanban view should be active
+    const isDesktop = window.innerWidth >= 1024;
+    const isKanbanActive = isDesktop && currentView === 'kanban';
 
+    // Highlight active view button
+    if (btnViewGrid) btnViewGrid.classList.toggle('active', currentView === 'grid');
+    if (btnViewKanban) btnViewKanban.classList.toggle('active', currentView === 'kanban');
+
+    if (isKanbanActive) {
+      renderKanban();
+      return;
+    }
+
+    // Grid / List View (Desktop Grid or Mobile Feed)
+    leadsListEl.className = 'leads-list leads-list--grid';
+
+    let filtered = leads;
     if (currentFilter !== 'all') {
       filtered = filtered.filter(l => (l.status || 'new') === currentFilter);
     }
@@ -1121,8 +1241,48 @@
     }
 
     feedEmptyEl.style.display = 'none';
+    leadsListEl.innerHTML = filtered.map(lead => createCardHtml(lead, { isKanban: false })).join('');
+  }
 
-    leadsListEl.innerHTML = filtered.map(lead => createCardHtml(lead)).join('');
+  function renderKanban() {
+    leadsListEl.className = 'leads-list leads-list--kanban';
+    feedEmptyEl.style.display = 'none';
+
+    const cols = [
+      { id: 'new', title: 'Новые заявки', subtitle: 'Требуют ответа', dot: 'dot-new' },
+      { id: 'processing', title: 'В обработке', subtitle: 'Расчёт и логистика', dot: 'dot-processing' },
+      { id: 'transit', title: 'В рейсе', subtitle: 'Груз в пути', dot: 'dot-transit' },
+      { id: 'completed', title: 'Выполнено', subtitle: 'Доставлено', dot: 'dot-completed' }
+    ];
+
+    leadsListEl.innerHTML = cols.map(col => {
+      let colLeads = leads.filter(l => (l.status || 'new') === col.id);
+      if (searchQuery) {
+        colLeads = colLeads.filter(l => {
+          const str = `${l.leadNumber || ''} ${l.name || ''} ${l.contact || ''} ${l.route || ''} ${l.comment || ''}`.toLowerCase();
+          return str.includes(searchQuery);
+        });
+      }
+
+      const cardsHtml = colLeads.length > 0
+        ? colLeads.map(l => createCardHtml(l, { isKanban: true })).join('')
+        : `<div class="kanban-empty-col">Нет заявок</div>`;
+
+      return `
+        <div class="kanban-column kanban-col--${col.id}">
+          <div class="kanban-col-header">
+            <div class="kanban-col-title-box">
+              <span class="tab-dot ${col.dot}"></span>
+              <span class="kanban-col-title">${col.title}</span>
+            </div>
+            <span class="kanban-col-count">${colLeads.length}</span>
+          </div>
+          <div class="kanban-cards-stack">
+            ${cardsHtml}
+          </div>
+        </div>
+      `;
+    }).join('');
   }
 
   function renderCounts() {
@@ -1147,7 +1307,8 @@
     if (metricCompletedLeads) metricCompletedLeads.textContent = counts.completed;
   }
 
-  function createCardHtml(lead) {
+  function createCardHtml(lead, options = {}) {
+    const isKanban = Boolean(options.isKanban);
     const status = lead.status || 'new';
     const num = lead.leadNumber || lead.id.replace(/\D/g, '').slice(-3) || '101';
     const isCargo = lead.type === 'cargo' || Boolean(lead.route && lead.route.includes('→'));
@@ -1170,53 +1331,68 @@
     let statusActionsHtml = '';
     if (status === 'new') {
       statusActionsHtml = `
-        <button class="btn-stage stage-action" onclick="changeLeadStatus('${lead.id}', 'processing')">
-          📞 Взять в работу
+        <button class="btn-stage stage-action" onclick="changeLeadStatus('${lead.id}', 'processing')" title="Взять в работу">
+          📞 В работу
         </button>
-        <button class="btn-stage" onclick="changeLeadStatus('${lead.id}', 'transit')">
-          🚛 Сразу в рейс
+        <button class="btn-stage" onclick="changeLeadStatus('${lead.id}', 'transit')" title="Сразу назначить рейс">
+          🚛 В рейс
         </button>
       `;
     } else if (status === 'processing') {
       statusActionsHtml = `
-        <button class="btn-stage stage-action" onclick="changeLeadStatus('${lead.id}', 'transit')">
-          🚛 Назначить в рейс
+        <button class="btn-stage stage-action" onclick="changeLeadStatus('${lead.id}', 'transit')" title="Назначить в рейс">
+          🚛 В рейс
         </button>
-        <button class="btn-stage stage-complete" onclick="changeLeadStatus('${lead.id}', 'completed')">
+        <button class="btn-stage stage-complete" onclick="changeLeadStatus('${lead.id}', 'completed')" title="Завершить заказ">
           ✅ Завершить
         </button>
       `;
     } else if (status === 'transit') {
       statusActionsHtml = `
-        <button class="btn-stage stage-complete" onclick="changeLeadStatus('${lead.id}', 'completed')">
-          ✅ Доставлен / Завершить
+        <button class="btn-stage stage-complete" onclick="changeLeadStatus('${lead.id}', 'completed')" title="Груз доставлен, закрыть">
+          ✅ Доставлен
         </button>
-        <button class="btn-stage" onclick="changeLeadStatus('${lead.id}', 'processing')">
-          ↩️ Вернуть в работу
+        <button class="btn-stage" onclick="changeLeadStatus('${lead.id}', 'processing')" title="Вернуть на стадию обработки">
+          ↩️ В работу
         </button>
       `;
     } else if (status === 'completed') {
       statusActionsHtml = `
-        <span style="font-size:12px; font-weight:700; color:var(--accent-green);">✅ Заказ выполнен</span>
-        <button class="btn-stage" onclick="changeLeadStatus('${lead.id}', 'processing')">
-          ↩️ Открыть снова
+        <span class="status-done-tag">✅ Выполнено</span>
+        <button class="btn-stage btn-stage-subtle" onclick="changeLeadStatus('${lead.id}', 'processing')" title="Открыть снова">
+          ↩️ Возобновить
         </button>
       `;
     }
 
-    // Route block (if cargo or route specified)
+    // Route block (parsed with arrow)
     let routeHtml = '';
     if (lead.route && lead.route !== '—') {
+      let routeLine = escapeHtml(lead.route);
+      let fromCity = '';
+      let toCity = '';
+      if (lead.route.includes('→')) {
+        const pts = lead.route.split('→');
+        fromCity = pts[0].trim();
+        toCity = pts[1].trim();
+      } else if (lead.route.includes('-') && !lead.route.includes('–')) {
+        const pts = lead.route.split('-');
+        fromCity = pts[0].trim();
+        toCity = pts[1].trim();
+      }
+
+      const routeDisplay = (fromCity && toCity)
+        ? `<div class="route-path"><span class="route-city route-from">📍 ${escapeHtml(fromCity)}</span><span class="route-arrow" aria-hidden="true">➔</span><span class="route-city route-to">${escapeHtml(toCity)}</span></div>`
+        : `<div class="route-header"><span>📍 ${routeLine}</span></div>`;
+
       routeHtml = `
         <div class="route-box">
-          <div class="route-header">
-            <span>📍 ${escapeHtml(lead.route)}</span>
-          </div>
+          ${routeDisplay}
           <div class="route-specs">
-            ${lead.distance ? `<span class="spec-chip">📏 ${escapeHtml(lead.distance)}</span>` : ''}
-            ${lead.vehicle ? `<span class="spec-chip">🚚 ${escapeHtml(lead.vehicle)}</span>` : ''}
-            ${lead.weight ? `<span class="spec-chip">⚖️ ${escapeHtml(lead.weight)}</span>` : ''}
-            ${lead.price ? `<span class="spec-chip spec-price">💰 ${escapeHtml(lead.price)}</span>` : ''}
+            ${lead.distance ? `<span class="spec-chip spec-dist" title="Расстояние">📏 ${escapeHtml(lead.distance)}</span>` : ''}
+            ${lead.vehicle ? `<span class="spec-chip spec-veh" title="Транспорт">🚚 ${escapeHtml(lead.vehicle)}</span>` : ''}
+            ${lead.weight ? `<span class="spec-chip spec-wt" title="Тоннаж">⚖️ ${escapeHtml(lead.weight)}</span>` : ''}
+            ${lead.price ? `<span class="spec-chip spec-price" title="Ставка перевозки">💰 ${escapeHtml(lead.price)}</span>` : ''}
           </div>
         </div>
       `;
@@ -1227,7 +1403,8 @@
     if (lead.comment && lead.comment.trim() && lead.comment !== '—') {
       commentHtml = `
         <div class="client-comment">
-          💬 ${escapeHtml(lead.comment)}
+          <span class="comment-icon">💬</span>
+          <span class="comment-text">${escapeHtml(lead.comment)}</span>
         </div>
       `;
     }
@@ -1237,45 +1414,58 @@
     const notesCount = notes.length;
     const notesHtml = notes.map(n => `
       <div class="note-item">
-        <span class="note-author">${escapeHtml(n.author || 'Иван')}:</span>
-        <span class="note-text">${escapeHtml(n.text)}</span>
-        <span class="note-time">${formatTimeShort(n.time)}</span>
+        <div class="note-meta-row">
+          <span class="note-author">${escapeHtml(n.author || 'Иван')}</span>
+          <span class="note-time">${formatTimeShort(n.time)}</span>
+        </div>
+        <div class="note-text">${escapeHtml(n.text)}</div>
       </div>
     `).join('');
 
     return `
-      <article class="lead-card status-${status}" id="card-${lead.id}" data-lead-id="${lead.id}" data-lead-number="${num}">
+      <article class="lead-card status-${status} ${isKanban ? 'lead-card--kanban' : ''}" id="card-${lead.id}" data-lead-id="${lead.id}" data-lead-number="${num}">
         <!-- Top Meta -->
         <div class="card-meta-row">
           <div class="card-number-time">
             <span class="lead-num">#${num}</span>
-            <span class="lead-time">${timeStr}</span>
+            <span class="lead-time" title="${lead.createdAt ? new Date(lead.createdAt).toLocaleString('ru-RU') : ''}">${timeStr}</span>
           </div>
           <div class="card-meta-right">
             <span class="lead-badge ${badgeClass}">${badgeLabel}</span>
-            <button class="btn-delete-lead" onclick="deleteLead('${lead.id}')" title="Удалить заявку с концами" aria-label="Удалить заявку">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <button class="btn-delete-lead" onclick="deleteLead('${lead.id}')" title="Удалить заявку" aria-label="Удалить заявку">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/>
               </svg>
             </button>
           </div>
         </div>
 
-        <!-- Client Info -->
+        <!-- Client & Communication Section -->
         <div class="card-client-block">
           <div class="client-name">${escapeHtml(lead.name || 'Клиент')}</div>
           <div class="client-contact-row">
             <span class="client-phone">${escapeHtml(lead.contact || 'Телефон не указан')}</span>
+            ${lead.contact ? `
+              <button type="button" class="btn-copy-phone" onclick="copyPhone(event, '${escapeHtml(lead.contact)}')" title="Скопировать номер">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+            ` : ''}
           </div>
         </div>
 
         <!-- Direct Actions (Call & Chat) -->
         <div class="card-actions-row">
-          <a href="tel:${cleanPhone}" class="btn-call">
-            📞 Позвонить
+          <a href="tel:${cleanPhone}" class="btn-call" title="Позвонить клиенту">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            <span>Позвонить</span>
           </a>
-          <a href="https://t.me/+${cleanPhone.replace('+', '')}" target="_blank" class="btn-chat" title="Открыть в Telegram">
-            💬 Telegram
+          <a href="https://t.me/+${cleanPhone.replace('+', '')}" target="_blank" rel="noopener" class="btn-chat" title="Открыть чат в Telegram">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.05-.2-.06-.05-.16-.03-.23-.02-.1.02-1.74 1.11-4.91 3.25-.46.32-.88.48-1.26.47-.42-.01-1.22-.24-1.82-.43-.73-.24-1.31-.37-1.26-.78.03-.21.32-.43.88-.66 3.46-1.5 5.76-2.49 6.92-2.97 3.3-1.38 3.99-1.62 4.43-1.63.1 0 .32.02.46.14.12.1.15.24.17.34.02.13.03.3.01.46z"/>
+            </svg>
+            <span>Telegram</span>
           </a>
         </div>
 
@@ -1285,28 +1475,26 @@
         <!-- Client Comment -->
         ${commentHtml}
 
-        <!-- Stage Progression Controls -->
+        <!-- Stage Progression Controls & Notes -->
         <div class="card-footer-controls">
           <div class="stage-buttons">
             ${statusActionsHtml}
           </div>
           <div class="footer-actions-right">
-            <button class="notes-toggle" onclick="toggleNotes('${lead.id}')">
-              📝 Заметки (${notesCount})
-            </button>
-            <button class="btn-delete-link" onclick="deleteLead('${lead.id}')" title="Удалить навсегда">
-              🗑️ Удалить
+            <button type="button" class="notes-toggle ${notesCount > 0 ? 'has-notes' : ''}" onclick="toggleNotes('${lead.id}')" title="Заметки диспетчера">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span>${notesCount > 0 ? notesCount : 'Заметки'}</span>
             </button>
           </div>
         </div>
 
         <!-- Inline Notes Panel -->
-        <div id="notes-panel-${lead.id}" class="notes-panel" style="display: ${notesCount > 0 ? 'block' : 'none'};">
+        <div id="notes-panel-${lead.id}" class="notes-panel" style="display: ${notesCount > 0 && !isKanban ? 'block' : 'none'};">
           <div class="lead-notes-area">
             ${notesHtml}
             <div class="note-input-row">
-              <input type="text" id="note-input-${lead.id}" class="note-input" placeholder="Добавить заметку..." onkeydown="if(event.key==='Enter') addLeadNote('${lead.id}')">
-              <button class="btn-note-add" onclick="addLeadNote('${lead.id}')">OK</button>
+              <input type="text" id="note-input-${lead.id}" class="note-input" placeholder="Заметка диспетчера (Enter)..." onkeydown="if(event.key==='Enter') addLeadNote('${lead.id}')">
+              <button type="button" class="btn-note-add" onclick="addLeadNote('${lead.id}')">OK</button>
             </div>
           </div>
         </div>
