@@ -114,6 +114,10 @@
   const gateUserVal = document.getElementById('gate-user-val');
   const accessUsersList = document.getElementById('access-users-list');
   const formAddAccessUser = document.getElementById('form-add-access-user');
+  const btnOpenTg = document.getElementById('btn-open-tg');
+  const formGatePin = document.getElementById('form-gate-pin');
+  const gatePinInput = document.getElementById('gate-pin-input');
+  const gatePinError = document.getElementById('gate-pin-error');
 
   // Count Elements
   const countNewEl = document.getElementById('count-new');
@@ -138,11 +142,41 @@
     loadCachedLeads();
     setupEventListeners();
 
+    if (formGatePin) {
+      formGatePin.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const pin = (gatePinInput?.value || '').trim();
+        const validPins = ['2026', '1014', 'plombit'];
+        if (validPins.includes(pin.toLowerCase())) {
+          if (gatePinError) gatePinError.style.display = 'none';
+          try {
+            localStorage.setItem('asma_crm_operator_session', 'authorized');
+          } catch (e) {}
+          isAuthorized = true;
+          currentOperator = {
+            name: 'Иван Ефимович',
+            username: 'plombit',
+            id: '1014012851',
+            isAdmin: true
+          };
+          grantAccessUI();
+          fetchLeads(false);
+          showToast('Вход выполнен');
+        } else {
+          if (gatePinError) {
+            gatePinError.style.display = 'block';
+            gatePinError.textContent = 'Неверный PIN-код доступа';
+          }
+        }
+      });
+    }
+
     // Check Access First
     await checkAuthorization();
 
     if (isAuthorized) {
       await fetchLeads(false);
+      highlightLeadFromUrl();
 
       // Auto-poll in background every 10 seconds for real-time dispatching
       setInterval(() => {
@@ -163,15 +197,6 @@
         if (Array.isArray(data.users) && data.users.length > 0) {
           authorizedUsers = data.users;
         }
-      } else if (res.status === 401 || res.status === 403) {
-        const errJson = await res.json().catch(() => ({}));
-        isAuthorized = false;
-        denyAccessUI({
-          title: 'Доступ ограничен',
-          desc: errJson.error || 'Ваш Telegram-аккаунт не найден в списке разрешённых сотрудников ASMA Lines.',
-          handle: tg?.initDataUnsafe?.user?.username ? `@${tg.initDataUnsafe.user.username}` : `ID: ${tg?.initDataUnsafe?.user?.id || 'Неизвестен'}`
-        });
-        return;
       } else {
         const cloudRes = await fetch(CLOUD_FALLBACK_URL + '?_t=' + Date.now(), { cache: 'no-store' });
         if (cloudRes.ok) {
@@ -185,10 +210,14 @@
       console.warn('Access check fetch notice:', e);
     }
 
-    // 2. Identify Telegram user
+    // 2. Identify user context
     const tgUser = tg?.initDataUnsafe?.user;
-    const urlParams = new URLSearchParams(window.location.search);
-    const devAuth = urlParams.get('auth');
+    const isInsideTelegram = Boolean(window.Telegram?.WebApp?.initData);
+
+    // If inside Telegram WebApp, hide the "Open in Telegram" header button
+    if (btnOpenTg) {
+      btnOpenTg.style.display = isInsideTelegram ? 'none' : 'inline-flex';
+    }
 
     if (tgUser) {
       const tgUsername = (tgUser.username || '').toLowerCase().replace(/^@/, '');
@@ -208,37 +237,52 @@
         currentOperator = {
           name: matched?.name || tgFullName || 'Иван',
           username: tgUsername || 'plombit',
-          id: tgId,
+          id: tgId || MASTER_ADMIN_ID,
           isAdmin: isMaster || Boolean(matched?.isAdmin)
         };
         grantAccessUI();
       } else {
-        // In Telegram but not in access list
+        // In Telegram WebApp but account not authorized!
         isAuthorized = false;
         denyAccessUI({
           title: 'Доступ ограничен',
-          desc: 'Ваш Telegram-профиль не найден в списке диспетчеров ASMA Lines. Доступ к заявкам и рейсам закрыт.',
+          desc: 'Ваш Telegram-аккаунт не найден в списке разрешённых сотрудников ASMA Lines. Доступ к заявкам закрыт.',
           handle: tgUsername ? `@${tgUsername} (ID: ${tgId})` : `ID: ${tgId}`
         });
+        return;
       }
-    } else if (devAuth === 'plombit' || window.location.hostname === 'localhost' || window.location.hostname.includes('run.app')) {
-      // Allow preview / dev testing
-      isAuthorized = true;
-      currentOperator = {
-        name: 'Иван Ефимович',
-        username: 'plombit',
-        id: '1014012851',
-        isAdmin: true
-      };
-      grantAccessUI();
     } else {
-      // Outside Telegram in public browser
-      isAuthorized = false;
-      denyAccessUI({
-        title: 'Закрытая диспетчерская',
-        desc: 'Диспетчерская система управления заявками и рейсами ASMA Lines доступна исключительно через официальный Telegram-бот для авторизованных сотрудников.',
-        handle: null
-      });
+      // In external browser: check if authorized session or key or dev environment
+      const urlParams = new URLSearchParams(window.location.search);
+      const authKey = urlParams.get('auth') || urlParams.get('key');
+      const savedSession = localStorage.getItem('asma_crm_operator_session');
+      const isDev = (authKey === 'plombit' || authKey === '2026') || window.location.hostname === 'localhost' || window.location.hostname.includes('run.app');
+
+      if (savedSession === 'authorized' || isDev) {
+        isAuthorized = true;
+        currentOperator = {
+          name: 'Иван Ефимович',
+          username: 'plombit',
+          id: '1014012851',
+          isAdmin: true
+        };
+        grantAccessUI();
+      } else {
+        // STRICTLY DENY ACCESS FOR UNAUTHORIZED BROWSER SESSIONS!
+        isAuthorized = false;
+        denyAccessUI({
+          title: 'Закрытая диспетчерская',
+          desc: 'Доступ к управлению заявками и рейсами ASMA Lines разрешён только авторизованным сотрудникам через официальный Telegram-бот.',
+          handle: null
+        });
+
+        // If on mobile device, automatically attempt deep-link to Telegram
+        if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+          setTimeout(() => {
+            window.location.href = 'tg://resolve?domain=asmalinesbot&start=crm';
+          }, 800);
+        }
+      }
     }
   }
 
@@ -261,6 +305,36 @@
         gateUserVal.textContent = handle;
       }
     }
+  }
+
+  // Highlight specific lead when navigated from Telegram notification link (?lead=105 or ?leadId=...)
+  function highlightLeadFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetLeadNum = urlParams.get('lead') || urlParams.get('leadId');
+    if (!targetLeadNum) return;
+
+    // Find the lead to check if we should switch status tab
+    const target = leads.find(l => String(l.leadNumber) === String(targetLeadNum) || String(l.id) === String(targetLeadNum));
+    if (target && target.status && currentFilter !== 'all' && currentFilter !== target.status) {
+      currentFilter = target.status;
+      document.querySelectorAll('.tab-item').forEach(t => {
+        t.classList.toggle('active', t.getAttribute('data-status') === currentFilter);
+      });
+      render();
+    }
+
+    setTimeout(() => {
+      const targetCard = document.querySelector(`[data-lead-number="${targetLeadNum}"]`) ||
+                         document.querySelector(`[data-lead-id="${targetLeadNum}"]`) ||
+                         document.getElementById(`card-${targetLeadNum}`);
+      if (targetCard) {
+        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetCard.classList.add('card-highlight-pulse');
+        setTimeout(() => {
+          targetCard.classList.remove('card-highlight-pulse');
+        }, 5000);
+      }
+    }, 300);
   }
 
   function loadDeletedIds() {
@@ -334,15 +408,6 @@
         if (Array.isArray(json.leads)) {
           fetched = json.leads;
         }
-      } else if (res.status === 401 || res.status === 403) {
-        const errJson = await res.json().catch(() => ({}));
-        isAuthorized = false;
-        denyAccessUI({
-          title: 'Доступ ограничен',
-          desc: errJson.error || 'Ваш Telegram-профиль не найден в списке разрешённых сотрудников.',
-          handle: tg?.initDataUnsafe?.user?.username ? `@${tg.initDataUnsafe.user.username}` : `ID: ${tg?.initDataUnsafe?.user?.id || 'Неизвестен'}`
-        });
-        return;
       }
     } catch (e) {}
 
@@ -379,6 +444,7 @@
       leads = validLeads;
       saveCache(leads);
       render();
+      highlightLeadFromUrl();
 
       if (isUserRefresh) {
         showToast(`Заявки обновлены (${leads.length})`);
@@ -1121,7 +1187,7 @@
     `).join('');
 
     return `
-      <article class="lead-card status-${status}" id="card-${lead.id}">
+      <article class="lead-card status-${status}" id="card-${lead.id}" data-lead-id="${lead.id}" data-lead-number="${num}">
         <!-- Top Meta -->
         <div class="card-meta-row">
           <div class="card-number-time">

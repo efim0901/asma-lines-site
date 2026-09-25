@@ -440,22 +440,36 @@ app.post('/api/lead', async (req, res) => {
   const host = req.get('host') || 'localhost:3000';
   const protocol = req.protocol || 'http';
   const crmUrl = `${protocol}://${host}/crm.html`;
+  const botUsername = process.env.TELEGRAM_USERNAME || 'asmalinesbot';
 
   if (botToken && chatId) {
     try {
+      const isPrivateChat = Number(chatId) > 0;
+      const tgBotUrl = `https://t.me/${botUsername}?start=crm`;
+
+      const inlineKeyboard = [];
+      if (isPrivateChat) {
+        inlineKeyboard.push([
+          {
+            text: '🚀 Открыть CRM в Telegram',
+            web_app: { url: crmUrl }
+          }
+        ]);
+      } else {
+        inlineKeyboard.push([
+          {
+            text: '🚀 Открыть CRM в Telegram',
+            url: tgBotUrl
+          }
+        ]);
+      }
+
       const tgPayload = {
         chat_id: chatId,
         text: textHtml,
         parse_mode: 'HTML',
         reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: '📋 Открыть в CRM диспетчера',
-                url: crmUrl
-              }
-            ]
-          ]
+          inline_keyboard: inlineKeyboard
         }
       };
 

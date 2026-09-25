@@ -1851,3 +1851,120 @@ body.crm-body {
   box-shadow: 0 0 0 3px rgba(255, 211, 130, 0.18);
 }
 
+/* Card Highlight Pulse (when navigated directly from Telegram notification) */
+@keyframes leadGlowPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(139, 37, 54, 0.7);
+    border-color: #8B2536;
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(255, 211, 130, 0.4);
+    border-color: #FFD382;
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(139, 37, 54, 0);
+    border-color: #8B2536;
+  }
+}
+
+.card-highlight-pulse {
+  animation: leadGlowPulse 1.6s ease-in-out 3;
+  border-width: 2px !important;
+  border-color: #FFD382 !important;
+}
+
+/* Header Telegram Button */
+.btn-open-tg {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(36, 161, 222, 0.12);
+  border: 1px solid rgba(36, 161, 222, 0.35);
+  color: #24A1DE;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-open-tg:hover {
+  background: #24A1DE;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(36, 161, 222, 0.3);
+}
+
+[data-theme='dark'] .btn-open-tg {
+  background: rgba(36, 161, 222, 0.18);
+  border-color: rgba(36, 161, 222, 0.5);
+  color: #5ec2ff;
+}
+
+[data-theme='dark'] .btn-open-tg:hover {
+  background: #24A1DE;
+  color: #FFFFFF;
+}
+
+/* Gate PIN login form */
+.gate-pin-section {
+  margin-top: 16px;
+  width: 100%;
+}
+
+.gate-divider-text {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94A3B8;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.gate-pin-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.gate-pin-input {
+  flex: 1;
+  padding: 10px 14px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  color: #FFFFFF;
+  font-size: 14px;
+  outline: none;
+}
+
+.gate-pin-input:focus {
+  border-color: #FFD382;
+}
+
+.btn-pin-submit {
+  padding: 10px 18px;
+  background: var(--burgundy);
+  color: #FFFFFF;
+  border: 1px solid var(--burgundy-bright);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-pin-submit:hover {
+  background: var(--burgundy-bright);
+}
+
+.gate-pin-error {
+  color: #EF4444;
+  font-size: 12px;
+  margin-top: 6px;
+  text-align: center;
+}
+

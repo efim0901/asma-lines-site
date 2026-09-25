@@ -762,34 +762,7 @@ export default {
           textHtml += `🌐 <b>Источник:</b> Форма контактов`;
         }
 
-        // Send Telegram notification
-        if (botToken) {
-          try {
-            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                chat_id: chatId,
-                text: textHtml,
-                parse_mode: 'HTML',
-                reply_markup: {
-                  inline_keyboard: [
-                    [
-                      {
-                        text: '📋 Открыть заявку в CRM',
-                        url: `${url.origin}/crm.html`
-                      }
-                    ]
-                  ]
-                }
-              })
-            });
-          } catch (err) {
-            console.error('Worker Telegram send error:', err);
-          }
-        }
-
-        // 2. Persist to Cloud CRM Store
+        // 1. Persist to Cloud CRM Store
         let storeData = { leads: [], deletedIds: [] };
         try {
           const storeRes = await fetch(CLOUD_STORE_URL + '?_t=' + Date.now(), { cache: 'no-store' });
@@ -848,6 +821,48 @@ export default {
           });
         } catch (err) {
           console.error('Worker CRM save error:', err);
+        }
+
+        // 2. Send Telegram notification
+        if (botToken) {
+          try {
+            const botUsername = env?.TELEGRAM_USERNAME || 'asmalinesbot';
+            const isPrivateChat = Number(chatId) > 0;
+            const crmDirectUrl = `${crmAppUrl}?lead=${newLead.leadNumber}&auth=plombit`;
+            const tgBotUrl = `https://t.me/${botUsername}?start=crm`;
+
+            const inlineKeyboard = [];
+            if (isPrivateChat) {
+              inlineKeyboard.push([
+                {
+                  text: '🚀 Открыть CRM в Telegram',
+                  web_app: { url: crmAppUrl }
+                }
+              ]);
+            } else {
+              inlineKeyboard.push([
+                {
+                  text: '🚀 Открыть CRM в Telegram',
+                  url: tgBotUrl
+                }
+              ]);
+            }
+
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: textHtml,
+                parse_mode: 'HTML',
+                reply_markup: {
+                  inline_keyboard: inlineKeyboard
+                }
+              })
+            });
+          } catch (err) {
+            console.error('Worker Telegram send error:', err);
+          }
         }
 
         return jsonResponse({
