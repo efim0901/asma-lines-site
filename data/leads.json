@@ -1,1 +1,33 @@
-[]
+[
+  {
+    "id": "lead-1790314169148",
+    "leadNumber": "101",
+    "type": "cargo",
+    "category": "Заявка на перевозку груза",
+    "status": "new",
+    "createdAt": "2026-09-25T05:29:29.148Z",
+    "name": "Тест Заказчик",
+    "contact": "+375291234567",
+    "email": "",
+    "fromCity": "Минск",
+    "toCity": "Брест",
+    "route": "Минск → Брест",
+    "distance": "350 км",
+    "vehicle": "Тент 20т",
+    "weight": "18 т",
+    "volume": "86 м³",
+    "price": "1200 BYN",
+    "comment": "Срочная погрузка в понедельник",
+    "assignedTo": null,
+    "priority": "high",
+    "notes": [
+      {
+        "id": "n-1790314169148",
+        "author": "Система",
+        "text": "Заявка поступила с сайта: website_calculator",
+        "time": "2026-09-25T05:29:29.148Z"
+      }
+    ],
+    "source": "website_calculator"
+  }
+]

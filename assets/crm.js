@@ -118,6 +118,14 @@
   const formGatePin = document.getElementById('form-gate-pin');
   const gatePinInput = document.getElementById('gate-pin-input');
   const gatePinError = document.getElementById('gate-pin-error');
+  const formChangePin = document.getElementById('form-change-pin');
+  const displayCurrentPin = document.getElementById('display-current-pin');
+  const inputNewPin = document.getElementById('input-new-pin');
+  let currentAccessPin = '2026';
+  try {
+    const savedPin = localStorage.getItem('asma_crm_pin');
+    if (savedPin) currentAccessPin = savedPin;
+  } catch (e) {}
 
   // Count Elements
   const countNewEl = document.getElementById('count-new');
@@ -146,7 +154,7 @@
       formGatePin.addEventListener('submit', (e) => {
         e.preventDefault();
         const pin = (gatePinInput?.value || '').trim();
-        const validPins = ['2026', '1014', 'plombit'];
+        const validPins = [currentAccessPin.toLowerCase(), '2026', '1014', 'plombit'];
         if (validPins.includes(pin.toLowerCase())) {
           if (gatePinError) gatePinError.style.display = 'none';
           try {
@@ -167,6 +175,44 @@
             gatePinError.style.display = 'block';
             gatePinError.textContent = 'Неверный PIN-код доступа';
           }
+        }
+      });
+    }
+
+    if (formChangePin) {
+      formChangePin.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newPin = (inputNewPin?.value || '').trim();
+        if (!newPin || newPin.length < 3) {
+          showToast('⚠️ PIN-код должен содержать от 3 символов');
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/crm/access', {
+            method: 'POST',
+            headers: getCrmHeaders(),
+            body: JSON.stringify({
+              action: 'set_pin',
+              pin: newPin,
+              requestedBy: currentOperator
+            })
+          });
+
+          if (res.ok) {
+            currentAccessPin = newPin;
+            try {
+              localStorage.setItem('asma_crm_pin', newPin);
+            } catch (err) {}
+            if (displayCurrentPin) displayCurrentPin.value = newPin;
+            if (inputNewPin) inputNewPin.value = '';
+            showToast(`✅ Новый PIN-код сохранён: ${newPin}`);
+          } else {
+            const err = await res.json().catch(() => ({}));
+            showToast(`Ошибка: ${err.error || 'Не удалось сменить PIN'}`);
+          }
+        } catch (err) {
+          showToast('Ошибка сети при смене PIN');
         }
       });
     }
@@ -197,12 +243,22 @@
         if (Array.isArray(data.users) && data.users.length > 0) {
           authorizedUsers = data.users;
         }
+        if (data.accessPin) {
+          currentAccessPin = String(data.accessPin);
+          try { localStorage.setItem('asma_crm_pin', currentAccessPin); } catch(e){}
+          if (displayCurrentPin) displayCurrentPin.value = currentAccessPin;
+        }
       } else {
         const cloudRes = await fetch(CLOUD_FALLBACK_URL + '?_t=' + Date.now(), { cache: 'no-store' });
         if (cloudRes.ok) {
           const cloudData = await cloudRes.json();
           if (Array.isArray(cloudData.authorizedUsers) && cloudData.authorizedUsers.length > 0) {
             authorizedUsers = cloudData.authorizedUsers;
+          }
+          if (cloudData.accessPin) {
+            currentAccessPin = String(cloudData.accessPin);
+            try { localStorage.setItem('asma_crm_pin', currentAccessPin); } catch(e){}
+            if (displayCurrentPin) displayCurrentPin.value = currentAccessPin;
           }
         }
       }
@@ -623,6 +679,7 @@
 
   function openAccessModal() {
     if (!modalAccessMgmt) return;
+    if (displayCurrentPin) displayCurrentPin.value = currentAccessPin;
     renderAccessUsersList();
     modalAccessMgmt.classList.add('open');
     if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');

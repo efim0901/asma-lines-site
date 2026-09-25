@@ -547,7 +547,7 @@ app.post('/api/lead', async (req, res) => {
 const CRM_STORAGE_BIN = 'https://json.extendsclass.com/bin/becdbda';
 
 async function getCloudStorage() {
-  let storeData = { leads: [], deletedIds: [], authorizedUsers: [] };
+  let storeData = { leads: [], deletedIds: [], authorizedUsers: [], accessPin: process.env.CRM_ACCESS_PIN || '2026' };
   try {
     const storeRes = await fetch(CRM_STORAGE_BIN + '?_t=' + Date.now(), { cache: 'no-store' });
     if (storeRes.ok) {
@@ -556,6 +556,7 @@ async function getCloudStorage() {
         storeData.leads = Array.isArray(json.leads) ? json.leads : [];
         storeData.deletedIds = Array.isArray(json.deletedIds) ? json.deletedIds : [];
         storeData.authorizedUsers = Array.isArray(json.authorizedUsers) ? json.authorizedUsers : [];
+        if (json.accessPin) storeData.accessPin = json.accessPin;
       }
     }
   } catch (e) {
@@ -563,6 +564,12 @@ async function getCloudStorage() {
   }
 
   // Local fallback if empty
+  const pinFile = path.join(DATA_DIR, 'access_pin.json');
+  const localPinData = await readJsonFile(pinFile, { pin: process.env.CRM_ACCESS_PIN || '2026' });
+  if (localPinData && localPinData.pin) {
+    storeData.accessPin = localPinData.pin;
+  }
+
   if (storeData.leads.length === 0) {
     const localLeads = await readJsonFile(LEADS_FILE, []);
     if (localLeads.length > 0) storeData.leads = localLeads;
@@ -600,6 +607,7 @@ async function saveCloudStorage(storeData) {
   if (Array.isArray(storeData.leads)) await writeJsonFile(LEADS_FILE, storeData.leads);
   if (Array.isArray(storeData.deletedIds)) await writeJsonFile(DELETED_LEADS_FILE, storeData.deletedIds);
   if (Array.isArray(storeData.authorizedUsers)) await writeJsonFile(ACCESS_USERS_FILE, storeData.authorizedUsers);
+  if (storeData.accessPin) await writeJsonFile(path.join(DATA_DIR, 'access_pin.json'), { pin: storeData.accessPin });
 
   try {
     await fetch(CRM_STORAGE_BIN, {
@@ -634,7 +642,11 @@ app.get(['/api/crm', '/api/crm/data'], async (req, res) => {
 app.get('/api/crm/access', async (req, res) => {
   try {
     const store = await getCloudStorage();
-    res.json({ success: true, users: store.authorizedUsers });
+    res.json({
+      success: true,
+      users: store.authorizedUsers,
+      accessPin: store.accessPin || process.env.CRM_ACCESS_PIN || '2026'
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -642,12 +654,23 @@ app.get('/api/crm/access', async (req, res) => {
 
 app.post('/api/crm/access', async (req, res) => {
   try {
-    const { action, user, target, requestedBy } = req.body;
+    const { action, user, target, pin, requestedBy } = req.body;
     if (!checkUserAdmin(requestedBy)) {
       return res.status(403).json({ error: 'Доступ запрещён: только @plombit может управлять списком' });
     }
 
     const store = await getCloudStorage();
+
+    if (action === 'set_pin') {
+      const newPin = String(pin || '').trim();
+      if (!newPin || newPin.length < 3) {
+        return res.status(400).json({ error: 'PIN-код должен быть от 3 символов' });
+      }
+      store.accessPin = newPin;
+      await saveCloudStorage(store);
+      return res.json({ success: true, accessPin: store.accessPin });
+    }
+
     let users = store.authorizedUsers;
 
     if (action === 'add' && user) {
@@ -1053,7 +1076,8 @@ async function handleTelegramBotMessage(message) {
         reply += `\n\n👑 <b>Команды управления доступом:</b>\n` +
           `• <code>/add @username Имя</code> — добавить диспетчера\n` +
           `• <code>/remove @username</code> — отозвать доступ\n` +
-          `• <code>/users</code> — список сотрудников\n\n` +
+          `• <code>/users</code> — список сотрудников\n` +
+          `• <code>/pin</code> — узнать или сменить PIN для браузера (напр. <code>/pin 4545</code>)\n\n` +
           `<i>Также вы можете управлять доступом прямо в интерфейсе CRM.</i>`;
       }
 
@@ -1101,7 +1125,39 @@ async function handleTelegramBotMessage(message) {
       return;
     }
 
-    // 3. /add
+    // 3. /pin, /setpin
+    if (text.startsWith('/pin') || text.startsWith('/setpin')) {
+      if (!isAdmin) {
+        await sendTelegramMessage(chatId, `⛔ Только главный администратор (@plombit) может просматривать и менять PIN-код.`);
+        return;
+      }
+
+      const parts = text.split(/\s+/);
+      if (parts.length > 1) {
+        const newPin = parts[1].trim();
+        if (newPin.length < 3) {
+          await sendTelegramMessage(chatId, `⚠️ PIN-код должен содержать минимум 3 символа.`);
+          return;
+        }
+        storeData.accessPin = newPin;
+        await saveCloudStorage(storeData);
+        await sendTelegramMessage(
+          chatId,
+          `✅ <b>PIN-код диспетчера успешно обновлён!</b>\n\nНовый код: <code>${escapeHtml(newPin)}</code>\n\nИспользуйте его для входа в CRM через браузер на компьютере.`
+        );
+      } else {
+        const curPin = storeData.accessPin || process.env.CRM_ACCESS_PIN || '2026';
+        await sendTelegramMessage(
+          chatId,
+          `🔑 <b>Текущий PIN-код для входа из браузера:</b> <code>${escapeHtml(curPin)}</code>\n\n` +
+          `Чтобы изменить код доступа, отправьте команду:\n` +
+          `<code>/pin НОВЫЙ_КОД</code> (например, <code>/pin 4545</code>)`
+        );
+      }
+      return;
+    }
+
+    // 4. /add
     if (text.startsWith('/add')) {
       if (!isAdmin) {
         await sendTelegramMessage(chatId, `⛔ Только главный администратор (@plombit) может добавлять пользователей.`);
