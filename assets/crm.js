@@ -1034,6 +1034,28 @@
     }
   };
 
+  // Open Fillable / Printable Document Generator (Transport Order Agreement & Commercial Proposal)
+  window.openLeadDocument = function (leadId) {
+    const lead = leads.find(l => l.id === leadId);
+    if (!lead) return;
+    const num = lead.leadNumber || lead.id.replace(/\D/g, '').slice(-3) || '101';
+    const q = new URLSearchParams({
+      id: lead.id,
+      lead: num,
+      name: lead.name || '',
+      contact: lead.contact || '',
+      route: lead.route || '',
+      vehicle: lead.vehicle || '',
+      weight: lead.weight || '',
+      distance: lead.distance || '',
+      price: lead.price || '',
+      comment: lead.comment || '',
+      dispatcher: currentOperator?.name || 'Иван Ефимович'
+    });
+    window.open(`order-doc.html?${q.toString()}`, '_blank');
+    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+  };
+
   // Render Engine
   function render() {
     if (!isAuthorized) return;
@@ -1314,6 +1336,10 @@
             ${statusActionsHtml}
           </div>
           <div class="footer-actions-right">
+            <button type="button" class="btn-doc-link" onclick="openLeadDocument('${lead.id}')" title="Открыть заполненный договор-заявку / КП">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span>Документ</span>
+            </button>
             <button type="button" class="notes-toggle ${notesCount > 0 ? 'has-notes' : ''}" onclick="toggleNotes('${lead.id}')" title="Заметки диспетчера">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               <span>${notesCount > 0 ? notesCount : 'Заметки'}</span>

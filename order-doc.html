@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Документ по перевозке — ASMA Lines</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/svg+xml" href="assets/brand/asma-mark.svg?v=20260926">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32x32.png?v=20260926">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16x16.png?v=20260926">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png?v=20260926">
+  <link rel="shortcut icon" href="favicon.ico?v=20260926">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap">
+
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 12mm 12mm 14mm 12mm;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      color: #1A1817;
+      background: #F4F1EA;
+      font-size: 13px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+      padding: 20px;
+    }
+
+    /* Top Action Bar (Screen Only) */
+    .no-print-toolbar {
+      max-width: 900px;
+      margin: 0 auto 16px auto;
+      background: #1C1917;
+      color: #FAF8F5;
+      padding: 10px 16px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      flex-wrap: wrap;
+    }
+
+    .doc-type-tabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #2B2624;
+      padding: 3px;
+      border-radius: 8px;
+    }
+
+    .doc-tab-btn {
+      background: transparent;
+      border: none;
+      color: #D6CEC8;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .doc-tab-btn:hover {
+      color: #FFFFFF;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .doc-tab-btn.active {
+      background: #6B1E2D;
+      color: #FFFFFF;
+      box-shadow: 0 2px 6px rgba(107,30,45,0.4);
+    }
+
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 14px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+    }
+
+    .btn-action-primary {
+      background: #6B1E2D;
+      color: #FFFFFF;
+      border-color: #8B2536;
+    }
+
+    .btn-action-primary:hover {
+      background: #8B2536;
+      transform: translateY(-1px);
+    }
+
+    .btn-action-secondary {
+      background: #2E2927;
+      color: #FAF8F5;
+      border-color: #443E3B;
+    }
+
+    .btn-action-secondary:hover {
+      background: #3D3734;
+      color: #FFFFFF;
+    }
+
+    .edit-mode-indicator {
+      font-size: 11.5px;
+      color: #FBBF24;
+      display: none;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Paper Document Canvas */
+    .paper-sheet {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #FFFFFF;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 4px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      padding: 36px 42px;
+      min-height: 1050px;
+      position: relative;
+    }
+
+    /* Document Header */
+    .doc-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      border-bottom: 2px solid #6B1E2D;
+      padding-bottom: 14px;
+      margin-bottom: 20px;
+    }
+
+    .brand-block {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo-img {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+    }
+
+    .brand-name-title {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      color: #6B1E2D;
+      line-height: 1.1;
+    }
+
+    .brand-sub-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #666;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .doc-meta-right {
+      text-align: right;
+      font-size: 12px;
+      color: #444;
+    }
+
+    .doc-number-main {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      font-weight: 800;
+      color: #1A1817;
+      margin-bottom: 3px;
+    }
+
+    /* Document Titles */
+    .doc-main-title {
+      font-size: 17px;
+      font-weight: 800;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: #1A1817;
+      margin-bottom: 4px;
+    }
+
+    .doc-sub-heading {
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 18px;
+    }
+
+    /* Parties Section */
+    .parties-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .party-card {
+      border: 1px solid #D6CEC8;
+      border-radius: 6px;
+      padding: 10px 14px;
+      background: #FAF8F5;
+      font-size: 12px;
+    }
+
+    .party-card-title {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6B1E2D;
+      margin-bottom: 6px;
+      border-bottom: 1px solid rgba(107,30,45,0.15);
+      padding-bottom: 3px;
+    }
+
+    .party-line {
+      margin-bottom: 3px;
+    }
+
+    .party-line b {
+      color: #1A1817;
+    }
+
+    /* Specifications Table */
+    .spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 18px;
+      font-size: 12.5px;
+    }
+
+    .spec-table th,
+    .spec-table td {
+      border: 1px solid #D1CAC3;
+      padding: 8px 12px;
+      vertical-align: top;
+    }
+
+    .spec-table th {
+      background: #F4ECEE;
+      color: #6B1E2D;
+      font-weight: 700;
+      width: 32%;
+      text-align: left;
+    }
+
+    .spec-table td {
+      background: #FFFFFF;
+      color: #1A1817;
+    }
+
+    .spec-highlight {
+      font-weight: 700;
+      color: #6B1E2D;
+    }
+
+    .spec-price-cell {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14.5px;
+      font-weight: 800;
+      color: #6B1E2D;
+      background: #FAF3F4 !important;
+    }
+
+    /* Terms and Legal Conditions */
+    .terms-block {
+      border: 1px solid #E5E0DA;
+      border-left: 3px solid #6B1E2D;
+      padding: 10px 14px;
+      border-radius: 0 4px 4px 0;
+      background: #FAFAF8;
+      font-size: 11px;
+      color: #444;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    .terms-block h4 {
+      font-size: 11.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #1A1817;
+      margin-bottom: 4px;
+    }
+
+    .terms-block ol {
+      padding-left: 16px;
+    }
+
+    .terms-block li {
+      margin-bottom: 3px;
+    }
+
+    /* Signatures & Seal Section */
+    .sign-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 28px;
+      page-break-inside: avoid;
+    }
+
+    .sign-box {
+      border: 1px dashed #B8B0A8;
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 11.5px;
+      background: #FAF8F5;
+    }
+
+    .sign-title {
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #6B1E2D;
+      margin-bottom: 8px;
+      font-size: 11px;
+    }
+
+    .sign-line-row {
+      margin-top: 24px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .sign-line {
+      flex: 1;
+      border-bottom: 1px solid #1A1817;
+      height: 1px;
+      margin-bottom: 2px;
+    }
+
+    .sign-stamp-hint {
+      text-align: center;
+      color: #888;
+      font-size: 10px;
+      margin-top: 6px;
+    }
+
+    /* Editable Fields Styling */
+    [contenteditable="true"] {
+      background: rgba(254, 243, 199, 0.4);
+      outline: 1px dashed #D97706;
+      border-radius: 2px;
+      padding: 0 3px;
+    }
+
+    [contenteditable="true"]:focus {
+      background: #FEF3C7;
+      outline: 2px solid #D97706;
+    }
+
+    /* PRINT STYLES */
+    @media print {
+      body {
+        background: #FFFFFF !important;
+        padding: 0 !important;
+        font-size: 12px !important;
+      }
+
+      .no-print-toolbar {
+        display: none !important;
+      }
+
+      .paper-sheet {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+      }
+
+      [contenteditable="true"] {
+        background: transparent !important;
+        outline: none !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 8px;
+      }
+      .paper-sheet {
+        padding: 16px;
+      }
+      .parties-grid, .sign-section {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .no-print-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Toolbar (Hidden on Print) -->
+  <aside class="no-print-toolbar">
+    <div class="doc-type-tabs" role="tablist">
+      <button type="button" class="doc-tab-btn active" id="tab-order" onclick="switchDocType('order')">
+        <span>📑 Договор-заявка</span>
+      </button>
+      <button type="button" class="doc-tab-btn" id="tab-kp" onclick="switchDocType('kp')">
+        <span>📊 КП / Расчёт</span>
+      </button>
+      <button type="button" class="doc-tab-btn" id="tab-waybill" onclick="switchDocType('waybill')">
+        <span>🚚 Маршрутный лист</span>
+      </button>
+    </div>
+
+    <div class="toolbar-actions">
+      <span class="edit-mode-indicator" id="edit-indicator">✏️ Режим правки включён</span>
+      <button type="button" class="btn-action btn-action-secondary" id="btn-toggle-edit" onclick="toggleEditMode()" title="Включить редактирование текста перед печатью">
+        <span>✏️ Редактировать</span>
+      </button>
+      <button type="button" class="btn-action btn-action-secondary" onclick="copyDocumentText()" title="Скопировать текст договора в буфер обмена">
+        <span>📋 Скопировать</span>
+      </button>
+      <button type="button" class="btn-action btn-action-primary" onclick="window.print()" title="Сохранить в PDF или отправить на печать">
+        <span>🖨️ Печать / PDF</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Printable Paper Canvas -->
+  <main class="paper-sheet" id="doc-canvas">
+
+    <!-- Header Section -->
+    <header class="doc-header">
+      <div class="brand-block">
+        <img class="brand-logo-img" src="assets/brand/asma-mark.svg" alt="ASMA Lines">
+        <div>
+          <div class="brand-name-title">ASMA LINES</div>
+          <div class="brand-sub-title">Организация грузовых автоперевозок · Республика Беларусь</div>
+        </div>
+      </div>
+      <div class="doc-meta-right">
+        <div class="doc-number-main" id="doc-num-display">ДОГОВОР-ЗАЯВКА № ASMA-2026-101</div>
+        <div id="doc-date-display">Дата составления: 26.09.2026</div>
+        <div>Город составления: <b>г. Гомель</b></div>
+      </div>
+    </header>
+
+    <!-- Document Dynamic Content -->
+    <div id="doc-content">
+      <!-- Injected by JavaScript -->
+    </div>
+
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const params = new URLSearchParams(window.location.search);
+      const leadId = params.get('id') || 'lead-demo';
+      const num = params.get('lead') || params.get('leadNumber') || '101';
+      const clientName = params.get('name') || 'ООО «Заказчик»';
+      const contact = params.get('contact') || '+375 (29) 000-00-00';
+      const route = params.get('route') || (params.get('from') && params.get('to') ? `${params.get('from')} → ${params.get('to')}` : 'Гомель → Минск');
+      const fromCity = params.get('from') || (route.includes('→') ? route.split('→')[0].trim() : (route.includes('-') ? route.split('-')[0].trim() : 'Гомель'));
+      const toCity = params.get('to') || (route.includes('→') ? route.split('→')[1].trim() : (route.includes('-') ? route.split('-')[1].trim() : 'Минск'));
+      const distance = params.get('distance') || (params.get('km') ? `${params.get('km')} км` : '~310 км');
+      const weight = params.get('weight') || '5.0 т';
+      const vehicle = params.get('vehicle') || 'Тент (еврофура 86-92 м³)';
+      const price = params.get('price') || '680 BYN';
+      const comment = params.get('comment') || 'Без особенностей. Загрузка боковая/задняя.';
+      const dispatcher = params.get('dispatcher') || 'Иван Ефимович';
+
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const dateStr = `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+      const docCode = `ASMA-2026-${num}`;
+
+      document.getElementById('doc-num-display').textContent = `ДОГОВОР-ЗАЯВКА № ${docCode}`;
+      document.getElementById('doc-date-display').textContent = `Дата составления: ${dateStr}`;
+
+      let currentType = 'order'; // 'order' | 'kp' | 'waybill'
+      let isEditing = false;
+
+      window.switchDocType = function(type) {
+        currentType = type;
+        document.querySelectorAll('.doc-tab-btn').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.getElementById(`tab-${type}`);
+        if (activeBtn) activeBtn.classList.add('active');
+
+        if (type === 'order') {
+          document.getElementById('doc-num-display').textContent = `ДОГОВОР-ЗАЯВКА № ${docCode}`;
+          renderOrderDoc();
+        } else if (type === 'kp') {
+          document.getElementById('doc-num-display').textContent = `КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ № ${docCode}`;
+          renderKPDoc();
+        } else if (type === 'waybill') {
+          document.getElementById('doc-num-display').textContent = `МАРШРУТНОЕ ПОРУЧЕНИЕ № ${docCode}`;
+          renderWaybillDoc();
+        }
+      };
+
+      window.toggleEditMode = function() {
+        isEditing = !isEditing;
+        const btn = document.getElementById('btn-toggle-edit');
+        const indicator = document.getElementById('edit-indicator');
+        
+        document.querySelectorAll('.paper-sheet [data-editable]').forEach(el => {
+          el.setAttribute('contenteditable', isEditing ? 'true' : 'false');
+        });
+
+        if (isEditing) {
+          btn.innerHTML = '<span>💾 Готово</span>';
+          btn.classList.add('btn-action-primary');
+          btn.classList.remove('btn-action-secondary');
+          indicator.style.display = 'inline-flex';
+        } else {
+          btn.innerHTML = '<span>✏️ Редактировать</span>';
+          btn.classList.remove('btn-action-primary');
+          btn.classList.add('btn-action-secondary');
+          indicator.style.display = 'none';
+        }
+      };
+
+      window.copyDocumentText = function() {
+        const text = document.getElementById('doc-canvas').innerText;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => {
+            alert('✓ Текст документа скопирован в буфер обмена');
+          });
+        }
+      };
+
+      function renderOrderDoc() {
+        const html = `
+          <h1 class="doc-main-title">ДОГОВОР-ЗАЯВКА № ${docCode}</h1>
+          <p class="doc-sub-heading">на организацию автомобильной перевозки груза в городском и междугородном сообщении по РБ</p>
+
+          <div class="parties-grid">
+            <div class="party-card">
+              <div class="party-card-title">ЭКСПЕДИТОР / ОРГАНИЗАТОР:</div>
+              <div class="party-line"><b>ООО «АСМА Лайнс»</b></div>
+              <div class="party-line">Юр. адрес: Республика Беларусь, г. Гомель</div>
+              <div class="party-line">Диспетчер: <span data-editable>${escapeHtml(dispatcher)}</span></div>
+              <div class="party-line">Контакты: +375 (29) 100-20-30 · info@asmalines.by</div>
+            </div>
+
+            <div class="party-card">
+              <div class="party-card-title">ЗАКАЗЧИК:</div>
+              <div class="party-line">Организация / ФИО: <b data-editable>${escapeHtml(clientName)}</b></div>
+              <div class="party-line">Контактный телефон: <span data-editable>${escapeHtml(contact)}</span></div>
+              <div class="party-line">УНП / Реквизиты: <span data-editable>По согласованию</span></div>
+              <div class="party-line">Плательщик: <span data-editable>Заказчик (безналичный расчёт)</span></div>
+            </div>
+          </div>
+
+          <table class="spec-table">
+            <tbody>
+              <tr>
+                <th>1. Маршрут перевозки:</th>
+                <td><b class="spec-highlight" data-editable>${escapeHtml(fromCity)} ➔ ${escapeHtml(toCity)}</b> (дистанция: <span data-editable>${escapeHtml(distance)}</span>)</td>
+              </tr>
+              <tr>
+                <th>2. Адрес и дата погрузки:</th>
+                <td><span data-editable>г. ${escapeHtml(fromCity)}, склад отправителя. Дата: ${dateStr}, согласованное время: 09:00 - 11:00</span></td>
+              </tr>
+              <tr>
+                <th>3. Адрес и дата выгрузки:</th>
+                <td><span data-editable>г. ${escapeHtml(toCity)}, склад получателя. В день погрузки / на следующий день</span></td>
+              </tr>
+              <tr>
+                <th>4. Характеристика груза:</th>
+                <td>Вес: <b data-editable>${escapeHtml(weight)}</b> · Объём/Упаковка: <span data-editable>Паллеты / Грузовые места</span></td>
+              </tr>
+              <tr>
+                <th>5. Требуемый транспорт:</th>
+                <td><span data-editable>${escapeHtml(vehicle)}</span> · Растентовка: <span data-editable>Задняя / Боковая</span></td>
+              </tr>
+              <tr>
+                <th>6. Стоимость услуг (Ставка):</th>
+                <td class="spec-price-cell"><span data-editable>${escapeHtml(price)}</span> (включая все налоги и сборы согласно законодательству РБ)</td>
+              </tr>
+              <tr>
+                <th>7. Условия оплаты:</th>
+                <td><span data-editable>Безналичный расчёт по факту выгрузки и предоставления оригиналов ТТН/актов в течение 3-5 банковских дней.</span></td>
+              </tr>
+              <tr>
+                <th>8. Дополнительные условия:</th>
+                <td><span data-editable>${escapeHtml(comment)}</span></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="terms-block">
+            <h4>УСЛОВИЯ И ОБЯЗАТЕЛЬСТВА СТОРОН:</h4>
+            <ol>
+              <li>Экспедитор обязуется организовать подачу исправного автотранспорта под погрузку в согласованный срок.</li>
+              <li>Заказчик обеспечивает беспрепятственный подъезд, своевременное оформление ТТН и проведение ПРР. Нормативное время на погрузку/разгрузку — не более 3 часов.</li>
+              <li>За сверхнормативный простой автотранспорта по вине Заказчика начисляется штраф в размере 35 BYN за каждый час простоя.</li>
+              <li>Стороны признают юридическую силу документов, переданных посредством факсимильной связи, электронной почты или мессенджеров.</li>
+            </ol>
+          </div>
+
+          <div class="sign-section">
+            <div class="sign-box">
+              <div class="sign-title">ОТ ЭКСПЕДИТОРА:</div>
+              <div>ООО «АСМА Лайнс»</div>
+              <div>Диспетчер: <b>${escapeHtml(dispatcher)}</b></div>
+              <div class="sign-line-row">
+                <span>Подпись:</span>
+                <div class="sign-line"></div>
+              </div>
+              <div class="sign-stamp-hint">М.П.</div>
+            </div>
+
+            <div class="sign-box">
+              <div class="sign-title">ОТ ЗАКАЗЧИКА:</div>
+              <div><b data-editable>${escapeHtml(clientName)}</b></div>
+              <div>Тел: <span data-editable>${escapeHtml(contact)}</span></div>
+              <div class="sign-line-row">
+                <span>Подпись:</span>
+                <div class="sign-line"></div>
+              </div>
+              <div class="sign-stamp-hint">М.П.</div>
+            </div>
+          </div>
+        `;
+        document.getElementById('doc-content').innerHTML = html;
+      }
+
+      function renderKPDoc() {
+        const html = `
+          <h1 class="doc-main-title">КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ № ${docCode}</h1>
+          <p class="doc-sub-heading">Расчёт стоимости и регламент организации автоперевозки по Республике Беларусь</p>
+
+          <div class="parties-grid">
+            <div class="party-card">
+              <div class="party-card-title">ИСПОЛНИТЕЛЬ:</div>
+              <div class="party-line"><b>ООО «АСМА Лайнс»</b> (ASMA Lines)</div>
+              <div class="party-line">Диспетчерская служба: +375 (29) 100-20-30</div>
+              <div class="party-line">E-mail: info@asmalines.by · Сайт: asmalines.by</div>
+            </div>
+
+            <div class="party-card">
+              <div class="party-card-title">КОМУ (КЛИЕНТ):</div>
+              <div class="party-line">Заказчик: <b data-editable>${escapeHtml(clientName)}</b></div>
+              <div class="party-line">Контакт: <span data-editable>${escapeHtml(contact)}</span></div>
+              <div class="party-line">Срок действия КП: <b>14 календарных дней</b></div>
+            </div>
+          </div>
+
+          <table class="spec-table">
+            <tbody>
+              <tr>
+                <th>Маршрут перевозки:</th>
+                <td><b class="spec-highlight" data-editable>${escapeHtml(route)}</b> (дистанция: ${escapeHtml(distance)})</td>
+              </tr>
+              <tr>
+                <th>Тоннаж и объём:</th>
+                <td>Вес: <b data-editable>${escapeHtml(weight)}</b> · Подбор авто: <span data-editable>${escapeHtml(vehicle)}</span></td>
+              </tr>
+              <tr>
+                <th>Срок подачи авто:</th>
+                <td><span data-editable>От 2 часов с момента подтверждения заявки или в согласованную дату</span></td>
+              </tr>
+              <tr>
+                <th>Итоговая ставка рейса:</th>
+                <td class="spec-price-cell"><span data-editable>${escapeHtml(price)}</span></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="terms-block">
+            <h4>ПРЕИМУЩЕСТВА РАБОТЫ С ASMA LINES:</h4>
+            <ol>
+              <li><b>Прямой контакт без лишних звеньев</b>: персональный логист ведёт рейс от момента загрузки до передачи подписанных ТТН.</li>
+              <li><b>Оперативная подача подвижного состава</b>: оперативный подбор тентов, рефрижераторов и бусов по всей территории Беларуси.</li>
+              <li><b>Полная юридическая прозрачность</b>: работа по официальному договору, предоставление полного пакета бухгалтерских документов.</li>
+            </ol>
+          </div>
+
+          <div class="sign-section">
+            <div class="sign-box" style="grid-column: 1 / -1; max-width: 450px; margin-left: auto;">
+              <div class="sign-title">СПЕЦИАЛИСТ ПО ЛОГИСТИКЕ:</div>
+              <div>ООО «АСМА Лайнс» · <b>${escapeHtml(dispatcher)}</b></div>
+              <div class="sign-line-row">
+                <span>Подпись:</span>
+                <div class="sign-line"></div>
+              </div>
+            </div>
+          </div>
+        `;
+        document.getElementById('doc-content').innerHTML = html;
+      }
+
+      function renderWaybillDoc() {
+        const html = `
+          <h1 class="doc-main-title">МАРШРУТНОЕ ПОРУЧЕНИЕ № ${docCode}</h1>
+          <p class="doc-sub-heading">Служебное экспедиторское задание водителю и складу на выполнение рейса</p>
+
+          <table class="spec-table">
+            <tbody>
+              <tr>
+                <th>Рейс / Направление:</th>
+                <td><b class="spec-highlight" data-editable>${escapeHtml(route)}</b></td>
+              </tr>
+              <tr>
+                <th>Заказчик / Грузоотправитель:</th>
+                <td><b data-editable>${escapeHtml(clientName)}</b> (тел: <span data-editable>${escapeHtml(contact)}</span>)</td>
+              </tr>
+              <tr>
+                <th>Пункт А (Погрузка):</th>
+                <td><span data-editable>г. ${escapeHtml(fromCity)}, точный адрес склада согласовывается с диспетчером</span></td>
+              </tr>
+              <tr>
+                <th>Пункт Б (Выгрузка):</th>
+                <td><span data-editable>г. ${escapeHtml(toCity)}, склад грузополучателя</span></td>
+              </tr>
+              <tr>
+                <th>Характер груза / Вес:</th>
+                <td><span data-editable>${escapeHtml(weight)}, ${escapeHtml(vehicle)}</span></td>
+              </tr>
+              <tr>
+                <th>ФИО Водителя / Тягач:</th>
+                <td><span data-editable>Назначается диспетчером (Гос. номер: ______, тел: ______)</span></td>
+              </tr>
+              <tr>
+                <th>Особые указания:</th>
+                <td><span data-editable>${escapeHtml(comment)}</span></td>
+              </tr>
+              <tr>
+                <th>Согласованная ставка:</th>
+                <td class="spec-price-cell"><span data-editable>${escapeHtml(price)}</span></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="terms-block">
+            <h4>ИНСТРУКЦИЯ ВОДИТЕЛЮ И СКЛАДУ:</h4>
+            <ol>
+              <li>Проверить целостность упаковки и соответствие количества мест данным в ТТН перед началом движения.</li>
+              <li>Обеспечить надёжное крепление груза ремнями.</li>
+              <li>При возникновении задержек или форс-мажора немедленно информировать диспетчера: +375 (29) 100-20-30.</li>
+            </ol>
+          </div>
+
+          <div class="sign-section">
+            <div class="sign-box">
+              <div class="sign-title">ДИСПЕТЧЕР-ОРГАНИЗАТОР:</div>
+              <div><b>${escapeHtml(dispatcher)}</b></div>
+              <div class="sign-line-row">
+                <span>Подпись:</span>
+                <div class="sign-line"></div>
+              </div>
+            </div>
+
+            <div class="sign-box">
+              <div class="sign-title">ВОДИТЕЛЬ-ЭКСПЕДИТОР:</div>
+              <div><span data-editable>ФИО водителя принявшего рейс</span></div>
+              <div class="sign-line-row">
+                <span>Подпись:</span>
+                <div class="sign-line"></div>
+              </div>
+            </div>
+          </div>
+        `;
+        document.getElementById('doc-content').innerHTML = html;
+      }
+
+      // Initial Render
+      renderOrderDoc();
+    })();
+  </script>
+</body>
+</html>

@@ -1271,6 +1271,35 @@ body.crm-body {
   gap: 6px;
 }
 
+.btn-doc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.btn-doc-link:hover {
+  background: var(--burgundy-soft);
+  border-color: var(--burgundy);
+  color: var(--burgundy);
+  transform: translateY(-1px);
+}
+
+[data-theme='dark'] .btn-doc-link:hover {
+  background: rgba(139, 37, 54, 0.28);
+  border-color: #FFD382;
+  color: #FFD382;
+}
+
 .notes-toggle {
   display: inline-flex;
   align-items: center;
