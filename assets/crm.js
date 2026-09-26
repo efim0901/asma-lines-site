@@ -7,7 +7,6 @@
   'use strict';
 
   // Constants & Storage Config
-  const CLOUD_FALLBACK_URL = 'https://json.extendsclass.com/bin/becdbda';
   const CACHE_KEY = 'asma_crm_leads_v2';
   const DELETED_KEY = 'asma_crm_deleted_leads_v1';
   const MASTER_ADMIN_USERNAME = 'plombit';
@@ -158,12 +157,19 @@
       await fetchLeads(false);
       highlightLeadFromUrl();
 
-      // Auto-poll in background every 10 seconds for real-time dispatching
+      // Auto-poll in background every 10 seconds for real-time dispatching.
+      // Pauses when tab is hidden to conserve resources and refreshes immediately when tab returns.
       setInterval(() => {
-        if (isAuthorized) {
+        if (isAuthorized && document.visibilityState === 'visible') {
           fetchLeads(false);
         }
       }, 10000);
+
+      document.addEventListener('visibilitychange', () => {
+        if (isAuthorized && document.visibilityState === 'visible') {
+          fetchLeads(false);
+        }
+      });
     } else {
       // Purge any local cache if unauthorized
       leads = [];
@@ -174,31 +180,6 @@
   }
 
   async function checkAuthorization() {
-    // 1. Fetch authorized users list from server / cloud
-    try {
-      const res = await fetch('/api/crm/access?_t=' + Date.now(), {
-        headers: getCrmHeaders(),
-        cache: 'no-store'
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.users) && data.users.length > 0) {
-          authorizedUsers = data.users;
-        }
-      } else {
-        const cloudRes = await fetch(CLOUD_FALLBACK_URL + '?_t=' + Date.now(), { cache: 'no-store' });
-        if (cloudRes.ok) {
-          const cloudData = await cloudRes.json();
-          if (Array.isArray(cloudData.authorizedUsers) && cloudData.authorizedUsers.length > 0) {
-            authorizedUsers = cloudData.authorizedUsers;
-          }
-        }
-      }
-    } catch (e) {
-      console.warn('Access check fetch notice:', e);
-    }
-
-    // 2. Identify Telegram WebApp context
     const tgUser = tg?.initDataUnsafe?.user;
     const hasTgInitData = Boolean(window.Telegram?.WebApp?.initData);
 
@@ -207,7 +188,23 @@
       btnOpenTg.style.display = hasTgInitData ? 'none' : 'inline-flex';
     }
 
-    // 3. Strict verification: user MUST be opening inside Telegram WebApp with verified account
+    // 1. Fetch authorized users list from server
+    try {
+      const res = await fetch('/api/crm/access?_t=' + Date.now(), {
+        headers: getCrmHeaders(),
+        cache: 'no-store'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.users) && data.users.length > 0) {
+          authorizedUsers = sanitizeUsers(data.users);
+        }
+      }
+    } catch (e) {
+      console.warn('Access check fetch notice:', e);
+    }
+
+    // 2. Strict verification: user MUST be opening inside Telegram WebApp with valid initData
     if (tgUser && hasTgInitData) {
       const tgUsername = (tgUser.username || '').toLowerCase().replace(/^@/, '');
       const tgId = String(tgUser.id || '');
@@ -349,7 +346,7 @@
     } catch (e) {}
   }
 
-  // Fetch leads from Cloud API / Fallback
+  // Fetch leads from Server API
   async function fetchLeads(isUserRefresh = true) {
     if (!isAuthorized) return;
 
@@ -363,7 +360,6 @@
     let fetched = null;
     const cacheBuster = '?_t=' + Date.now();
 
-    // 1. Try local API
     try {
       const res = await fetch('/api/crm' + cacheBuster, {
         headers: getCrmHeaders(),
@@ -384,29 +380,18 @@
         if (Array.isArray(json.leads)) {
           fetched = json.leads;
         }
+      } else if (res.status === 401 || res.status === 403) {
+        isAuthorized = false;
+        denyAccessUI({
+          title: 'Доступ ограничен',
+          desc: 'Сессия истекла или аккаунт не авторизован сервером.',
+          handle: currentOperator.username ? `@${currentOperator.username}` : null
+        });
+        return;
       }
-    } catch (e) {}
-
-    // 2. Direct cloud storage (always with cache buster for Telegram Webview)
-    try {
-      const cloudRes = await fetch(CLOUD_FALLBACK_URL + cacheBuster, { cache: 'no-store' });
-      if (cloudRes.ok) {
-        const cloudJson = await cloudRes.json();
-        if (Array.isArray(cloudJson.deletedIds)) {
-          cloudJson.deletedIds.forEach(id => deletedLeadIds.add(id));
-          saveDeletedIds();
-        }
-        if (Array.isArray(cloudJson.authorizedUsers) && cloudJson.authorizedUsers.length > 0) {
-          authorizedUsers = sanitizeUsers(cloudJson.authorizedUsers);
-          if (modalAccessMgmt && modalAccessMgmt.classList.contains('open')) {
-            renderAccessUsersList();
-          }
-        }
-        if (fetched === null && Array.isArray(cloudJson.leads)) {
-          fetched = cloudJson.leads;
-        }
-      }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('CRM fetch error:', e);
+    }
 
     if (btnRefresh) {
       setTimeout(() => { btnRefresh.style.transform = 'none'; }, 300);
@@ -434,7 +419,7 @@
     }
   }
 
-  // Sync back to cloud storage
+  // Sync back to server storage
   async function syncLeadsToCloud() {
     if (!isAuthorized) return;
     saveCache(leads);
@@ -449,8 +434,6 @@
       authorizedUsers: sanitizeUsers(authorizedUsers)
     };
 
-    // 1. Primary: Save via CRM API endpoint
-    let apiSuccess = false;
     try {
       const res = await fetch('/api/crm', {
         method: 'POST',
@@ -462,43 +445,9 @@
         if (json.authorizedUsers) {
           authorizedUsers = sanitizeUsers(json.authorizedUsers);
         }
-        apiSuccess = true;
       }
-    } catch (e) {}
-
-    // 2. Direct cloud storage sync
-    try {
-      let storeData = {
-        leads: activeLeads,
-        deletedIds: Array.from(deletedLeadIds),
-        authorizedUsers: sanitizeUsers(authorizedUsers)
-      };
-
-      try {
-        const cRes = await fetch(CLOUD_FALLBACK_URL + '?_t=' + Date.now(), { cache: 'no-store' });
-        if (cRes.ok) {
-          const cJson = await cRes.json();
-          if (Array.isArray(cJson.authorizedUsers)) {
-            cJson.authorizedUsers.forEach(u => {
-              const exists = storeData.authorizedUsers.some(ex => 
-                (u.username && ex.username && u.username.toLowerCase() === ex.username.toLowerCase()) ||
-                (u.id && ex.id && String(u.id) === String(ex.id))
-              );
-              if (!exists) storeData.authorizedUsers.push(u);
-            });
-          }
-        }
-      } catch (e) {}
-
-      storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers);
-
-      await fetch(CLOUD_FALLBACK_URL, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(storeData)
-      });
-    } catch (err) {
-      console.warn('Cloud storage sync notice:', err);
+    } catch (e) {
+      console.warn('CRM sync warning:', e);
     }
   }
 
@@ -597,11 +546,16 @@
       }, 150);
     });
 
-    // Search Filter
+    // Search Filter (Debounced)
+    let searchDebounceTimer = null;
     searchInput.addEventListener('input', (e) => {
-      searchQuery = e.target.value.trim().toLowerCase();
-      btnClearSearch.style.display = searchQuery ? 'block' : 'none';
-      render();
+      const value = e.target.value;
+      btnClearSearch.style.display = value.trim() ? 'block' : 'none';
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => {
+        searchQuery = value.trim().toLowerCase();
+        render();
+      }, 180);
     });
 
     btnClearSearch.addEventListener('click', () => {
@@ -803,7 +757,6 @@
 
     let updatedUsers = null;
 
-    // 1. Try local / Worker API first
     try {
       const res = await fetch('/api/crm/access', {
         method: 'POST',
@@ -827,42 +780,6 @@
       console.warn('API add user notice:', e);
     }
 
-    // 2. Direct Cloud Storage sync (guarantees immediate persistence even without server/worker)
-    if (!updatedUsers) {
-      try {
-        let storeData = { leads: [], deletedIds: [], authorizedUsers: [] };
-        const cloudRes = await fetch(CLOUD_FALLBACK_URL + '?_t=' + Date.now(), { cache: 'no-store' });
-        if (cloudRes.ok) {
-          storeData = await cloudRes.json();
-        }
-
-        if (!Array.isArray(storeData.authorizedUsers)) {
-          storeData.authorizedUsers = [...authorizedUsers];
-        }
-
-        const alreadyInCloud = storeData.authorizedUsers.some(u =>
-          (cleanUsername && u.username && u.username.toLowerCase() === cleanUsername) ||
-          (cleanId && u.id && String(u.id) === cleanId)
-        );
-
-        if (!alreadyInCloud) {
-          storeData.authorizedUsers.push(newUser);
-        }
-
-        const saveRes = await fetch(CLOUD_FALLBACK_URL, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(storeData)
-        });
-
-        if (saveRes.ok) {
-          updatedUsers = storeData.authorizedUsers;
-        }
-      } catch (cloudErr) {
-        console.error('Direct cloud sync error:', cloudErr);
-      }
-    }
-
     if (updatedUsers) {
       authorizedUsers = sanitizeUsers(updatedUsers);
       renderAccessUsersList();
@@ -870,12 +787,7 @@
       showToast('✅ Доступ предоставлен!');
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     } else {
-      // Local optimistic fallback
-      authorizedUsers.push(newUser);
-      authorizedUsers = sanitizeUsers(authorizedUsers);
-      renderAccessUsersList();
-      formAddAccessUser.reset();
-      showToast('✅ Доступ добавлен локально');
+      showToast('❌ Ошибка при добавлении доступа');
     }
   }
 
@@ -892,7 +804,6 @@
     showToast('Отзыв доступа...');
     let updatedUsers = null;
 
-    // 1. Try local API
     try {
       const res = await fetch('/api/crm/access', {
         method: 'POST',
@@ -914,36 +825,6 @@
       }
     } catch (e) {
       console.warn('API remove user notice:', e);
-    }
-
-    // 2. Direct Cloud Storage sync
-    if (!updatedUsers) {
-      try {
-        let storeData = { leads: [], deletedIds: [], authorizedUsers: [] };
-        const cloudRes = await fetch(CLOUD_FALLBACK_URL + '?_t=' + Date.now(), { cache: 'no-store' });
-        if (cloudRes.ok) {
-          storeData = await cloudRes.json();
-        }
-
-        if (Array.isArray(storeData.authorizedUsers)) {
-          storeData.authorizedUsers = storeData.authorizedUsers.filter(u => {
-            const uName = (u.username || '').toLowerCase().replace(/^@/, '');
-            const uId = String(u.id || '');
-            return uName !== cleanTarget && uId !== cleanTarget;
-          });
-          storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers);
-
-          await fetch(CLOUD_FALLBACK_URL, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(storeData)
-          });
-
-          updatedUsers = storeData.authorizedUsers;
-        }
-      } catch (cloudErr) {
-        console.error('Direct cloud remove error:', cloudErr);
-      }
     }
 
     if (updatedUsers) {
@@ -969,10 +850,25 @@
   function closeAddModal() {
     modalAddLead.classList.remove('open');
     formNewLead.reset();
+    const submitBtn = formNewLead.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      if (submitBtn.dataset.defaultHtml) submitBtn.innerHTML = submitBtn.dataset.defaultHtml;
+    }
   }
 
   async function handleCreateLead(e) {
     e.preventDefault();
+
+    // Guard against double-submit (double click / Enter spam) creating duplicate leads
+    const submitBtn = formNewLead.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      if (submitBtn.disabled) return;
+      if (!submitBtn.dataset.defaultHtml) submitBtn.dataset.defaultHtml = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Сохраняем…</span>';
+    }
+
     const fd = new FormData(formNewLead);
 
     const type = fd.get('leadType') || 'cargo';
@@ -1108,7 +1004,7 @@
       render();
     }, 250);
 
-    // Sync to Cloud Storage
+    // Sync to Storage
     await syncLeadsToCloud();
 
     // Call DELETE API if available

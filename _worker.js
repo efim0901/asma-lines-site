@@ -40,6 +40,57 @@ function sanitizeUsers(users, masterUsername = DEFAULT_MASTER_ADMIN_USERNAME, ma
   return list;
 }
 
+async function verifyTelegramWebAppDataWorker(initDataStr, botToken) {
+  if (!initDataStr) return null;
+  try {
+    const params = new URLSearchParams(initDataStr);
+    const hash = params.get('hash');
+    if (!hash) return null;
+
+    if (botToken) {
+      params.delete('hash');
+      const dataCheckArr = [];
+      const keys = Array.from(params.keys()).sort();
+      for (const k of keys) {
+        dataCheckArr.push(`${k}=${params.get(k)}`);
+      }
+      const dataCheckString = dataCheckArr.join('\n');
+
+      const enc = new TextEncoder();
+      const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        enc.encode('WebAppData'),
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign']
+      );
+      const secretKeyBuffer = await crypto.subtle.sign('HMAC', keyMaterial, enc.encode(botToken));
+      
+      const hmacKey = await crypto.subtle.importKey(
+        'raw',
+        secretKeyBuffer,
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign']
+      );
+      const signature = await crypto.subtle.sign('HMAC', hmacKey, enc.encode(dataCheckString));
+      const hashArray = Array.from(new Uint8Array(signature));
+      const calculatedHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+      if (calculatedHash.toLowerCase() !== hash.toLowerCase()) {
+        console.warn('Worker Telegram initData signature mismatch');
+        return null;
+      }
+    }
+
+    const userRaw = params.get('user');
+    if (!userRaw) return null;
+    return JSON.parse(userRaw);
+  } catch (e) {
+    return null;
+  }
+}
+
 function checkUserAuthorized(users, tgUser, masterUsername = DEFAULT_MASTER_ADMIN_USERNAME, masterId = DEFAULT_MASTER_ADMIN_ID) {
   if (!tgUser) return false;
   const username = (tgUser.username || '').toLowerCase().replace(/^@/, '');
@@ -585,6 +636,9 @@ export default {
     // ----------------------------------------------------
     if (url.pathname === '/api/crm' || url.pathname === '/api/crm/data') {
       try {
+        const initDataStr = request.headers.get('x-telegram-init-data') || '';
+        const tgUser = await verifyTelegramWebAppDataWorker(initDataStr, botToken);
+
         if (request.method === 'GET') {
           let leads = [];
           let deletedIds = [];
@@ -605,14 +659,18 @@ export default {
             console.error('Worker CRM fetch error:', e);
           }
 
-          authorizedUsers = sanitizeUsers(authorizedUsers);
+          authorizedUsers = sanitizeUsers(authorizedUsers, masterAdminUsername, masterAdminId);
+
+          if (!checkUserAuthorized(authorizedUsers, tgUser, masterAdminUsername, masterAdminId)) {
+            return jsonResponse({ error: 'Доступ запрещён: требуется авторизация через Telegram-бот ASMA Lines' }, 401);
+          }
 
           return jsonResponse({
             success: true,
             leads,
             deletedIds,
             authorizedUsers,
-            user: { name: 'Иван', username: 'plombit', role: 'Главный диспетчер' }
+            user: { name: tgUser?.first_name || 'Диспетчер', username: tgUser?.username || 'plombit', role: 'Диспетчер' }
           });
         }
 
@@ -631,6 +689,12 @@ export default {
           if (!Array.isArray(storeData.leads)) storeData.leads = [];
           if (!Array.isArray(storeData.deletedIds)) storeData.deletedIds = [];
           if (!Array.isArray(storeData.authorizedUsers)) storeData.authorizedUsers = [];
+
+          storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers, masterAdminUsername, masterAdminId);
+
+          if (!checkUserAuthorized(storeData.authorizedUsers, tgUser, masterAdminUsername, masterAdminId)) {
+            return jsonResponse({ error: 'Доступ запрещён: требуется авторизация через Telegram-бот ASMA Lines' }, 401);
+          }
 
           let delSet = new Set(storeData.deletedIds);
 

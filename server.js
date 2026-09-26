@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
 import fs from 'fs';
+import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,6 +44,39 @@ function sanitizeUsers(users) {
   return list;
 }
 
+function verifyTelegramWebAppData(initDataStr, botToken = process.env.TELEGRAM_BOT_TOKEN) {
+  if (!initDataStr) return null;
+  try {
+    const params = new URLSearchParams(initDataStr);
+    const hash = params.get('hash');
+    if (!hash) return null;
+
+    if (botToken) {
+      params.delete('hash');
+      const dataCheckArr = [];
+      const keys = Array.from(params.keys()).sort();
+      for (const k of keys) {
+        dataCheckArr.push(`${k}=${params.get(k)}`);
+      }
+      const dataCheckString = dataCheckArr.join('\n');
+
+      const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
+      const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+
+      if (calculatedHash.toLowerCase() !== hash.toLowerCase()) {
+        console.warn('Telegram initData signature verification failed');
+        return null;
+      }
+    }
+
+    const userRaw = params.get('user');
+    if (!userRaw) return null;
+    return JSON.parse(userRaw);
+  } catch (e) {
+    return null;
+  }
+}
+
 function checkUserAdmin(tgUser) {
   if (!tgUser) return false;
   const username = (tgUser.username || '').toLowerCase().replace(/^@/, '');
@@ -52,15 +86,7 @@ function checkUserAdmin(tgUser) {
 
 function extractTgUserFromReq(req) {
   const initDataStr = req.headers['x-telegram-init-data'];
-  if (!initDataStr) return null;
-  try {
-    const params = new URLSearchParams(initDataStr);
-    const userRaw = params.get('user');
-    if (!userRaw) return null;
-    return JSON.parse(userRaw);
-  } catch (e) {
-    return null;
-  }
+  return verifyTelegramWebAppData(initDataStr);
 }
 
 function isReqAuthorized(req, authorizedUsers = []) {
