@@ -1,0 +1,75 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="se_bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#140D10"/>
+      <stop offset="45%" stop-color="#241018"/>
+      <stop offset="85%" stop-color="#3D1522"/>
+      <stop offset="100%" stop-color="#12080D"/>
+    </linearGradient>
+    <linearGradient id="se_road" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1C181A"/>
+      <stop offset="100%" stop-color="#0A0709"/>
+    </linearGradient>
+    <linearGradient id="se_van" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8B2536"/>
+      <stop offset="50%" stop-color="#A52C40"/>
+      <stop offset="100%" stop-color="#701D2C"/>
+    </linearGradient>
+    <filter id="se_shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000" flood-opacity="0.65"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#se_bg)"/>
+
+  <!-- City Skyline Silhouette Background -->
+  <g fill="#1A1014" opacity="0.5">
+    <rect x="100" y="280" width="80" height="200"/>
+    <rect x="200" y="220" width="100" height="260"/>
+    <rect x="320" y="260" width="70" height="220"/>
+    <rect x="410" y="190" width="120" height="290"/>
+    <rect x="550" y="240" width="90" height="240"/>
+    <rect x="660" y="270" width="80" height="210"/>
+  </g>
+
+  <!-- Highway Surface -->
+  <path d="M 0 480 L 1200 480 L 1200 800 L 0 800 Z" fill="url(#se_road)"/>
+  <line x1="0" y1="478" x2="1200" y2="478" stroke="#8B2536" stroke-width="3"/>
+  <path d="M 0 630 L 1200 630" stroke="#FAF8F5" stroke-width="4" stroke-dasharray="50 35" opacity="0.35"/>
+  <line x1="0" y1="750" x2="1200" y2="750" stroke="#FFC048" stroke-width="3" opacity="0.45"/>
+
+  <!-- Commercial Express Freight Van (Mercedes Sprinter / Crafter) -->
+  <g transform="translate(480, 310)" filter="url(#se_shadow)">
+    <!-- Road shadow -->
+    <ellipse cx="280" cy="245" rx="310" ry="20" fill="#000" opacity="0.85"/>
+
+    <!-- Van Body -->
+    <path d="M 60 210 L 490 210 L 490 30 L 220 30 L 120 70 L 60 140 Z" fill="url(#se_van)" stroke="#C74D60" stroke-width="2.5"/>
+    
+    <!-- Windshield & Front Side Glass -->
+    <path d="M 125 72 L 210 40 L 210 110 L 85 110 Z" fill="#1C2730" stroke="#5AC8FA" stroke-width="1.5" opacity="0.9"/>
+    
+    <!-- Express Speed Stripes -->
+    <line x1="230" y1="90" x2="470" y2="90" stroke="#FAF8F5" stroke-width="4" stroke-linecap="round"/>
+    <line x1="250" y1="105" x2="450" y2="105" stroke="#FAF8F5" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+    <text x="350" y="145" fill="#FAF8F5" font-family="'Inter', system-ui, sans-serif" font-size="20" font-weight="900" letter-spacing="4" text-anchor="middle">ASMA EXPRESS</text>
+    <text x="350" y="172" fill="#E8B0BA" font-family="'Inter', system-ui, sans-serif" font-size="12" font-weight="700" letter-spacing="2" text-anchor="middle">ПОДАЧА ОТ 2 ЧАСОВ · 1.5–3.5 Т</text>
+
+    <!-- Side Cargo Sliding Door seam -->
+    <line x1="280" y1="35" x2="280" y2="205" stroke="#48141F" stroke-width="2"/>
+    <rect x="290" y="110" width="12" height="6" rx="1.5" fill="#FAF8F5"/>
+
+    <!-- Headlight beam & unit -->
+    <path d="M 55 140 L 70 140 L 70 165 L 55 165 Z" fill="#FFF8E0" filter="drop-shadow(0 0 10px #FFF8E0)"/>
+    <rect x="50" y="170" width="30" height="35" rx="3" fill="#161214"/>
+
+    <!-- Wheels -->
+    <g fill="#100E0D" stroke="#3A3532" stroke-width="4">
+      <circle cx="140" cy="225" r="28"/>
+      <circle cx="420" cy="225" r="28"/>
+      <!-- Hubcaps -->
+      <circle cx="140" cy="225" r="11" fill="#24201E" stroke="#5A524C" stroke-width="2"/>
+      <circle cx="420" cy="225" r="11" fill="#24201E" stroke="#5A524C" stroke-width="2"/>
+    </g>
+  </g>
+</svg>

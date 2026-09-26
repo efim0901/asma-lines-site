@@ -592,12 +592,16 @@
 
     const extras = [];
     if (cargo && cargo.value === 'fragile') extras.push(`хрупкий груз ×${RATES.fragile}`);
-    if (cargo && cargo.value === 'temperature') extras.push(`температурный режим ×${RATES.temperature}`);
+    if (cargo && cargo.value === 'temperature') extras.push(`терморежим ×${RATES.temperature} (по согласованию)`);
     if (els.loading && els.loading.checked) extras.push(`погрузка +${RATES.loading} р.`);
     if (extras.length) { els.multi.hidden = false; els.multi.textContent = extras.join(' · '); }
     else els.multi.hidden = true;
 
-    els.note.textContent = 'Предварительный расчёт. Финальная стоимость подтверждается менеджером после уточнения параметров перевозки.';
+    if (cargo && cargo.value === 'temperature') {
+      els.note.textContent = '❄️ Температурный режим (термо/реф от -20°C до +25°C) рассчитывается индивидуально и требует предварительного согласования графика рейса с диспетчером.';
+    } else {
+      els.note.textContent = 'Предварительный расчёт. Финальная стоимость подтверждается менеджером после уточнения параметров перевозки.';
+    }
     if (els.link) els.link.classList.remove('hidden');
     if (els.actions) els.actions.hidden = false;
 

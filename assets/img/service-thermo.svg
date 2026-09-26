@@ -1,0 +1,98 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="st_bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#081018"/>
+      <stop offset="45%" stop-color="#0F2432"/>
+      <stop offset="85%" stop-color="#1A3B4E"/>
+      <stop offset="100%" stop-color="#0A141D"/>
+    </linearGradient>
+    <linearGradient id="st_road" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#161B20"/>
+      <stop offset="100%" stop-color="#080C0F"/>
+    </linearGradient>
+    <linearGradient id="st_reefer_body" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#E2EAF0"/>
+      <stop offset="50%" stop-color="#F4F8FA"/>
+      <stop offset="100%" stop-color="#C5D3DC"/>
+    </linearGradient>
+    <linearGradient id="st_glow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38EF7D" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#11998E" stop-opacity="0.2"/>
+    </linearGradient>
+    <filter id="st_shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000" flood-opacity="0.65"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#st_bg)"/>
+
+  <!-- Temperature Wave Grid Background -->
+  <g opacity="0.15" stroke="#38EF7D" stroke-width="1.5">
+    <path d="M 0 200 Q 300 160 600 200 T 1200 200" fill="none"/>
+    <path d="M 0 260 Q 300 220 600 260 T 1200 260" fill="none"/>
+    <path d="M 0 320 Q 300 280 600 320 T 1200 320" fill="none"/>
+  </g>
+
+  <!-- Highway Surface -->
+  <path d="M 0 480 L 1200 480 L 1200 800 L 0 800 Z" fill="url(#st_road)"/>
+  <line x1="0" y1="478" x2="1200" y2="478" stroke="#38EF7D" stroke-width="3" opacity="0.8"/>
+  <path d="M 0 630 L 1200 630" stroke="#FAF8F5" stroke-width="4" stroke-dasharray="50 35" opacity="0.35"/>
+  <line x1="0" y1="750" x2="1200" y2="750" stroke="#5AC8FA" stroke-width="3" opacity="0.45"/>
+
+  <!-- Modern Refrigerated Semi-Trailer (Reefer TIR) -->
+  <g transform="translate(420, 290)" filter="url(#st_shadow)">
+    <!-- Road shadow -->
+    <ellipse cx="360" cy="285" rx="390" ry="24" fill="#000" opacity="0.88"/>
+
+    <!-- Trailer Body (Isothermal White) -->
+    <rect x="180" y="30" width="480" height="210" rx="6" fill="url(#st_reefer_body)" stroke="#98ABB8" stroke-width="2"/>
+    
+    <!-- Refrigeration Unit (Front of trailer, Thermo King / Carrier style) -->
+    <rect x="150" y="45" width="30" height="100" rx="3" fill="#1A2630" stroke="#38EF7D" stroke-width="2"/>
+    <circle cx="165" cy="70" r="10" fill="#0B131A" stroke="#5AC8FA" stroke-width="2"/>
+    <circle cx="165" cy="70" r="4" fill="#38EF7D"/>
+    <!-- Temp LED Digital Readout -->
+    <rect x="154" y="98" width="22" height="14" rx="2" fill="#000"/>
+    <text x="165" y="109" fill="#38EF7D" font-family="monospace" font-size="8" font-weight="900" text-anchor="middle">-18°C</text>
+
+    <!-- Side Graphic Band (ASMA Reefer Livery) -->
+    <rect x="180" y="130" width="480" height="24" fill="#8B2536"/>
+    <text x="420" y="147" fill="#FAF8F5" font-family="'Inter', system-ui, sans-serif" font-size="13" font-weight="800" letter-spacing="4" text-anchor="middle">ASMA THERMO CONTROL</text>
+
+    <!-- Temperature status badge on trailer -->
+    <g transform="translate(540, 50)">
+      <rect width="105" height="32" rx="4" fill="#0E1B24" stroke="#5AC8FA" stroke-width="1.5"/>
+      <circle cx="16" cy="16" r="6" fill="#5AC8FA" opacity="0.3"/>
+      <circle cx="16" cy="16" r="3" fill="#5AC8FA"/>
+      <text x="30" y="21" fill="#FAF8F5" font-family="system-ui, sans-serif" font-size="11" font-weight="700">-20°C … +25°C</text>
+    </g>
+
+    <!-- Trailer Subframe & Wheels -->
+    <rect x="200" y="240" width="450" height="16" fill="#1A1817"/>
+    <g fill="#100E0D" stroke="#3A3532" stroke-width="4">
+      <circle cx="490" cy="265" r="26"/>
+      <circle cx="550" cy="265" r="26"/>
+      <circle cx="610" cy="265" r="26"/>
+      <!-- Hubcaps -->
+      <circle cx="490" cy="265" r="10" fill="#24201E" stroke="#5A524C" stroke-width="2"/>
+      <circle cx="550" cy="265" r="10" fill="#24201E" stroke="#5A524C" stroke-width="2"/>
+      <circle cx="610" cy="265" r="10" fill="#24201E" stroke="#5A524C" stroke-width="2"/>
+    </g>
+
+    <!-- Tractor Unit (TIR Cab) -->
+    <g transform="translate(0, 50)">
+      <!-- Cab body -->
+      <path d="M 40 190 L 150 190 L 150 40 L 90 40 L 40 100 Z" fill="#8B2536" stroke="#B03046" stroke-width="2"/>
+      <!-- Windshield -->
+      <path d="M 50 95 L 88 48 L 140 48 L 140 95 Z" fill="#1C303D" stroke="#5AC8FA" stroke-width="1.5" opacity="0.85"/>
+      <!-- Aero Roof Deflector -->
+      <path d="M 88 40 L 150 10 L 150 40 Z" fill="#6A1C29"/>
+      <!-- Headlights & Bumper -->
+      <path d="M 36 170 L 46 170 L 46 195 L 36 195 Z" fill="#FFF8E0" filter="drop-shadow(0 0 8px #FFF8E0)"/>
+      <rect x="30" y="175" width="20" height="20" fill="#161311"/>
+      <!-- Front Wheel -->
+      <circle cx="95" cy="215" r="26" fill="#100E0D" stroke="#3A3532" stroke-width="4"/>
+      <circle cx="95" cy="215" r="10" fill="#24201E" stroke="#5A524C" stroke-width="2"/>
+    </g>
+  </g>
+</svg>
