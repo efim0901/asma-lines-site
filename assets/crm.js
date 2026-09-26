@@ -615,6 +615,28 @@
     btnRefresh.addEventListener('click', () => fetchLeads(true));
 
     // Theme Switcher Toggle
+    function updateCrmBrandLogo(isDark) {
+      const v = '20260926';
+      const markSrc = isDark ? `assets/brand/asma-mark-dark.svg?v=${v}` : `assets/brand/asma-mark-light.svg?v=${v}`;
+      document.querySelectorAll('img.brand-logo').forEach((img) => {
+        img.onerror = function() {
+          if (!this.dataset.fallbackApplied) {
+            this.dataset.fallbackApplied = 'true';
+            this.src = `assets/brand/asma-mark.svg?v=${v}`;
+          }
+        };
+        img.src = markSrc;
+      });
+      const svgFavicon = document.querySelector('link[rel="icon"][type="image/svg+xml"]');
+      if (svgFavicon) {
+        svgFavicon.href = markSrc;
+      }
+    }
+
+    // Initialize logo according to current theme
+    const currentIsDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    updateCrmBrandLogo(currentIsDark);
+
     if (btnThemeToggle) {
       btnThemeToggle.addEventListener('click', () => {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -628,6 +650,7 @@
         try {
           localStorage.setItem('asma-theme', nextTheme);
         } catch(e) {}
+        updateCrmBrandLogo(nextTheme === 'dark');
         if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
       });
     }

@@ -1304,6 +1304,14 @@ async function startTelegramPolling() {
 // Start polling in background
 startTelegramPolling().catch(err => console.error('Telegram polling error:', err));
 
+// Explicit favicon and apple touch icon routes
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, 'favicon.ico'));
+});
+app.get('/apple-touch-icon.png', (req, res) => {
+  res.sendFile(path.join(__dirname, 'apple-touch-icon.png'));
+});
+
 // Serve all static files from root directory, supporting clean URLs with .html extension
 app.use(express.static(__dirname, {
   extensions: ['html'],

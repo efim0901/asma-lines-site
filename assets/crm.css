@@ -212,6 +212,8 @@ body.crm-body {
 .brand-logo {
   display: block;
   border-radius: var(--r-sm);
+  object-fit: contain;
+  transition: opacity 0.2s ease;
 }
 
 .brand-text {

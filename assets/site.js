@@ -16,7 +16,7 @@ if (!document.querySelector('link[rel="icon"]')) {
   const favicon = document.createElement('link');
   favicon.rel = 'icon';
   favicon.type = 'image/svg+xml';
-  favicon.href = 'assets/brand/asma-mark.svg';
+  favicon.href = 'assets/brand/asma-mark.svg?v=20260926';
   document.head.append(favicon);
 }
 
@@ -34,6 +34,31 @@ try { savedTheme = localStorage.getItem('asma-theme'); } catch (error) { /* stor
 
 if (!savedTheme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
   savedTheme = 'dark';
+}
+
+function updateBrandLogos(dark) {
+  const v = '20260926';
+  const markSrc = dark ? `assets/brand/asma-mark-dark.svg?v=${v}` : `assets/brand/asma-mark-light.svg?v=${v}`;
+  const fullLogoSrc = dark ? `assets/brand/asma-logo-dark.svg?v=${v}` : `assets/brand/asma-logo-light.svg?v=${v}`;
+
+  document.querySelectorAll('img.brand-logo, img[data-brand-logo]').forEach((img) => {
+    img.onerror = function() {
+      if (!this.dataset.fallbackApplied) {
+        this.dataset.fallbackApplied = 'true';
+        this.src = `assets/brand/asma-mark.svg?v=${v}`;
+      }
+    };
+    if (img.classList.contains('brand-logo--full') || img.dataset.brandLogo === 'full') {
+      img.src = fullLogoSrc;
+    } else {
+      img.src = markSrc;
+    }
+  });
+
+  const svgFavicon = document.querySelector('link[rel="icon"][type="image/svg+xml"]');
+  if (svgFavicon) {
+    svgFavicon.href = markSrc;
+  }
 }
 
 function setTheme(dark, animate = false) {
@@ -61,10 +86,24 @@ function setTheme(dark, animate = false) {
     btn.setAttribute('aria-label', dark ? 'Включить светлую тему' : 'Включить тёмную тему');
     btn.setAttribute('title', dark ? 'Светлая тема' : 'Тёмная тема');
   });
+
+  updateBrandLogos(dark);
+
   window.dispatchEvent(new CustomEvent('themechange', { detail: { theme, dark } }));
 }
 
 setTheme(savedTheme === 'dark', false);
+
+// Ensure logos are updated when DOM is fully ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark' || document.body.dataset.theme === 'dark';
+    updateBrandLogos(isDark);
+  });
+} else {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark' || document.body.dataset.theme === 'dark';
+  updateBrandLogos(isDark);
+}
 
 themeButtons.forEach((btn) => {
   btn.addEventListener('click', () => {

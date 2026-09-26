@@ -191,8 +191,13 @@ summary:focus-visible {
 .brand-logo {
   width: 34px; height: 34px;
   border-radius: 6px;
-  object-fit: cover;
+  object-fit: contain;
   box-shadow: 0 0 0 1px var(--line);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+[data-theme='dark'] .brand-logo {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 
 #main-nav {
