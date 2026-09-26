@@ -1039,6 +1039,11 @@
     const lead = leads.find(l => l.id === leadId);
     if (!lead) return;
     const num = lead.leadNumber || lead.id.replace(/\D/g, '').slice(-3) || '101';
+    
+    try {
+      sessionStorage.setItem('asma_active_doc_lead', JSON.stringify(lead));
+    } catch (e) {}
+
     const q = new URLSearchParams({
       id: lead.id,
       lead: num,
