@@ -121,32 +121,17 @@ export default {
         if (request.method === 'GET') {
           return jsonResponse({
             success: true,
-            users: storeData.authorizedUsers,
-            accessPin: storeData.accessPin || env?.CRM_ACCESS_PIN || '2026'
+            users: storeData.authorizedUsers
           });
         }
 
         if (request.method === 'POST') {
           const body = await request.json().catch(() => ({}));
-          const { action, user, target, pin, requestedBy } = body;
+          const { action, user, target, requestedBy } = body;
 
           // Only admin can modify access
           if (!checkUserAdmin(requestedBy, masterAdminUsername, masterAdminId)) {
             return jsonResponse({ error: `Доступ запрещён: только администратор (@${masterAdminUsername}) может изменять настройки доступа` }, 403);
-          }
-
-          if (action === 'set_pin') {
-            const newPin = String(pin || '').trim();
-            if (!newPin || newPin.length < 3) {
-              return jsonResponse({ error: 'PIN-код должен быть от 3 символов' }, 400);
-            }
-            storeData.accessPin = newPin;
-            await fetch(CLOUD_STORE_URL, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(storeData)
-            });
-            return jsonResponse({ success: true, accessPin: storeData.accessPin });
           }
 
           if (action === 'add' && user) {
@@ -371,9 +356,8 @@ export default {
                 `• <code>/add @username Имя</code> — добавить диспетчера\n` +
                 `• <code>/remove @username</code> — отозвать доступ\n` +
                 `• <code>/users</code> — список пользователей с доступом\n` +
-                `• <code>/pin</code> — узнать или сменить PIN для браузера (напр. <code>/pin 4545</code>)\n` +
                 `• <code>/test</code> — проверить статус бота\n\n` +
-                `<i>Также вы можете управлять доступом и менять PIN прямо в интерфейсе CRM.</i>`;
+                `<i>Также вы можете управлять доступом прямо в интерфейсе CRM.</i>`;
             }
 
             await sendTg(reply, {
@@ -417,38 +401,6 @@ export default {
                 ]
               }
             });
-            return jsonResponse({ ok: true });
-          }
-
-          // /pin, /setpin
-          if (text.startsWith('/pin') || text.startsWith('/setpin')) {
-            if (!isAdmin) {
-              await sendTg(`⛔ Только главный администратор (@${masterAdminUsername}) может просматривать и менять PIN-код.`);
-              return jsonResponse({ ok: true });
-            }
-
-            const parts = text.split(/\s+/);
-            if (parts.length > 1) {
-              const newPin = parts[1].trim();
-              if (newPin.length < 3) {
-                await sendTg(`⚠️ PIN-код должен содержать минимум 3 символа.`);
-                return jsonResponse({ ok: true });
-              }
-              storeData.accessPin = newPin;
-              await fetch(CLOUD_STORE_URL, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(storeData)
-              });
-              await sendTg(`✅ <b>PIN-код диспетчера успешно обновлён!</b>\n\nНовый код: <code>${escapeHtml(newPin)}</code>\n\nИспользуйте его для входа в CRM через браузер на компьютере.`);
-            } else {
-              const curPin = storeData.accessPin || env?.CRM_ACCESS_PIN || '2026';
-              await sendTg(
-                `🔑 <b>Текущий PIN-код для входа из браузера:</b> <code>${escapeHtml(curPin)}</code>\n\n` +
-                `Чтобы изменить код доступа, отправьте команду:\n` +
-                `<code>/pin НОВЫЙ_КОД</code> (например, <code>/pin 4545</code>)`
-              );
-            }
             return jsonResponse({ ok: true });
           }
 

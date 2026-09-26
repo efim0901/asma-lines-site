@@ -2010,66 +2010,6 @@ body.crm-body {
   transform: scale(0.98);
 }
 
-.gate-pin-section {
-  margin-top: 16px;
-  width: 100%;
-}
-
-.gate-divider-text {
-  display: block;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-mute);
-  margin-bottom: 8px;
-  text-align: center;
-}
-
-.gate-pin-row {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-}
-
-.gate-pin-input {
-  flex: 1;
-  padding: 9px 12px;
-  background: var(--surface-subtle);
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  color: var(--ink);
-  font-size: 14px;
-  outline: none;
-}
-
-.gate-pin-input:focus {
-  border-color: var(--burgundy);
-}
-
-.btn-pin-submit {
-  padding: 9px 18px;
-  background: var(--burgundy);
-  color: #FFFFFF;
-  border: 1px solid var(--burgundy-bright);
-  border-radius: var(--r-md);
-  font-weight: 700;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.btn-pin-submit:hover {
-  background: var(--burgundy-bright);
-}
-
-.gate-pin-error {
-  color: var(--status-danger);
-  font-size: 12px;
-  margin-top: 6px;
-  text-align: center;
-}
-
 .gate-hint {
   font-size: 12px;
   color: var(--ink-mute);
