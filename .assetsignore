@@ -10,6 +10,8 @@ package.json
 package-lock.json
 bun.lock
 wrangler.toml
+OOO/
+OOO/**
 .git/
 .git/**
 .gitignore
