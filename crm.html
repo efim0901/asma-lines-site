@@ -423,6 +423,40 @@
     </div>
   </div>
 
+  <!-- MODAL: In-App Document Viewer & Generator (Zero External Redirects inside Telegram) -->
+  <div id="modal-doc-viewer" class="modal-overlay modal-doc-overlay">
+    <div class="modal-card modal-doc-card">
+      <div class="modal-head">
+        <div class="modal-head-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <h3 id="doc-modal-title">Документ по перевозке</h3>
+        </div>
+        <div class="doc-modal-actions-top">
+          <button type="button" class="btn-doc-top-act" id="btn-modal-copy-text" title="Скопировать текст договора для отправки в мессенджер">
+            📋 Скопировать
+          </button>
+          <button type="button" class="btn-doc-top-act" id="btn-modal-print-ext" title="Открыть защищённую страницу для печати на принтере / сохранения в PDF">
+            🖨️ Печать / PDF
+          </button>
+          <button class="btn-close modal-close-trigger" aria-label="Закрыть">✕</button>
+        </div>
+      </div>
+      <div class="modal-body doc-modal-body">
+        <div class="doc-modal-type-nav">
+          <button type="button" class="doc-m-tab active" data-type="order">📑 Договор-заявка</button>
+          <button type="button" class="doc-m-tab" data-type="kp">📊 КП / Смета</button>
+          <button type="button" class="doc-m-tab" data-type="waybill">🚚 Маршрутный лист</button>
+        </div>
+        <div id="modal-doc-render-area" class="modal-doc-render-area">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-secondary modal-close-trigger">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 

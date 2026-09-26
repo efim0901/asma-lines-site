@@ -1034,25 +1034,214 @@
     }
   };
 
+  // In-App Document Viewer & Generator
+  let activeDocLead = null;
+  let activeDocType = 'order'; // 'order' | 'kp' | 'waybill'
+  const modalDocViewer = document.getElementById('modal-doc-viewer');
+  const modalDocRenderArea = document.getElementById('modal-doc-render-area');
+  const docModalTitle = document.getElementById('doc-modal-title');
+  const btnModalPrintExt = document.getElementById('btn-modal-print-ext');
+  const btnModalCopyText = document.getElementById('btn-modal-copy-text');
+
   // Open Fillable / Printable Document Generator (Transport Order Agreement & Commercial Proposal)
-  window.openLeadDocument = function (leadId) {
+  window.openLeadDocument = async function (leadId) {
     const lead = leads.find(l => l.id === leadId);
     if (!lead) return;
     const num = lead.leadNumber || lead.id.replace(/\D/g, '').slice(-3) || '101';
     
+    showToast('Открываем защищённый документ...');
+    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+
+    let ticket = '';
+    try {
+      const res = await fetch('/api/crm/doc-ticket', {
+        method: 'POST',
+        headers: getCrmHeaders(),
+        body: JSON.stringify({ leadId: lead.id })
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.ticket) ticket = json.ticket;
+      }
+    } catch (e) {
+      console.warn('Doc ticket generation note:', e);
+    }
+
     try {
       const initData = window.Telegram?.WebApp?.initData || '';
       if (initData) sessionStorage.setItem('asma_crm_tg_init_data', initData);
       sessionStorage.setItem('asma_active_doc_lead', JSON.stringify(lead));
+      if (ticket) sessionStorage.setItem('asma_active_doc_ticket', ticket);
     } catch (e) {}
 
-    const q = new URLSearchParams({
-      id: lead.id,
-      lead: num
-    });
-    window.open(`order-doc.html?${q.toString()}`, '_blank');
-    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    const origin = window.location.origin || '';
+    const fullUrl = `${origin}/order-doc.html?id=${encodeURIComponent(lead.id)}&lead=${encodeURIComponent(num)}${ticket ? `&ticket=${encodeURIComponent(ticket)}` : ''}`;
+
+    if (window.Telegram?.WebApp?.openLink) {
+      window.Telegram.WebApp.openLink(fullUrl);
+    } else {
+      window.open(fullUrl, '_blank');
+    }
   };
+
+  function renderModalDocument() {
+    if (!activeDocLead || !modalDocRenderArea) return;
+    const lead = activeDocLead;
+    const num = lead.leadNumber || lead.id.replace(/\D/g, '').slice(-3) || '101';
+    const docCode = `ASMA-2026-${num}`;
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const dateStr = `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+
+    if (docModalTitle) {
+      docModalTitle.textContent = `Документ по заявке #${num} (${escapeHtml(lead.name || 'Клиент')})`;
+    }
+
+    // Update Tab buttons
+    document.querySelectorAll('.doc-m-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.type === activeDocType);
+    });
+
+    const clientName = lead.name || 'ООО «Заказчик»';
+    const contact = lead.contact || '+375 (29) 000-00-00';
+    const rawRoute = lead.route || 'Гомель → Минск';
+
+    let fromCity = 'Гомель';
+    let toCity = 'Минск';
+    if (rawRoute.includes('→')) {
+      const p = rawRoute.split('→');
+      fromCity = p[0].trim();
+      toCity = p[1].trim();
+    } else if (rawRoute.includes('-') && !rawRoute.includes('–')) {
+      const p = rawRoute.split('-');
+      fromCity = p[0].trim();
+      toCity = p[1].trim();
+    }
+
+    const distance = lead.distance || '~310 км';
+    const weight = lead.weight || '5.0 т';
+    const vehicle = lead.vehicle || 'Тент (еврофура 86-92 м³)';
+    const price = lead.price || '680 BYN';
+    const comment = lead.comment || 'Без особенностей. Загрузка боковая/задняя, исправный автотранспорт.';
+    const dispatcher = currentOperator?.name || 'Иван Ефимович';
+
+    if (activeDocType === 'order') {
+      modalDocRenderArea.innerHTML = `
+        <div style="text-align:center;margin-bottom:14px;">
+          <h4 style="font-size:15px;font-weight:900;color:#1A1817;text-transform:uppercase;">ДОГОВОР-ЗАЯВКА № ${escapeHtml(docCode)}</h4>
+          <p style="font-size:11.5px;color:#666;">на перевозку груза автомобильным транспортом по Республике Беларусь</p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;font-size:11.5px;">
+          <div style="border:1px solid #D6CEC8;border-radius:6px;padding:8px 10px;background:#FAF8F5;">
+            <b style="color:#6B1E2D;text-transform:uppercase;font-size:10.5px;">Экспедитор:</b>
+            <div><b>ООО «АСМА Лайнс»</b> (г. Гомель)</div>
+            <div>Диспетчер: ${escapeHtml(dispatcher)}</div>
+            <div>Тел: +375 (29) 100-20-30</div>
+          </div>
+          <div style="border:1px solid #D6CEC8;border-radius:6px;padding:8px 10px;background:#FAF8F5;">
+            <b style="color:#6B1E2D;text-transform:uppercase;font-size:10.5px;">Заказчик:</b>
+            <div><b>${escapeHtml(clientName)}</b></div>
+            <div>Тел: ${escapeHtml(contact)}</div>
+            <div>Оплата: безналичный расчёт</div>
+          </div>
+        </div>
+
+        <table class="spec-table" style="width:100%;font-size:11.5px;border-collapse:collapse;margin-bottom:14px;">
+          <tr><th style="background:#F4ECEE;color:#6B1E2D;padding:6px 8px;border:1px solid #C8C0B8;width:30%;">Маршрут:</th><td style="padding:6px 8px;border:1px solid #C8C0B8;"><b>${escapeHtml(fromCity)} ➔ ${escapeHtml(toCity)}</b> (${escapeHtml(distance)})</td></tr>
+          <tr><th style="background:#F4ECEE;color:#6B1E2D;padding:6px 8px;border:1px solid #C8C0B8;">Погрузка:</th><td style="padding:6px 8px;border:1px solid #C8C0B8;">г. ${escapeHtml(fromCity)}, склад отправителя. Дата: ${escapeHtml(dateStr)}</td></tr>
+          <tr><th style="background:#F4ECEE;color:#6B1E2D;padding:6px 8px;border:1px solid #C8C0B8;">Выгрузка:</th><td style="padding:6px 8px;border:1px solid #C8C0B8;">г. ${escapeHtml(toCity)}, склад получателя</td></tr>
+          <tr><th style="background:#F4ECEE;color:#6B1E2D;padding:6px 8px;border:1px solid #C8C0B8;">Груз / Авто:</th><td style="padding:6px 8px;border:1px solid #C8C0B8;">Вес: ${escapeHtml(weight)} · Подвижной состав: ${escapeHtml(vehicle)}</td></tr>
+          <tr><th style="background:#F4ECEE;color:#6B1E2D;padding:6px 8px;border:1px solid #C8C0B8;">Ставка (BYN):</th><td style="padding:6px 8px;border:1px solid #C8C0B8;font-weight:800;color:#6B1E2D;background:#FAF2F4;">${escapeHtml(price)}</td></tr>
+          <tr><th style="background:#F4ECEE;color:#6B1E2D;padding:6px 8px;border:1px solid #C8C0B8;">Примечания:</th><td style="padding:6px 8px;border:1px solid #C8C0B8;">${escapeHtml(comment)}</td></tr>
+        </table>
+
+        <div style="font-size:10.5px;color:#555;border-left:3px solid #6B1E2D;padding-left:8px;margin-bottom:14px;line-height:1.4;">
+          Нормативный простой на ПРР: до 3 часов. Сверхнормативный простой: 35 BYN/час. Расчёт по факту выгрузки и ТТН в течение 3-5 банковских дней.
+        </div>
+      `;
+    } else if (activeDocType === 'kp') {
+      modalDocRenderArea.innerHTML = `
+        <div style="text-align:center;margin-bottom:14px;">
+          <h4 style="font-size:15px;font-weight:900;color:#1A1817;text-transform:uppercase;">КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ</h4>
+          <p style="font-size:11.5px;color:#666;">Расчёт стоимости автоперевозки по РБ</p>
+        </div>
+        <div style="background:#FAF8F5;border:1px solid #D6CEC8;border-radius:6px;padding:12px;margin-bottom:12px;font-size:12px;">
+          <div>Клиент: <b>${escapeHtml(clientName)}</b> (${escapeHtml(contact)})</div>
+          <div>Маршрут: <b>${escapeHtml(fromCity)} ➔ ${escapeHtml(toCity)}</b> (${escapeHtml(distance)})</div>
+          <div>Параметры: Вес ${escapeHtml(weight)}, ${escapeHtml(vehicle)}</div>
+          <div style="margin-top:8px;font-size:15px;font-weight:800;color:#6B1E2D;">Итоговая ставка рейса: ${escapeHtml(price)}</div>
+        </div>
+      `;
+    } else if (activeDocType === 'waybill') {
+      modalDocRenderArea.innerHTML = `
+        <div style="text-align:center;margin-bottom:14px;">
+          <h4 style="font-size:15px;font-weight:900;color:#1A1817;text-transform:uppercase;">МАРШРУТНОЕ ПОРУЧЕНИЕ № ${escapeHtml(docCode)}</h4>
+          <p style="font-size:11.5px;color:#666;">Задание водителю на рейс</p>
+        </div>
+        <div style="background:#1C1917;color:#FFF;padding:10px 14px;border-radius:6px;margin-bottom:12px;">
+          <div style="font-size:15px;font-weight:800;">${escapeHtml(fromCity)} ➔ ${escapeHtml(toCity)}</div>
+          <div style="font-size:11.5px;color:#FFD382;">Ставка: ${escapeHtml(price)} · Дистанция: ${escapeHtml(distance)}</div>
+        </div>
+        <div style="font-size:12px;line-height:1.6;">
+          <div>Отправитель: <b>${escapeHtml(clientName)}</b> (${escapeHtml(contact)})</div>
+          <div>Погрузка: г. ${escapeHtml(fromCity)} · Выгрузка: г. ${escapeHtml(toCity)}</div>
+          <div>Груз: ${escapeHtml(weight)}, ${escapeHtml(vehicle)}</div>
+          <div>Инструкции: ${escapeHtml(comment)}</div>
+        </div>
+      `;
+    }
+  }
+
+  // Handle Tab Switch inside Document Modal
+  document.querySelectorAll('.doc-m-tab').forEach(tabBtn => {
+    tabBtn.addEventListener('click', () => {
+      activeDocType = tabBtn.dataset.type;
+      renderModalDocument();
+      if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
+    });
+  });
+
+  // Handle Print via Signed Ticket (Works in all external browsers without access loops)
+  if (btnModalPrintExt) {
+    btnModalPrintExt.addEventListener('click', async () => {
+      if (!activeDocLead) return;
+      showToast('Генерация защищённого билета печати...');
+
+      let ticket = '';
+      try {
+        const res = await fetch('/api/crm/doc-ticket', {
+          method: 'POST',
+          headers: getCrmHeaders(),
+          body: JSON.stringify({ leadId: activeDocLead.id })
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.ticket) ticket = json.ticket;
+        }
+      } catch (e) {}
+
+      const num = activeDocLead.leadNumber || activeDocLead.id;
+      const url = `order-doc.html?id=${encodeURIComponent(activeDocLead.id)}&lead=${encodeURIComponent(num)}${ticket ? `&ticket=${encodeURIComponent(ticket)}` : ''}`;
+      window.open(url, '_blank');
+    });
+  }
+
+  // Handle Copy Document Text
+  if (btnModalCopyText) {
+    btnModalCopyText.addEventListener('click', () => {
+      if (!modalDocRenderArea) return;
+      const text = modalDocRenderArea.innerText;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast('✓ Текст договора скопирован в буфер обмена');
+        });
+      } else {
+        showToast('✓ Текст готов к отправке');
+      }
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    });
+  }
 
   // Render Engine
   function render() {

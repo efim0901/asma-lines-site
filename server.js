@@ -638,19 +638,78 @@ app.get(['/api/crm', '/api/crm/data'], async (req, res) => {
   }
 });
 
+function createDocTicket(leadId, userId) {
+  const exp = Date.now() + 60 * 60 * 1000; // 1 hour valid ticket
+  const botToken = process.env.TELEGRAM_BOT_TOKEN || 'asma_lines_secret_key';
+  const data = `${leadId}:${userId}:${exp}`;
+  const sig = crypto.createHmac('sha256', botToken).update(data).digest('hex');
+  const payload = JSON.stringify({ leadId, userId, exp, sig });
+  return Buffer.from(payload).toString('base64url');
+}
+
+function verifyDocTicket(ticketStr, authorizedUsers = []) {
+  if (!ticketStr) return null;
+  try {
+    const raw = Buffer.from(ticketStr, 'base64url').toString('utf8');
+    const { leadId, userId, exp, sig } = JSON.parse(raw);
+    if (Date.now() > exp) return null;
+    const botToken = process.env.TELEGRAM_BOT_TOKEN || 'asma_lines_secret_key';
+    const data = `${leadId}:${userId}:${exp}`;
+    const expectedSig = crypto.createHmac('sha256', botToken).update(data).digest('hex');
+    if (expectedSig !== sig) return null;
+
+    const isAuth = (String(userId).toLowerCase() === MASTER_ADMIN_USERNAME || String(userId) === MASTER_ADMIN_ID) ||
+      (authorizedUsers || []).some(u => String(u.id) === String(userId) || (u.username && u.username.toLowerCase() === String(userId).toLowerCase()));
+    if (!isAuth) return null;
+    return { leadId, userId };
+  } catch (e) {
+    return null;
+  }
+}
+
+// POST /api/crm/doc-ticket (Generate signed time-limited ticket for external printing)
+app.post('/api/crm/doc-ticket', async (req, res) => {
+  try {
+    const store = await getCloudStorage();
+    if (!isReqAuthorized(req, store.authorizedUsers)) {
+      return res.status(401).json({ success: false, error: 'Доступ запрещён' });
+    }
+    const tgUser = extractTgUserFromReq(req);
+    const userId = tgUser?.id || tgUser?.username || MASTER_ADMIN_ID;
+    const { leadId } = req.body || {};
+    const ticket = createDocTicket(leadId, userId);
+    res.json({ success: true, ticket });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // POST /api/crm/doc-data (Protected document data endpoint)
 app.post('/api/crm/doc-data', async (req, res) => {
   try {
     const store = await getCloudStorage();
-    if (!isReqAuthorized(req, store.authorizedUsers)) {
+    const { leadId, leadNum, ticket } = req.body || {};
+
+    let isAuthorized = isReqAuthorized(req, store.authorizedUsers);
+    let verifiedOperator = null;
+
+    if (!isAuthorized && ticket) {
+      const ticketResult = verifyDocTicket(ticket, store.authorizedUsers);
+      if (ticketResult) {
+        isAuthorized = true;
+        verifiedOperator = { name: 'Авторизованный диспетчер', username: ticketResult.userId };
+      }
+    }
+
+    if (!isAuthorized) {
       return res.status(401).json({
         success: false,
         error: 'Доступ запрещён: документ защищён и доступен только авторизованным диспетчерам ASMA Lines'
       });
     }
 
-    const { leadId, leadNum } = req.body || {};
-    const lead = store.leads.find(l => (leadId && l.id === leadId) || (leadNum && String(l.leadNumber) === String(leadNum)));
+    const targetLeadId = leadId || (ticket ? verifyDocTicket(ticket, store.authorizedUsers)?.leadId : null);
+    const lead = store.leads.find(l => (targetLeadId && l.id === targetLeadId) || (leadNum && String(l.leadNumber) === String(leadNum)));
 
     if (!lead) {
       return res.status(404).json({ success: false, error: 'Заявка не найдена в базе данных' });
@@ -660,7 +719,7 @@ app.post('/api/crm/doc-data', async (req, res) => {
     res.json({
       success: true,
       lead,
-      operator: {
+      operator: verifiedOperator || {
         name: tgUser?.first_name || 'Иван Ефимович',
         username: tgUser?.username || 'plombit'
       }

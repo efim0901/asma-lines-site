@@ -1333,6 +1333,94 @@ body.crm-body {
   border-color: rgba(255, 211, 130, 0.2);
 }
 
+/* Document In-App Modal */
+.modal-doc-card {
+  max-width: 860px !important;
+  width: 95vw !important;
+  max-height: 92vh !important;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface) !important;
+}
+
+.doc-modal-body {
+  overflow-y: auto !important;
+  padding: 16px 20px !important;
+  background: var(--bg) !important;
+}
+
+.doc-modal-actions-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-doc-top-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-doc-top-act:hover {
+  background: var(--burgundy-soft);
+  border-color: var(--burgundy);
+  color: var(--burgundy);
+}
+
+.doc-modal-type-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  background: var(--surface);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  overflow-x: auto;
+}
+
+.doc-m-tab {
+  flex: 1;
+  text-align: center;
+  background: transparent;
+  border: none;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.doc-m-tab:hover {
+  color: var(--ink);
+}
+
+.doc-m-tab.active {
+  background: var(--burgundy);
+  color: #FFFFFF;
+}
+
+.modal-doc-render-area {
+  background: #FFFFFF;
+  color: #1A1817;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 24px 28px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+
 /* Notes Thread Panel */
 .notes-panel {
   margin-top: 10px;

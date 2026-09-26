@@ -770,11 +770,12 @@
       const gateEl = document.getElementById('doc-access-gate');
       const protectedArea = document.getElementById('doc-protected-area');
 
-      // Extract Telegram Auth token
+      // Extract Telegram Auth token and signed ticket
       const tgInitData = window.Telegram?.WebApp?.initData || sessionStorage.getItem('asma_crm_tg_init_data') || '';
       const params = new URLSearchParams(window.location.search);
       const leadId = params.get('id') || '';
       const leadNum = params.get('lead') || params.get('leadNumber') || '101';
+      const ticket = params.get('ticket') || params.get('t') || sessionStorage.getItem('asma_active_doc_ticket') || '';
 
       let verifiedLead = null;
       let verifiedOperator = { name: 'Иван Ефимович', username: 'plombit' };
@@ -787,7 +788,7 @@
             'Content-Type': 'application/json',
             'X-Telegram-Init-Data': tgInitData
           },
-          body: JSON.stringify({ leadId, leadNum })
+          body: JSON.stringify({ leadId, leadNum, ticket })
         });
 
         if (res.ok) {

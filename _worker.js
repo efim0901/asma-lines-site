@@ -632,9 +632,9 @@ export default {
     }
 
     // ----------------------------------------------------
-    // ROUTE: /api/crm/doc-data (Protected document data)
+    // ROUTE: /api/crm/doc-ticket (Generate signed time-limited ticket for external printing)
     // ----------------------------------------------------
-    if (url.pathname === '/api/crm/doc-data') {
+    if (url.pathname === '/api/crm/doc-ticket') {
       try {
         const initDataStr = request.headers.get('x-telegram-init-data') || '';
         const tgUser = await verifyTelegramWebAppDataWorker(initDataStr, botToken);
@@ -648,14 +648,93 @@ export default {
         storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers, masterAdminUsername, masterAdminId);
 
         if (!checkUserAuthorized(storeData.authorizedUsers, tgUser, masterAdminUsername, masterAdminId)) {
+          return jsonResponse({ success: false, error: 'Доступ запрещён' }, 401);
+        }
+
+        const body = await request.json().catch(() => ({}));
+        const { leadId } = body;
+        const userId = tgUser?.id || tgUser?.username || masterAdminId;
+        const exp = Date.now() + 60 * 60 * 1000;
+        const data = `${leadId}:${userId}:${exp}`;
+
+        const enc = new TextEncoder();
+        const key = await crypto.subtle.importKey(
+          'raw',
+          enc.encode(botToken),
+          { name: 'HMAC', hash: 'SHA-256' },
+          false,
+          ['sign']
+        );
+        const signature = await crypto.subtle.sign('HMAC', key, enc.encode(data));
+        const hashArray = Array.from(new Uint8Array(signature));
+        const sig = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        const payload = JSON.stringify({ leadId, userId, exp, sig });
+        const ticket = btoa(payload).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+        return jsonResponse({ success: true, ticket });
+      } catch (err) {
+        return jsonResponse({ success: false, error: err.message }, 500);
+      }
+    }
+
+    // ----------------------------------------------------
+    // ROUTE: /api/crm/doc-data (Protected document data)
+    // ----------------------------------------------------
+    if (url.pathname === '/api/crm/doc-data') {
+      try {
+        const initDataStr = request.headers.get('x-telegram-init-data') || '';
+        let tgUser = await verifyTelegramWebAppDataWorker(initDataStr, botToken);
+
+        let storeData = { leads: [], deletedIds: [], authorizedUsers: [] };
+        try {
+          const storeRes = await fetch(CLOUD_STORE_URL + '?_t=' + Date.now(), { cache: 'no-store' });
+          if (storeRes.ok) storeData = await storeRes.json();
+        } catch (e) {}
+
+        storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers, masterAdminUsername, masterAdminId);
+
+        const body = await request.json().catch(() => ({}));
+        const { leadId, leadNum, ticket } = body;
+
+        let isAuth = checkUserAuthorized(storeData.authorizedUsers, tgUser, masterAdminUsername, masterAdminId);
+
+        if (!isAuth && ticket) {
+          try {
+            const raw = atob(ticket.replace(/-/g, '+').replace(/_/g, '/'));
+            const tData = JSON.parse(raw);
+            if (tData && Date.now() <= tData.exp) {
+              const enc = new TextEncoder();
+              const key = await crypto.subtle.importKey(
+                'raw',
+                enc.encode(botToken),
+                { name: 'HMAC', hash: 'SHA-256' },
+                false,
+                ['sign']
+              );
+              const data = `${tData.leadId}:${tData.userId}:${tData.exp}`;
+              const sigBuf = await crypto.subtle.sign('HMAC', key, enc.encode(data));
+              const expSig = Array.from(new Uint8Array(sigBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+              if (expSig === tData.sig) {
+                const uId = String(tData.userId);
+                if (uId.toLowerCase() === masterAdminUsername.toLowerCase() || uId === String(masterAdminId) ||
+                    storeData.authorizedUsers.some(u => String(u.id) === uId || (u.username && u.username.toLowerCase() === uId.toLowerCase()))) {
+                  isAuth = true;
+                  tgUser = { first_name: 'Авторизованный диспетчер', username: tData.userId };
+                }
+              }
+            }
+          } catch(e) {}
+        }
+
+        if (!isAuth) {
           return jsonResponse({
             success: false,
             error: 'Доступ запрещён: документ защищён и доступен только авторизованным сотрудникам ASMA Lines'
           }, 401);
         }
 
-        const body = await request.json().catch(() => ({}));
-        const { leadId, leadNum } = body;
         const lead = (storeData.leads || []).find(l => (leadId && l.id === leadId) || (leadNum && String(l.leadNumber) === String(leadNum)));
 
         if (!lead) {
