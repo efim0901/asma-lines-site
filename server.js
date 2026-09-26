@@ -539,54 +539,6 @@ app.post('/api/lead', async (req, res) => {
     console.log('Telegram bot active, waiting for bot to be added to channel/chat to obtain Chat ID');
   }
 
-  // Send PlanFix Webhook if PLANFIX_WEBHOOK_URL is set
-  const planfixUrl = process.env.PLANFIX_WEBHOOK_URL;
-  if (planfixUrl) {
-    try {
-      await fetch(planfixUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(leadData)
-      });
-      console.log('Lead successfully sent to PlanFix webhook');
-    } catch (err) {
-      console.error('PlanFix webhook error:', err.message);
-    }
-  }
-
-  // Send PlanFix Task Email (Plomba@asma.planfix.com)
-  const planfixEmail = process.env.PLANFIX_EMAIL || 'Plomba@asma.planfix.com';
-  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
-  const smtpUser = process.env.SMTP_USER || 'efiv737@gmail.com';
-  const smtpPass = process.env.SMTP_PASS || 'pxvfrohlssilipvg';
-
-  if (smtpUser && smtpPass) {
-    try {
-      const transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: smtpPort,
-        secure: smtpPort === 465,
-        auth: { user: smtpUser, pass: smtpPass },
-        tls: { rejectUnauthorized: false }
-      });
-
-      await transporter.sendMail({
-        from: `"ASMA Lines" <${smtpUser}>`,
-        to: planfixEmail,
-        subject: emailSubject,
-        text: emailBody
-      });
-      console.log(`Lead email task successfully dispatched to PlanFix (${planfixEmail})`);
-    } catch (err) {
-      if (err.message.includes('535') || err.message.includes('Username and Password not accepted')) {
-        console.error('PlanFix email dispatch error: Gmail требует "Пароль приложения" (App Password) вместо обычного пароля от аккаунта.');
-      } else {
-        console.error('PlanFix email dispatch error:', err.message);
-      }
-    }
-  }
-
   res.json({
     success: true,
     message: 'Заявка успешно принята',

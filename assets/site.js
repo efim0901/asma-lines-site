@@ -600,26 +600,6 @@ async function submitLead(payload, statusNode, successMessage) {
         };
       }
 
-      // Send email to PlanFix via FormSubmit HTTP API
-      fetch('https://formsubmit.co/ajax/Plomba@asma.planfix.com', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(emailFormData)
-      }).catch(e => console.warn('PlanFix email notice:', e));
-
-      // If PlanFix Webhook URL is set globally on window (e.g. window.PLANFIX_WEBHOOK_URL), post to PlanFix as well
-      const planfixWebhook = window.PLANFIX_WEBHOOK_URL || window.PLANFIX_FORM_URL;
-      if (planfixWebhook) {
-        fetch(planfixWebhook, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).catch(e => console.warn('PlanFix webhook notice:', e));
-      }
-
       sent = true;
     } catch (e) {
       console.warn('Fallback sync notice:', e);
