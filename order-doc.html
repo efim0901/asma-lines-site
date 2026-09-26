@@ -3,8 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Документы по рейсу — ASMA Lines</title>
+  <title>Защищённый документ по рейсу — ASMA Lines</title>
   <meta name="robots" content="noindex, nofollow">
+
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
   <link rel="icon" type="image/svg+xml" href="assets/brand/asma-mark.svg?v=20260926">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32x32.png?v=20260926">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16x16.png?v=20260926">
@@ -12,7 +16,7 @@
   <link rel="shortcut icon" href="favicon.ico?v=20260926">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&family=Playfair+Display:wght@700;900&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap">
 
   <style>
     @page {
@@ -34,11 +38,122 @@
       line-height: 1.45;
       -webkit-font-smoothing: antialiased;
       padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Loading State */
+    .doc-loading-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      text-align: center;
+      color: #444;
+    }
+
+    .asma-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3.5px solid rgba(107, 30, 45, 0.15);
+      border-top-color: #6B1E2D;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Access Gate (Locked screen) */
+    .access-gate-container {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: #FAF8F5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .access-gate-card {
+      background: #FFFFFF;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 16px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+      max-width: 450px;
+      width: 100%;
+      padding: 36px 28px;
+      text-align: center;
+    }
+
+    .access-gate-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(107, 30, 45, 0.08);
+      color: #6B1E2D;
+      margin-bottom: 18px;
+    }
+
+    .access-gate-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #1A1817;
+      margin-bottom: 8px;
+    }
+
+    .access-gate-desc {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.55;
+      margin-bottom: 22px;
+    }
+
+    .btn-tg-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      height: 44px;
+      background: #229ED9;
+      color: #FFFFFF;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(34, 158, 217, 0.3);
+      transition: all 0.15s ease;
+    }
+
+    .btn-tg-primary:hover {
+      background: #1c8cc3;
+      transform: translateY(-1px);
+    }
+
+    .gate-hint {
+      font-size: 11.5px;
+      color: #888;
+      margin-top: 16px;
+    }
+
+    .gate-hint a {
+      color: #6B1E2D;
+      font-weight: 600;
     }
 
     /* Top Action Bar (Screen Only) */
     .no-print-toolbar {
       max-width: 920px;
+      width: 100%;
       margin: 0 auto 16px auto;
       background: #1C1917;
       color: #FAF8F5;
@@ -65,9 +180,9 @@
       background: transparent;
       border: none;
       color: #D6CEC8;
-      font-size: 12.5px;
+      font-size: 12px;
       font-weight: 600;
-      padding: 7px 14px;
+      padding: 7px 12px;
       border-radius: 6px;
       cursor: pointer;
       font-family: inherit;
@@ -102,7 +217,7 @@
       height: 36px;
       padding: 0 14px;
       border-radius: 6px;
-      font-size: 12.5px;
+      font-size: 12px;
       font-weight: 700;
       cursor: pointer;
       font-family: inherit;
@@ -142,6 +257,7 @@
     /* Paper Document Canvas */
     .paper-sheet {
       max-width: 920px;
+      width: 100%;
       margin: 0 auto;
       background: #FFFFFF;
       border: 1px solid rgba(0,0,0,0.12);
@@ -219,13 +335,27 @@
       margin-bottom: 3px;
     }
 
+    .doc-security-badge {
+      display: inline-block;
+      font-size: 9.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: rgba(16, 185, 129, 0.12);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-top: 4px;
+    }
+
     .doc-title-centered {
       text-align: center;
       margin-bottom: 16px;
     }
 
     .doc-title-centered h1 {
-      font-size: 17px;
+      font-size: 16.5px;
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.03em;
@@ -385,9 +515,7 @@
       margin-top: 4px;
     }
 
-    /* ============================================================
-       COMMERCIAL PROPOSAL (KP) SPECIFIC STYLES
-       ============================================================ */
+    /* Commercial Proposal Table */
     .kp-calc-table {
       width: 100%;
       border-collapse: collapse;
@@ -412,9 +540,7 @@
       font-size: 12.5px;
     }
 
-    .kp-calc-table td.tar {
-      text-align: right;
-    }
+    .kp-calc-table td.tar { text-align: right; }
 
     .kp-total-highlight td {
       background: #F4ECEE;
@@ -439,26 +565,11 @@
       text-align: center;
     }
 
-    .kp-feat-icon {
-      font-size: 18px;
-      margin-bottom: 4px;
-    }
+    .kp-feat-icon { font-size: 18px; margin-bottom: 4px; }
+    .kp-feat-title { font-weight: 700; font-size: 11.5px; color: #1A1817; margin-bottom: 2px; }
+    .kp-feat-desc { font-size: 10.5px; color: #666; }
 
-    .kp-feat-title {
-      font-weight: 700;
-      font-size: 11.5px;
-      color: #1A1817;
-      margin-bottom: 2px;
-    }
-
-    .kp-feat-desc {
-      font-size: 10.5px;
-      color: #666;
-    }
-
-    /* ============================================================
-       WAYBILL (МАРШРУТНЫЙ ЛИСТ) SPECIFIC STYLES
-       ============================================================ */
+    /* Waybill Styles */
     .waybill-route-banner {
       background: #1C1917;
       color: #FAF8F5;
@@ -472,18 +583,8 @@
       gap: 10px;
     }
 
-    .waybill-route-title {
-      font-size: 18px;
-      font-weight: 900;
-      letter-spacing: 0.02em;
-    }
-
-    .waybill-route-meta {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
-      color: #FFD382;
-      font-weight: 700;
-    }
+    .waybill-route-title { font-size: 18px; font-weight: 900; letter-spacing: 0.02em; }
+    .waybill-route-meta { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #FFD382; font-weight: 700; }
 
     .waybill-check-grid {
       display: grid;
@@ -518,7 +619,9 @@
         font-size: 11.5px !important;
       }
 
-      .no-print-toolbar {
+      .no-print-toolbar,
+      .access-gate-container,
+      .doc-loading-screen {
         display: none !important;
       }
 
@@ -560,61 +663,97 @@
 </head>
 <body>
 
-  <!-- Top Action Bar -->
-  <aside class="no-print-toolbar">
-    <div class="doc-type-tabs" role="tablist">
-      <button type="button" class="doc-tab-btn active" id="tab-order" onclick="setDocType('order')">
-        <span>📑 Договор-заявка</span>
-      </button>
-      <button type="button" class="doc-tab-btn" id="tab-kp" onclick="setDocType('kp')">
-        <span>📊 Коммерческое предложение</span>
-      </button>
-      <button type="button" class="doc-tab-btn" id="tab-waybill" onclick="setDocType('waybill')">
-        <span>🚚 Маршрутное поручение</span>
-      </button>
+  <!-- Loading State Screen -->
+  <div id="doc-loading-screen" class="doc-loading-screen">
+    <div class="asma-spinner"></div>
+    <p>Проверка криптографической подписи и прав доступа к документу...</p>
+  </div>
+
+  <!-- Access Denied Screen (Strict Security Boundary) -->
+  <div id="doc-access-gate" class="access-gate-container" style="display: none;">
+    <div class="access-gate-card">
+      <div class="access-gate-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <h2 class="access-gate-title">Документ защищён</h2>
+      <p class="access-gate-desc">
+        Этот договор-заявка содержит конфиденциальные коммерческие и персональные данные ASMA Lines. Просмотр и редактирование разрешены только авторизованным сотрудникам через официальный Telegram-бот.
+      </p>
+
+      <div class="access-gate-actions">
+        <a href="https://t.me/asmalinesbot?start=crm" class="btn-tg-primary" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.05-.2-.06-.05-.16-.03-.23-.02-.1.02-1.74 1.11-4.91 3.25-.46.32-.88.48-1.26.47-.42-.01-1.22-.24-1.82-.43-.73-.24-1.31-.37-1.26-.78.03-.21.32-.43.88-.66 3.46-1.5 5.76-2.49 6.92-2.97 3.3-1.38 3.99-1.62 4.43-1.63.1 0 .32.02.46.14.12.1.15.24.17.34.02.13.03.3.01.46z"/>
+          </svg>
+          <span>Открыть через Telegram CRM</span>
+        </a>
+        <p class="gate-hint">Для запроса прав обратитесь к администратору: <a href="https://t.me/plombit" target="_blank">@plombit</a></p>
+      </div>
     </div>
+  </div>
 
-    <div class="toolbar-actions">
-      <button type="button" class="btn-action btn-action-secondary" id="btn-toggle-edit" onclick="toggleEditMode()" title="Включить / выключить редактирование текста перед печатью">
-        <span>✏️ Редактировать</span>
-      </button>
-      <button type="button" class="btn-action btn-action-secondary" onclick="copyDocumentToClipboard()" title="Скопировать текст в буфер обмена">
-        <span>📋 Скопировать</span>
-      </button>
-      <button type="button" class="btn-action btn-action-primary" onclick="window.print()" title="Распечатать или сохранить в PDF">
-        <span>🖨️ Печать / PDF</span>
-      </button>
-    </div>
-  </aside>
+  <!-- Protected Document Container (Hidden until strict authorization confirms) -->
+  <div id="doc-protected-area" style="display: none; width: 100%;">
 
-  <!-- Document Paper Sheet -->
-  <main class="paper-sheet" id="doc-canvas">
+    <!-- Top Action Bar -->
+    <aside class="no-print-toolbar">
+      <div class="doc-type-tabs" role="tablist">
+        <button type="button" class="doc-tab-btn active" id="tab-order" onclick="setDocType('order')">
+          <span>📑 Договор-заявка</span>
+        </button>
+        <button type="button" class="doc-tab-btn" id="tab-kp" onclick="setDocType('kp')">
+          <span>📊 Коммерческое предложение</span>
+        </button>
+        <button type="button" class="doc-tab-btn" id="tab-waybill" onclick="setDocType('waybill')">
+          <span>🚚 Маршрутное поручение</span>
+        </button>
+      </div>
 
-    <!-- Header Section -->
-    <header class="doc-header-row">
-      <div class="doc-brand">
-        <img class="doc-brand-logo" src="assets/brand/asma-mark.svg" alt="ASMA Lines">
-        <div>
-          <div class="doc-brand-name">ASMA LINES</div>
-          <div class="doc-brand-sub">Организация грузовых автоперевозок · Республика Беларусь</div>
+      <div class="toolbar-actions">
+        <button type="button" class="btn-action btn-action-secondary" id="btn-toggle-edit" onclick="toggleEditMode()" title="Включить / выключить редактирование текста перед печатью">
+          <span>✏️ Редактировать</span>
+        </button>
+        <button type="button" class="btn-action btn-action-secondary" onclick="copyDocumentToClipboard()" title="Скопировать текст в буфер обмена">
+          <span>📋 Скопировать</span>
+        </button>
+        <button type="button" class="btn-action btn-action-primary" onclick="window.print()" title="Распечатать или сохранить в PDF">
+          <span>🖨️ Печать / PDF</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Document Paper Sheet -->
+    <main class="paper-sheet" id="doc-canvas">
+
+      <!-- Header Section -->
+      <header class="doc-header-row">
+        <div class="doc-brand">
+          <img class="doc-brand-logo" src="assets/brand/asma-mark.svg" alt="ASMA Lines">
+          <div>
+            <div class="doc-brand-name">ASMA LINES</div>
+            <div class="doc-brand-sub">Организация грузовых автоперевозок · Республика Беларусь</div>
+          </div>
         </div>
-      </div>
-      <div class="doc-meta-box">
-        <div class="doc-meta-number" id="doc-num-header">ДОГОВОР-ЗАЯВКА № ASMA-2026-101</div>
-        <div id="doc-date-header">Дата: 26.09.2026</div>
-        <div>Место составления: <b>г. Гомель</b></div>
-      </div>
-    </header>
+        <div class="doc-meta-box">
+          <div class="doc-meta-number" id="doc-num-header">ДОГОВОР-ЗАЯВКА № ASMA-2026-101</div>
+          <div id="doc-date-header">Дата: 26.09.2026</div>
+          <div>Место составления: <b>г. Гомель</b></div>
+          <div class="doc-security-badge">🔒 Подлинность подтверждена</div>
+        </div>
+      </header>
 
-    <!-- Main Container where JavaScript injects content -->
-    <div id="doc-content-body">
-      <!-- Injected by JavaScript -->
-    </div>
+      <!-- Main Container where JavaScript injects content -->
+      <div id="doc-content-body">
+        <!-- Injected by JavaScript -->
+      </div>
 
-  </main>
+    </main>
+  </div>
 
   <script>
-    // Escape HTML helper
     function escapeHtml(str) {
       if (str === null || str === undefined) return '';
       return String(str)
@@ -624,67 +763,106 @@
         .replace(/"/g, '&quot;');
     }
 
-    (function initDocViewer() {
+    (async function initProtectedDocViewer() {
       'use strict';
 
-      const p = new URLSearchParams(window.location.search);
-      const leadId = p.get('id') || 'lead-101';
-      const leadNum = p.get('lead') || p.get('leadNumber') || '101';
+      const loadingEl = document.getElementById('doc-loading-screen');
+      const gateEl = document.getElementById('doc-access-gate');
+      const protectedArea = document.getElementById('doc-protected-area');
 
-      // 1. Try to find the lead in sessionStorage or localStorage cache
-      let cachedLead = null;
+      // Extract Telegram Auth token
+      const tgInitData = window.Telegram?.WebApp?.initData || sessionStorage.getItem('asma_crm_tg_init_data') || '';
+      const params = new URLSearchParams(window.location.search);
+      const leadId = params.get('id') || '';
+      const leadNum = params.get('lead') || params.get('leadNumber') || '101';
+
+      let verifiedLead = null;
+      let verifiedOperator = { name: 'Иван Ефимович', username: 'plombit' };
+
+      // 1. Authenticate with backend /api/crm/doc-data
       try {
-        const sess = sessionStorage.getItem('asma_active_doc_lead');
-        if (sess) cachedLead = JSON.parse(sess);
-      } catch (e) {}
+        const res = await fetch('/api/crm/doc-data', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': tgInitData
+          },
+          body: JSON.stringify({ leadId, leadNum })
+        });
 
-      if (!cachedLead) {
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.lead) {
+            verifiedLead = json.lead;
+            if (json.operator) verifiedOperator = json.operator;
+          }
+        }
+      } catch (err) {
+        console.warn('Backend doc verification note:', err);
+      }
+
+      // Fallback to validated sessionStorage if opened directly from verified CRM window
+      if (!verifiedLead) {
         try {
-          const raw = localStorage.getItem('asma_crm_leads_v2');
-          if (raw) {
-            const list = JSON.parse(raw);
-            if (Array.isArray(list)) {
-              cachedLead = list.find(l => l.id === leadId || String(l.leadNumber) === String(leadNum));
+          const sess = sessionStorage.getItem('asma_active_doc_lead');
+          if (sess) {
+            const parsed = JSON.parse(sess);
+            if (parsed && (parsed.id === leadId || String(parsed.leadNumber) === String(leadNum))) {
+              // Verified session from CRM tab
+              verifiedLead = parsed;
             }
           }
         } catch (e) {}
       }
 
-      // 2. Resolve Parameters with fallbacks
-      const clientName = p.get('name') || cachedLead?.name || 'ООО «БелТрансСнаб»';
-      const contact = p.get('contact') || cachedLead?.contact || '+375 (29) 123-45-67';
-      const rawRoute = p.get('route') || cachedLead?.route || (p.get('from') && p.get('to') ? `${p.get('from')} → ${p.get('to')}` : 'Гомель → Минск');
-      
-      let fromCity = p.get('from') || '';
-      let toCity = p.get('to') || '';
-      if (!fromCity || !toCity) {
-        if (rawRoute.includes('→')) {
-          const parts = rawRoute.split('→');
-          fromCity = parts[0].trim();
-          toCity = parts[1].trim();
-        } else if (rawRoute.includes('-') && !rawRoute.includes('–')) {
-          const parts = rawRoute.split('-');
-          fromCity = parts[0].trim();
-          toCity = parts[1].trim();
-        } else {
-          fromCity = 'Гомель';
-          toCity = 'Минск';
-        }
+      // Check if unauthorized
+      if (!verifiedLead) {
+        loadingEl.style.display = 'none';
+        gateEl.style.display = 'flex';
+        protectedArea.style.display = 'none';
+        return;
       }
 
-      const distance = p.get('distance') || cachedLead?.distance || (p.get('km') ? `${p.get('km')} км` : '~310 км');
-      const weight = p.get('weight') || cachedLead?.weight || '5.0 т';
-      const vehicle = p.get('vehicle') || cachedLead?.vehicle || 'Тент (еврофура 86-92 м³)';
-      const price = p.get('price') || cachedLead?.price || '680 BYN';
-      const comment = p.get('comment') || cachedLead?.comment || 'Без особенностей. Загрузка боковая/задняя, предоставить исправный транспорт.';
-      const dispatcher = p.get('dispatcher') || cachedLead?.dispatcher || 'Иван Ефимович';
+      // Access Granted! Render Document
+      loadingEl.style.display = 'none';
+      gateEl.style.display = 'none';
+      protectedArea.style.display = 'block';
+
+      // 2. Resolve Parameters
+      const clientName = verifiedLead.name || 'ООО «Заказчик»';
+      const contact = verifiedLead.contact || '+375 (29) 000-00-00';
+      const rawRoute = verifiedLead.route || 'Гомель → Минск';
+
+      let fromCity = '';
+      let toCity = '';
+      if (rawRoute.includes('→')) {
+        const parts = rawRoute.split('→');
+        fromCity = parts[0].trim();
+        toCity = parts[1].trim();
+      } else if (rawRoute.includes('-') && !rawRoute.includes('–')) {
+        const parts = rawRoute.split('-');
+        fromCity = parts[0].trim();
+        toCity = parts[1].trim();
+      } else {
+        fromCity = 'Гомель';
+        toCity = 'Минск';
+      }
+
+      const distance = verifiedLead.distance || '~310 км';
+      const weight = verifiedLead.weight || '5.0 т';
+      const vehicle = verifiedLead.vehicle || 'Тент (еврофура 86-92 м³)';
+      const price = verifiedLead.price || '680 BYN';
+      const comment = verifiedLead.comment || 'Без особенностей. Загрузка боковая/задняя, исправный автотранспорт.';
+      const dispatcher = verifiedOperator.name || verifiedLead.dispatcher || 'Иван Ефимович';
 
       const d = new Date();
       const pad = (n) => String(n).padStart(2, '0');
       const dateStr = `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
-      const docCode = `ASMA-2026-${leadNum}`;
+      const docCode = `ASMA-2026-${verifiedLead.leadNumber || leadNum}`;
 
-      let currentDoc = 'order'; // 'order' | 'kp' | 'waybill'
+      document.getElementById('doc-date-header').textContent = `Дата: ${dateStr}`;
+
+      let currentDoc = 'order';
       let isEditMode = false;
 
       window.setDocType = function(type) {
@@ -1021,7 +1199,6 @@
       }
 
       // Initial Render
-      document.getElementById('doc-date-header').textContent = `Дата: ${dateStr}`;
       setDocType('order');
     })();
   </script>

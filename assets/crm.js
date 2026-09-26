@@ -1041,21 +1041,14 @@
     const num = lead.leadNumber || lead.id.replace(/\D/g, '').slice(-3) || '101';
     
     try {
+      const initData = window.Telegram?.WebApp?.initData || '';
+      if (initData) sessionStorage.setItem('asma_crm_tg_init_data', initData);
       sessionStorage.setItem('asma_active_doc_lead', JSON.stringify(lead));
     } catch (e) {}
 
     const q = new URLSearchParams({
       id: lead.id,
-      lead: num,
-      name: lead.name || '',
-      contact: lead.contact || '',
-      route: lead.route || '',
-      vehicle: lead.vehicle || '',
-      weight: lead.weight || '',
-      distance: lead.distance || '',
-      price: lead.price || '',
-      comment: lead.comment || '',
-      dispatcher: currentOperator?.name || 'Иван Ефимович'
+      lead: num
     });
     window.open(`order-doc.html?${q.toString()}`, '_blank');
     if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');

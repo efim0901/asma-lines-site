@@ -638,6 +638,38 @@ app.get(['/api/crm', '/api/crm/data'], async (req, res) => {
   }
 });
 
+// POST /api/crm/doc-data (Protected document data endpoint)
+app.post('/api/crm/doc-data', async (req, res) => {
+  try {
+    const store = await getCloudStorage();
+    if (!isReqAuthorized(req, store.authorizedUsers)) {
+      return res.status(401).json({
+        success: false,
+        error: 'Доступ запрещён: документ защищён и доступен только авторизованным диспетчерам ASMA Lines'
+      });
+    }
+
+    const { leadId, leadNum } = req.body || {};
+    const lead = store.leads.find(l => (leadId && l.id === leadId) || (leadNum && String(l.leadNumber) === String(leadNum)));
+
+    if (!lead) {
+      return res.status(404).json({ success: false, error: 'Заявка не найдена в базе данных' });
+    }
+
+    const tgUser = extractTgUserFromReq(req);
+    res.json({
+      success: true,
+      lead,
+      operator: {
+        name: tgUser?.first_name || 'Иван Ефимович',
+        username: tgUser?.username || 'plombit'
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Ошибка получения данных документа: ' + err.message });
+  }
+});
+
 // GET & POST /api/crm/access
 app.get('/api/crm/access', async (req, res) => {
   try {

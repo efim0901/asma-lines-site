@@ -632,6 +632,50 @@ export default {
     }
 
     // ----------------------------------------------------
+    // ROUTE: /api/crm/doc-data (Protected document data)
+    // ----------------------------------------------------
+    if (url.pathname === '/api/crm/doc-data') {
+      try {
+        const initDataStr = request.headers.get('x-telegram-init-data') || '';
+        const tgUser = await verifyTelegramWebAppDataWorker(initDataStr, botToken);
+
+        let storeData = { leads: [], deletedIds: [], authorizedUsers: [] };
+        try {
+          const storeRes = await fetch(CLOUD_STORE_URL + '?_t=' + Date.now(), { cache: 'no-store' });
+          if (storeRes.ok) storeData = await storeRes.json();
+        } catch (e) {}
+
+        storeData.authorizedUsers = sanitizeUsers(storeData.authorizedUsers, masterAdminUsername, masterAdminId);
+
+        if (!checkUserAuthorized(storeData.authorizedUsers, tgUser, masterAdminUsername, masterAdminId)) {
+          return jsonResponse({
+            success: false,
+            error: 'Доступ запрещён: документ защищён и доступен только авторизованным сотрудникам ASMA Lines'
+          }, 401);
+        }
+
+        const body = await request.json().catch(() => ({}));
+        const { leadId, leadNum } = body;
+        const lead = (storeData.leads || []).find(l => (leadId && l.id === leadId) || (leadNum && String(l.leadNumber) === String(leadNum)));
+
+        if (!lead) {
+          return jsonResponse({ success: false, error: 'Заявка не найдена в базе данных' }, 404);
+        }
+
+        return jsonResponse({
+          success: true,
+          lead,
+          operator: {
+            name: tgUser?.first_name || 'Иван Ефимович',
+            username: tgUser?.username || 'plombit'
+          }
+        });
+      } catch (err) {
+        return jsonResponse({ success: false, error: err.message }, 500);
+      }
+    }
+
+    // ----------------------------------------------------
     // ROUTE: /api/crm (GET / POST)
     // ----------------------------------------------------
     if (url.pathname === '/api/crm' || url.pathname === '/api/crm/data') {
