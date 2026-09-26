@@ -142,21 +142,34 @@
   init();
 
   async function init() {
-    loadDeletedIds();
-    loadCachedLeads();
     setupEventListeners();
 
-    // Check Access First
+    // Clear any obsolete localStorage session
+    try {
+      localStorage.removeItem('asma_crm_operator_session');
+    } catch (e) {}
+
+    // Check Access First - strictly no data is loaded or displayed until Telegram identity is verified
     await checkAuthorization();
 
     if (isAuthorized) {
+      loadDeletedIds();
+      loadCachedLeads();
       await fetchLeads(false);
       highlightLeadFromUrl();
 
       // Auto-poll in background every 10 seconds for real-time dispatching
       setInterval(() => {
-        fetchLeads(false);
+        if (isAuthorized) {
+          fetchLeads(false);
+        }
       }, 10000);
+    } else {
+      // Purge any local cache if unauthorized
+      leads = [];
+      try {
+        localStorage.removeItem(CACHE_KEY);
+      } catch (e) {}
     }
   }
 
@@ -185,16 +198,17 @@
       console.warn('Access check fetch notice:', e);
     }
 
-    // 2. Identify user context
+    // 2. Identify Telegram WebApp context
     const tgUser = tg?.initDataUnsafe?.user;
-    const isInsideTelegram = Boolean(window.Telegram?.WebApp?.initData);
+    const hasTgInitData = Boolean(window.Telegram?.WebApp?.initData);
 
     // If inside Telegram WebApp, hide the "Open in Telegram" header button
     if (btnOpenTg) {
-      btnOpenTg.style.display = isInsideTelegram ? 'none' : 'inline-flex';
+      btnOpenTg.style.display = hasTgInitData ? 'none' : 'inline-flex';
     }
 
-    if (tgUser) {
+    // 3. Strict verification: user MUST be opening inside Telegram WebApp with verified account
+    if (tgUser && hasTgInitData) {
       const tgUsername = (tgUser.username || '').toLowerCase().replace(/^@/, '');
       const tgId = String(tgUser.id || '');
       const tgFullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || tgUsername || 'Диспетчер';
@@ -216,6 +230,7 @@
           isAdmin: isMaster || Boolean(matched?.isAdmin)
         };
         grantAccessUI();
+        return;
       } else {
         // In Telegram WebApp but account not authorized!
         isAuthorized = false;
@@ -226,42 +241,20 @@
         });
         return;
       }
-    } else {
-      // In external browser: check if authorized session or key or dev environment
-      const urlParams = new URLSearchParams(window.location.search);
-      const authKey = urlParams.get('auth') || urlParams.get('key');
-      const savedSession = localStorage.getItem('asma_crm_operator_session');
-      const isDev = authKey === 'plombit' || window.location.hostname === 'localhost' || window.location.hostname.includes('run.app');
-
-      if (savedSession === 'authorized' || isDev) {
-        isAuthorized = true;
-        currentOperator = {
-          name: 'Иван Ефимович',
-          username: 'plombit',
-          id: '1014012851',
-          isAdmin: true
-        };
-        grantAccessUI();
-      } else {
-        // STRICTLY DENY ACCESS FOR UNAUTHORIZED BROWSER SESSIONS!
-        isAuthorized = false;
-        denyAccessUI({
-          title: 'Закрытая диспетчерская',
-          desc: 'Доступ к управлению заявками и рейсами ASMA Lines разрешён только авторизованным сотрудникам через официальный Telegram-бот.',
-          handle: null
-        });
-
-        // If on mobile device, automatically attempt deep-link to Telegram
-        if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-          setTimeout(() => {
-            window.location.href = 'tg://resolve?domain=asmalinesbot&start=crm';
-          }, 800);
-        }
-      }
     }
+
+    // STRICT: External browser without Telegram WebApp session — strictly denied!
+    isAuthorized = false;
+    denyAccessUI({
+      title: 'Закрытая диспетчерская',
+      desc: 'Доступ к управлению заявками и рейсами ASMA Lines разрешён только авторизованным сотрудникам через официальный Telegram-бот.',
+      handle: null
+    });
   }
 
   function grantAccessUI() {
+    const crmShell = document.getElementById('crm-shell') || document.querySelector('.crm-shell');
+    if (crmShell) crmShell.style.display = 'block';
     if (accessGateScreen) accessGateScreen.style.display = 'none';
     if (operatorNameDisplay) operatorNameDisplay.textContent = currentOperator.name;
     if (btnAccessMgmt) {
@@ -270,14 +263,20 @@
   }
 
   function denyAccessUI({ title, desc, handle }) {
+    const crmShell = document.getElementById('crm-shell') || document.querySelector('.crm-shell');
+    if (crmShell) crmShell.style.display = 'none';
     if (feedLoadingEl) feedLoadingEl.style.display = 'none';
     if (accessGateScreen) {
       accessGateScreen.style.display = 'flex';
       if (gateTitle) gateTitle.textContent = title;
       if (gateDesc) gateDesc.textContent = desc;
-      if (handle && gateUserInfo && gateUserVal) {
-        gateUserInfo.style.display = 'flex';
-        gateUserVal.textContent = handle;
+      if (gateUserInfo && gateUserVal) {
+        if (handle) {
+          gateUserInfo.style.display = 'inline-flex';
+          gateUserVal.textContent = handle;
+        } else {
+          gateUserInfo.style.display = 'none';
+        }
       }
     }
   }
@@ -352,6 +351,8 @@
 
   // Fetch leads from Cloud API / Fallback
   async function fetchLeads(isUserRefresh = true) {
+    if (!isAuthorized) return;
+
     if (isUserRefresh) {
       if (btnRefresh) btnRefresh.style.transform = 'rotate(180deg)';
       showToast('Обновление заявок...');
@@ -435,6 +436,7 @@
 
   // Sync back to cloud storage
   async function syncLeadsToCloud() {
+    if (!isAuthorized) return;
     saveCache(leads);
     saveDeletedIds();
     renderCounts();
@@ -1115,6 +1117,7 @@
 
   // Render Engine
   function render() {
+    if (!isAuthorized) return;
     renderCounts();
 
     // Check if desktop Kanban view should be active

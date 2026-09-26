@@ -32,12 +32,12 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap">
 
   <link rel="icon" type="image/svg+xml" href="assets/brand/asma-mark.svg">
-  <link rel="stylesheet" href="assets/crm.css?v=20260925_v1">
+  <link rel="stylesheet" href="assets/crm.css?v=20260926_tgonly">
 </head>
 <body class="crm-body">
 
-  <!-- Main App Shell -->
-  <div class="crm-shell">
+  <!-- Main App Shell (Hidden until strict Telegram auth is confirmed) -->
+  <div class="crm-shell" id="crm-shell" style="display: none;">
 
     <!-- Top Sticky Header -->
     <header class="app-header" id="app-header">
@@ -253,8 +253,8 @@
 
   </div>
 
-  <!-- Access Denied Screen -->
-  <div id="access-gate-screen" class="access-gate-container" style="display: none;">
+  <!-- Access Denied Screen (Shown by default until strict Telegram authentication confirms) -->
+  <div id="access-gate-screen" class="access-gate-container">
     <div class="access-gate-card">
       <div class="access-gate-icon">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -423,6 +423,6 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <!-- CRM Script -->
-  <script src="assets/crm.js?v=20260926_nopin"></script>
+  <script src="assets/crm.js?v=20260926_tgstrictly"></script>
 </body>
 </html>

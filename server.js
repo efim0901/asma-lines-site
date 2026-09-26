@@ -50,6 +50,32 @@ function checkUserAdmin(tgUser) {
   return username === MASTER_ADMIN_USERNAME || id === MASTER_ADMIN_ID;
 }
 
+function extractTgUserFromReq(req) {
+  const initDataStr = req.headers['x-telegram-init-data'];
+  if (!initDataStr) return null;
+  try {
+    const params = new URLSearchParams(initDataStr);
+    const userRaw = params.get('user');
+    if (!userRaw) return null;
+    return JSON.parse(userRaw);
+  } catch (e) {
+    return null;
+  }
+}
+
+function isReqAuthorized(req, authorizedUsers = []) {
+  const user = extractTgUserFromReq(req);
+  if (!user) return false;
+  const username = (user.username || '').toLowerCase().replace(/^@/, '');
+  const id = String(user.id || '');
+  if (username === MASTER_ADMIN_USERNAME || id === MASTER_ADMIN_ID) return true;
+  return (authorizedUsers || []).some(u => {
+    const uName = (u.username || '').toLowerCase().replace(/^@/, '');
+    const uId = String(u.id || '');
+    return (uName && uName === username) || (uId && uId === id);
+  });
+}
+
 function escapeHtml(str) {
   if (!str) return '';
   return String(str)
@@ -617,12 +643,17 @@ async function saveCloudStorage(storeData) {
 app.get(['/api/crm', '/api/crm/data'], async (req, res) => {
   try {
     const store = await getCloudStorage();
+    if (!isReqAuthorized(req, store.authorizedUsers)) {
+      return res.status(401).json({
+        error: 'Доступ запрещён: требуется авторизация через официальный Telegram-бот ASMA Lines'
+      });
+    }
+
     res.json({
       success: true,
       leads: store.leads,
       deletedIds: store.deletedIds,
-      authorizedUsers: store.authorizedUsers,
-      user: { name: 'Иван', username: 'plombit', role: 'Главный диспетчер' }
+      authorizedUsers: store.authorizedUsers
     });
   } catch (err) {
     res.status(500).json({ error: 'CRM data retrieval failed: ' + err.message });
@@ -703,8 +734,12 @@ app.post('/api/crm/access', async (req, res) => {
 // POST /api/crm - update leads list or sync from WebApp
 app.post('/api/crm', async (req, res) => {
   try {
-    const { leads, deletedIds, action, leadId, authorizedUsers } = req.body;
     const store = await getCloudStorage();
+    if (!isReqAuthorized(req, store.authorizedUsers)) {
+      return res.status(401).json({ error: 'Доступ запрещён: требуется авторизация через Telegram' });
+    }
+
+    const { leads, deletedIds, action, leadId, authorizedUsers } = req.body;
 
     if (Array.isArray(deletedIds)) {
       store.deletedIds = Array.from(new Set([...store.deletedIds, ...deletedIds]));
