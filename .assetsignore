@@ -1,0 +1,28 @@
+# Файлы, которые НЕ должны публиковаться как статика.
+# _worker.js и _shared/ попадают в бандл Worker'а как модули, но не отдаются
+# клиентам по HTTP. Реализация каталогов без «точки» (assets) в этой версии
+# Wrangler не поддерживается.
+
+_worker.js
+_shared/
+_shared/**
+_tests/
+_tests/**
+server.js
+data/
+data/**
+functions/
+functions/**
+package.json
+package-lock.json
+wrangler.toml
+schema.sql
+eslint.config.js
+.dev.vars
+.dev.vars.example
+.gitignore
+.git/
+.git/**
+metadata.json
+DEPLOY-CLOUDFLARE.md
+_headers

@@ -1,0 +1,29 @@
+# ASMA Lines — конфигурация Cloudflare Pages (продакшн).
+#
+# ВАЖНО ПРО БИНДИНГ D1:
+# Секция [[d1_databases]] ниже закомментирована, чтобы деплой не сломался,
+# пока база не создана. Пока она закомментирована, Worker работает в режиме
+# только для чтения (данные из старого внешнего бина) и НЕ принимает заявки.
+#
+# Порядок действий (подробно — в DEPLOY-CLOUDFLARE.md):
+#   1. npx wrangler d1 create asma-lines
+#   2. npx wrangler d1 execute asma-lines --remote --file=./schema.sql
+#   3. Раскомментируйте блок [[d1_databases]] и подставьте database_id
+#   4. Закоммитьте и задеплойте
+
+name = "asma-lines-site"
+main = "_worker.js"
+# Дата совместимости фиксирует поведение рантайма. Меняйте осознанно и проверяя сайт.
+compatibility_date = "2025-09-23"
+
+[assets]
+directory = "."
+binding = "ASSETS"
+
+# Не отдаём index.html вместо несуществующих путей: Worker сам решает, что вернуть.
+not_found_handling = "none"
+
+# [[d1_databases]]
+# "binding": "asma_lines",
+# "database_name": "asma-lines",
+# "database_id": "1acb05be-5bf6-4efc-bd11-41ff0509fb0e"

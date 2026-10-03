@@ -1,0 +1,16 @@
+# robots.txt для asmalines.by
+#
+# Раньше здесь были отдельные группы для Googlebot и Yandex с одним лишь
+# «Allow: /». Группы в robots.txt НЕ наследуют правила друг друга, поэтому
+# эти боты игнорировали все Disallow из группы «*» и могли обходить
+# /api/ и служебные страницы. Теперь правила заданы одной группой.
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /crm.html
+Disallow: /order-doc.html
+Disallow: /proposal.html
+
+# Sitemap
+Sitemap: https://asmalines.by/sitemap.xml

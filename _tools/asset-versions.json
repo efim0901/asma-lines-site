@@ -1,0 +1,42 @@
+{
+  "theme-init.js": {
+    "version": "20261004_theme",
+    "hash": "a0e00feb9756fb3b"
+  },
+  "style.css": {
+    "version": "20261004_css",
+    "hash": "58939275bd49d252"
+  },
+  "site.js": {
+    "version": "20261004_js",
+    "hash": "fc8c729b134953e9"
+  },
+  "pricing-client.js": {
+    "version": "20261004_pricing",
+    "hash": "5d9db3c79aacd61a"
+  },
+  "vehicles.js": {
+    "version": "20261004_js",
+    "hash": "4068f6cd720e8863"
+  },
+  "calculator.js": {
+    "version": "20261004_js",
+    "hash": "759b3398445e4409"
+  },
+  "crm-next.css": {
+    "version": "20260930_v2",
+    "hash": "ac7e60389f0604b5"
+  },
+  "crm-next.js": {
+    "version": "20260930_v2",
+    "hash": "0362d1b7f017f7a1"
+  },
+  "order-doc.js": {
+    "version": "20261004_orderdoc",
+    "hash": "f2a288f55cd67a49"
+  },
+  "proposal.js": {
+    "version": "20261004_proposal",
+    "hash": "ba9729985fc045df"
+  }
+}

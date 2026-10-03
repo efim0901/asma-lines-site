@@ -1,0 +1,128 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <!-- Semantic Theme 3: Dark Plum / Violet (Express Delivery, Speed, Priority) -->
+    <linearGradient id="se_bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0C0712"/>
+      <stop offset="45%" stop-color="#1D0F26"/>
+      <stop offset="80%" stop-color="#341544"/>
+      <stop offset="100%" stop-color="#100718"/>
+    </linearGradient>
+    <radialGradient id="se_glow" cx="60%" cy="38%" r="55%">
+      <stop offset="0%" stop-color="#6B2282" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="#0C0712" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Unified 40x40 Grid Pattern with Dot Intersections -->
+    <pattern id="se_grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+      <circle cx="20" cy="20" r="1" fill="rgba(255,255,255,0.06)"/>
+    </pattern>
+    <linearGradient id="se_road" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#18111D"/>
+      <stop offset="100%" stop-color="#09060B"/>
+    </linearGradient>
+    <linearGradient id="se_van" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8B2536"/>
+      <stop offset="45%" stop-color="#A52C40"/>
+      <stop offset="80%" stop-color="#7B1D3A"/>
+      <stop offset="100%" stop-color="#551225"/>
+    </linearGradient>
+    <linearGradient id="se_speed_trail1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#C054E8" stop-opacity="0"/>
+      <stop offset="70%" stop-color="#D968FF" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#FAF8F5" stop-opacity="0.95"/>
+    </linearGradient>
+    <linearGradient id="se_speed_trail2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8B2536" stop-opacity="0"/>
+      <stop offset="80%" stop-color="#E83D62" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#FFA8BC" stop-opacity="0.95"/>
+    </linearGradient>
+    <filter id="se_shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000" flood-opacity="0.75"/>
+    </filter>
+  </defs>
+
+  <!-- Canvas Background & Unified Grid System -->
+  <rect width="1200" height="800" fill="url(#se_bg)"/>
+  <rect width="1200" height="800" fill="url(#se_grid)"/>
+  <rect width="1200" height="480" fill="url(#se_glow)"/>
+
+  <!-- City Skyline Silhouette Background (Night Express Transit) -->
+  <g fill="#170C1E" opacity="0.45">
+    <rect x="90" y="270" width="85" height="210"/>
+    <rect x="195" y="210" width="105" height="270"/>
+    <rect x="315" y="250" width="75" height="230"/>
+    <rect x="405" y="180" width="130" height="300"/>
+    <rect x="550" y="230" width="95" height="250"/>
+    <rect x="660" y="260" width="85" height="220"/>
+    <rect x="760" y="220" width="110" height="260"/>
+    <rect x="885" y="250" width="80" height="230"/>
+  </g>
+
+  <!-- Speed Motion Streaks Behind the Express Van -->
+  <g opacity="0.8">
+    <line x1="60" y1="365" x2="520" y2="365" stroke="url(#se_speed_trail1)" stroke-width="2.5" stroke-dasharray="140 40"/>
+    <line x1="120" y1="395" x2="540" y2="395" stroke="url(#se_speed_trail2)" stroke-width="3" stroke-dasharray="160 50"/>
+    <line x1="40" y1="435" x2="510" y2="435" stroke="url(#se_speed_trail1)" stroke-width="2" stroke-dasharray="120 40"/>
+    <line x1="160" y1="465" x2="530" y2="465" stroke="#FFA8BC" stroke-width="1.8" stroke-dasharray="90 30" opacity="0.6"/>
+  </g>
+
+  <!-- Highway Surface (Identical 60% Geometry) -->
+  <path d="M 0 480 L 1200 480 L 1200 800 L 0 800 Z" fill="url(#se_road)"/>
+  <!-- Plum Accent Curb Line -->
+  <line x1="0" y1="478" x2="1200" y2="478" stroke="#8E2D99" stroke-width="3.5"/>
+  <!-- Identical Road Markings & Dashed Center Divider -->
+  <path opacity="0.4" d="M 0 630 L 1200 630" stroke="#FAF8F5" stroke-width="4" stroke-dasharray="50 35"/>
+  <!-- Identical Lower Edge Line -->
+  <line x1="0" y1="750" x2="1200" y2="750" stroke="#FFC048" stroke-width="3" opacity="0.45"/>
+
+  <!-- Commercial Express Freight Van (Mercedes Sprinter / Crafter) -->
+  <g transform="translate(490, 305)" filter="url(#se_shadow)">
+    <!-- Road shadow -->
+    <ellipse cx="280" cy="250" rx="320" ry="22" fill="#000" opacity="0.88"/>
+
+    <!-- Van Body -->
+    <path d="M 60 210 L 490 210 L 490 30 L 220 30 L 120 70 L 60 140 Z" fill="url(#se_van)" stroke="#C74D60" stroke-width="2.5"/>
+    
+    <!-- Windshield & Front Side Glass -->
+    <path d="M 125 72 L 210 40 L 210 110 L 85 110 Z" fill="#151A24" stroke="#7E57C2" stroke-width="1.5" opacity="0.92"/>
+    
+    <!-- Express Speed Stripes -->
+    <line x1="230" y1="88" x2="470" y2="88" stroke="#FAF8F5" stroke-width="4" stroke-linecap="round"/>
+    <line x1="250" y1="103" x2="450" y2="103" stroke="#FAF8F5" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+    <text x="350" y="145" fill="#FAF8F5" font-family="'Inter', system-ui, sans-serif" font-size="20" font-weight="900" letter-spacing="4" text-anchor="middle">ASMA EXPRESS</text>
+    <text x="350" y="172" fill="#F3BFD0" font-family="'Inter', system-ui, sans-serif" font-size="12" font-weight="700" letter-spacing="2" text-anchor="middle">ПОДАЧА ОТ 2 ЧАСОВ · 1.5–3.5 Т</text>
+
+    <!-- Side Cargo Sliding Door seam -->
+    <line x1="280" y1="35" x2="280" y2="205" stroke="#48141F" stroke-width="2"/>
+    <rect x="290" y="110" width="12" height="6" rx="1.5" fill="#FAF8F5"/>
+
+    <!-- Express Priority Badge on Rear -->
+    <g transform="translate(420, 42)">
+      <rect width="58" height="22" rx="3" fill="#3D134D" stroke="#BB52DE" stroke-width="1.2"/>
+      <text x="29" y="15" fill="#FAF8F5" font-family="'Inter', system-ui, sans-serif" font-size="9" font-weight="800" text-anchor="middle" letter-spacing="1">PRIORITY</text>
+    </g>
+
+    <!-- Headlight beam & unit -->
+    <path d="M 55 140 L 70 140 L 70 165 L 55 165 Z" fill="#FFF8E0" filter="drop-shadow(0 0 10px #FFF8E0)"/>
+    <!-- Headlight Projection Beam on Road -->
+    <polygon points="55,152 -180,240 -120,260 55,160" fill="url(#se_beam_glow)" opacity="0.35"/>
+    <rect x="50" y="170" width="30" height="35" rx="3" fill="#161214"/>
+
+    <!-- Wheels -->
+    <g fill="#100E0D" stroke="#3A3532" stroke-width="4">
+      <circle cx="140" cy="225" r="28"/>
+      <circle cx="420" cy="225" r="28"/>
+      <!-- Hubcaps -->
+      <circle cx="140" cy="225" r="11" fill="#24201E" stroke="#5A524C" stroke-width="2"/>
+      <circle cx="420" cy="225" r="11" fill="#24201E" stroke="#5A524C" stroke-width="2"/>
+    </g>
+  </g>
+
+  <!-- Projection Beam Gradient -->
+  <defs>
+    <linearGradient id="se_beam_glow" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFF8E0" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#FFF8E0" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+</svg>

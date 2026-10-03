@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f3f5f4">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Диспетчерская ASMA Lines</title>
+  <link rel="icon" href="assets/brand/asma-mark.svg">
+  <link rel="stylesheet" href="assets/crm-next.css?v=20260930_v2">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div class="crm-app" id="crm-app">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="ASMA Lines, на сайт">
+        <img src="assets/brand/asma-mark.svg" alt="">
+        <span><strong>ASMA Lines</strong><small>Диспетчерская</small></span>
+      </a>
+      <div class="top-actions" id="top-actions" hidden>
+        <span class="operator" id="operator-name">Telegram CRM</span>
+        <button class="button" id="btn-access" type="button" hidden>Доступ</button>
+        <button class="icon-button" id="btn-refresh" type="button" aria-label="Обновить заявки" title="Обновить">↻</button>
+        <button class="button button--primary" id="btn-new" type="button">+ Заявка</button>
+      </div>
+    </header>
+
+    <section class="gate" id="crm-loading" role="status">
+      <div class="gate-panel"><img src="assets/brand/asma-mark.svg" alt=""><h1>Подключение диспетчерской</h1><p>Проверяем доступ и загружаем общую базу заявок.</p></div>
+    </section>
+    <section class="gate" id="crm-offline" hidden>
+      <div class="gate-panel"><img src="assets/brand/asma-mark.svg" alt=""><h1>База временно недоступна</h1><p>Данные не загружены. Повторите попытку, когда соединение восстановится.</p><p style="margin-top:16px"><button class="button button--primary" id="btn-retry" type="button">Повторить</button></p></div>
+    </section>
+
+    <main class="main" id="crm-content" hidden>
+      <section class="page-heading" aria-labelledby="page-title">
+        <div><h1 id="page-title">Заявки</h1><p>Сайт, калькулятор и Telegram в одной очереди</p></div>
+        <span class="connection" id="connection-status" data-state="offline" role="status">Подключаемся</span>
+      </section>
+      <section class="metrics" id="status-filters" aria-label="Фильтр по статусу">
+        <button class="metric" type="button" data-filter="all" aria-pressed="false"><span>Все заявки</span><strong data-count="all">0</strong></button>
+        <button class="metric" type="button" data-filter="new" aria-pressed="true"><span>Новые</span><strong data-count="new">0</strong></button>
+        <button class="metric" type="button" data-filter="processing" aria-pressed="false"><span>В работе</span><strong data-count="processing">0</strong></button>
+        <button class="metric" type="button" data-filter="transit" aria-pressed="false"><span>В рейсе</span><strong data-count="transit">0</strong></button>
+        <button class="metric" type="button" data-filter="completed" aria-pressed="false"><span>Завершены</span><strong data-count="completed">0</strong></button>
+      </section>
+      <section class="toolbar" aria-label="Поиск заявок">
+        <input class="search" id="search" type="search" placeholder="Имя, телефон, маршрут, номер заявки" autocomplete="off">
+        <span class="lead-count" id="lead-count">0 заявок</span>
+      </section>
+      <section class="lead-list" id="lead-list" aria-live="polite"></section>
+      <section class="empty" id="empty-state" hidden><strong>Заявок не найдено</strong><p>Измените фильтр или поисковый запрос.</p></section>
+    </main>
+
+    <section class="gate" id="crm-gate" hidden>
+      <div class="gate-panel">
+        <img src="assets/brand/asma-mark.svg" alt="ASMA Lines">
+        <h1>Диспетчерская закрыта</h1>
+        <p id="gate-message">Откройте диспетчерскую через Telegram-бот ASMA Lines.</p>
+        <p style="margin-top:16px"><a class="button button--primary" href="https://t.me/asmalinesbot?start=crm">Открыть Telegram</a></p>
+      </div>
+    </section>
+  </div>
+
+  <dialog class="dialog" id="lead-dialog">
+    <form id="lead-form">
+      <header class="dialog-head"><h2>Новая заявка</h2><button class="icon-button" data-close type="button" aria-label="Закрыть">×</button></header>
+      <div class="dialog-body">
+        <label class="field">Клиент / компания<input name="name" maxlength="160" required></label>
+        <div class="field-grid">
+          <label class="field">Телефон или Telegram<input name="contact" maxlength="120" required></label>
+          <label class="field">Email<input name="email" type="email" maxlength="160"></label>
+        </div>
+        <label class="field">Маршрут<input name="route" maxlength="240" placeholder="Минск → Брест"></label>
+        <div class="field-grid">
+          <label class="field">Транспорт<input name="vehicle" maxlength="120"></label>
+          <label class="field">Вес / объём<input name="weight" maxlength="80"></label>
+        </div>
+        <label class="field">Ориентир стоимости<input name="price" maxlength="80"></label>
+        <label class="field">Комментарий<textarea name="comment" maxlength="1500"></textarea></label>
+      </div>
+      <footer class="dialog-actions"><button class="button" data-close type="button">Отмена</button><button class="button button--primary" type="submit">Создать заявку</button></footer>
+    </form>
+  </dialog>
+
+  <dialog class="dialog" id="access-dialog">
+    <header class="dialog-head"><h2>Доступ диспетчеров</h2><button class="icon-button" data-close type="button" aria-label="Закрыть">×</button></header>
+    <div class="dialog-body">
+      <ul class="access-list" id="access-list"></ul>
+      <form id="access-form" class="dialog-body" style="padding:0">
+        <div class="field-grid">
+          <label class="field">Telegram username<input name="username" placeholder="@username"></label>
+          <label class="field">Telegram ID<input name="id" inputmode="numeric" placeholder="123456789"></label>
+        </div>
+        <label class="field">Имя<input name="name" maxlength="100"></label>
+        <div><button class="button button--primary" type="submit">Выдать доступ</button></div>
+      </form>
+    </div>
+  </dialog>
+
+  <details class="diagnostics" id="diagnostic-panel">
+    <summary>Состояние системы <span id="diag-leads-count">0 заявок</span></summary>
+    <div id="diagnostic-log-area" class="diagnostic-log" role="log" aria-live="polite">
+      <div class="diagnostic-head"><span>ЖУРНАЛ CRM</span><span>LIVE</span></div>
+      <div id="diag-output-console"></div>
+    </div>
+  </details>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="assets/crm-next.js?v=20260930_v2"></script>
+</body>
+</html>
