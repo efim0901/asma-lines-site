@@ -26,10 +26,12 @@ TELEGRAM_WEBHOOK_SECRET=
 SETUP_TOKEN=
 
 # Публичный адрес CRM для кнопки в боте.
-CRM_APP_URL=https://asmalines.by/crm.html
+CRM_APP_URL=https://asma-lines-site.firws.workers.dev/crm.html
 
-# Разрешённые источники для CORS (через запятую). Пусто = только домены проекта.
-ALLOWED_ORIGINS=https://asmalines.by,https://www.asmalines.by
+# Разрешённые источники для CORS (через запятую).
+# По умолчанию разрешается собственный origin запроса, поэтому для работы
+# самого сайта переменная не нужна — задавайте только для сторонних сайтов.
+ALLOWED_ORIGINS=
 
 # ── Необязательные ────────────────────────────────────────────────────
 # Ключ Yandex Geocoder. Без него используется бесплатный OpenStreetMap Nominatim.
