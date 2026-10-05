@@ -23,7 +23,7 @@
     "db:create": "wrangler d1 create asma-lines",
     "db:migrate": "wrangler d1 execute asma-lines --remote --file=./schema.sql",
     "db:migrate:local": "wrangler d1 execute asma-lines --local --file=./schema.sql",
-    "deploy": "wrangler pages deploy .",
+    "deploy": "wrangler deploy",
     "og:build": "python _tools/make_og_cover.py"
   },
   "dependencies": {
