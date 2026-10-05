@@ -266,6 +266,8 @@ app.post(
       lead.leadNumber = await store.nextLeadNumber();
       lead.status = isValidStatus(req.body.lead?.status) ? req.body.lead.status : 'new';
       lead.source = lead.source || 'crm_manual';
+      // Заявку завёл диспетчер — он же её и ведёт (см. поле «Диспетчер» в CRM).
+      lead.dispatcher = operatorName;
       lead.createdAt = new Date().toISOString();
       lead.updatedAt = lead.createdAt;
       lead.notes = [
@@ -286,7 +288,12 @@ app.post(
         },
         ...(current.notes || [])
       ].slice(0, 500);
-      await store.updateLead(current.id, { status, notes });
+      const patch = { status, notes };
+      // «Взять в работу»: вместе со статусом заявка закрепляется за диспетчером.
+      if (req.body.dispatcher !== undefined) {
+        patch.dispatcher = String(req.body.dispatcher || '').trim().slice(0, 80) || null;
+      }
+      await store.updateLead(current.id, patch);
     } else if (action === 'add_note') {
       const text = String(req.body.note || '').trim().slice(0, 2000);
       if (!text) throw new ValidationError('Текст заметки пуст', 'note');
