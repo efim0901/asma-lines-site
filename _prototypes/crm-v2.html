@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASMA Lines — прототип диспетчерской</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* ============================================================
+   Прототип нового интерфейса диспетчерской ASMA Lines.
+   Это МАКЕТ, а не рабочий код: данные вымышленные, API не вызывается.
+   Цель — согласовать структуру и вид до того, как переписывать crm-next.js.
+
+   Что изменено по сравнению с текущей CRM (см. README рядом):
+   — три зоны вместо одной колонки: разделы, список, карточка заявки;
+   — табличный список: видно 12 заявок вместо 4 при той же высоте;
+   — карточка заявки открывается сбоку, не нужно искать кнопки в строке;
+   — шкала этапов вместо выпадающего списка;
+   — заявки старше 2 часов подсвечиваются, есть предупреждение о простое.
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  /* Бренд: соответствует палитре сайта (style.css) */
+  --brand: #8B2536;
+  --brand-dark: #6B1E2D;
+  --brand-soft: #FBF2F4;
+  --brand-line: #EBD9DD;
+  --gold: #B8860B;
+
+  /* Нейтральные */
+  --bg: #F6F3EF;
+  --surface: #FFFFFF;
+  --surface-2: #FBF9F7;
+  --ink: #1A1817;
+  --ink-2: #4A4441;
+  --muted: #7D746E;
+  --line: #E5DED7;
+
+  /* Статусы */
+  --st-new: #2866A0;
+  --st-processing: #B8860B;
+  --st-transit: #19786D;
+  --st-completed: #237B50;
+  --st-cancelled: #9A9A9A;
+
+  --radius: 10px;
+  --shadow-sm: 0 1px 2px rgba(26,24,23,.05);
+  --shadow: 0 8px 24px rgba(26,24,23,.07);
+  --shadow-lg: 0 20px 50px rgba(26,24,23,.12);
+  --font: 'Manrope', system-ui, -apple-system, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 14px/1.5 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+input { font: inherit; }
+[hidden] { display: none !important; }
+
+/* ---------- Каркас ---------- */
+.app { display: grid; grid-template-columns: 232px minmax(0, 1fr) 396px; min-height: 100vh; }
+
+/* ---------- Боковая панель ---------- */
+.side {
+  display: flex; flex-direction: column; gap: 22px;
+  padding: 18px 14px 22px;
+  background: #FFFDFC;
+  border-right: 1px solid var(--line);
+}
+.side__brand { display: flex; align-items: center; gap: 10px; padding: 2px 6px 0; }
+.side__mark {
+  display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto;
+  border-radius: 9px; background: linear-gradient(135deg, #A62C40, var(--brand)); color: #fff;
+  font-weight: 800; font-size: 16px;
+}
+.side__brand b { display: block; font-size: 14px; letter-spacing: -.01em; }
+.side__brand span { display: block; color: var(--muted); font: 600 9.5px var(--mono); text-transform: uppercase; letter-spacing: .07em; }
+
+.side__label {
+  padding: 0 8px; margin-bottom: 7px;
+  color: var(--muted); font: 700 9.5px var(--mono); text-transform: uppercase; letter-spacing: .1em;
+}
+.nav { display: grid; gap: 1px; }
+.nav__item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 10px; border-radius: 7px;
+  color: var(--ink-2); font-size: 13px; font-weight: 600; text-align: left;
+  transition: background .14s, color .14s;
+}
+.nav__item:hover { background: var(--surface-2); }
+.nav__item[aria-current="true"] { background: var(--brand-soft); color: var(--brand); font-weight: 700; }
+.nav__dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: var(--st-new); }
+.nav__item[data-status="processing"] .nav__dot { background: var(--st-processing); }
+.nav__item[data-status="transit"] .nav__dot { background: var(--st-transit); }
+.nav__item[data-status="completed"] .nav__dot { background: var(--st-completed); }
+.nav__item[data-status="cancelled"] .nav__dot { background: var(--st-cancelled); }
+.nav__count { margin-left: auto; color: var(--muted); font: 600 11px var(--mono); }
+.nav__item[aria-current="true"] .nav__count { color: var(--brand); }
+
+.side__alert {
+  margin-top: auto; padding: 11px 12px;
+  border: 1px solid #F0DDC0; border-radius: 8px; background: #FDF7EC;
+  color: #6B4A12; font-size: 11.5px; line-height: 1.45;
+}
+.side__alert b { display: block; margin-bottom: 3px; color: #8A5B0B; font-size: 12px; }
+
+/* ---------- Список заявок ---------- */
+.list-pane { display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
+.topbar {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 20px; background: rgba(255,255,255,.9);
+  border-bottom: 1px solid var(--line); backdrop-filter: blur(10px);
+  position: sticky; top: 0; z-index: 4;
+}
+.search { position: relative; flex: 1; min-width: 0; }
+.search input {
+  width: 100%; height: 40px; padding: 0 12px 0 36px;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink);
+  font-size: 13px; outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.search input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(139,37,54,.1); }
+.search svg { position: absolute; left: 12px; top: 50%; width: 15px; height: 15px; transform: translateY(-50%); color: var(--muted); }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 14px;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
+  color: var(--ink); font-size: 12.5px; font-weight: 700;
+  transition: background .15s, border-color .15s;
+}
+.btn:hover { background: var(--surface-2); border-color: #D6CCC3; }
+.btn--primary { border-color: var(--brand); background: var(--brand); color: #fff; }
+.btn--primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+.btn--icon { width: 40px; padding: 0; justify-content: center; font-size: 15px; color: var(--ink-2); }
+
+.conn { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font: 500 11px var(--mono); white-space: nowrap; }
+.conn i { width: 7px; height: 7px; border-radius: 50%; background: var(--st-completed); box-shadow: 0 0 0 3px rgba(35,123,80,.14); }
+
+.table-head, .row {
+  /* Сумма минимумов подобрана так, чтобы таблица помещалась в узкую
+     центральную колонку (900–1000px) без наползания ячеек. */
+  display: grid; grid-template-columns: 56px minmax(110px, 1.5fr) minmax(110px, 1.25fr) 96px 112px 100px 86px;
+  gap: 12px; align-items: center;
+}
+.table-head {
+  padding: 9px 20px; border-bottom: 1px solid var(--line);
+  color: var(--muted); font: 700 9.5px var(--mono); text-transform: uppercase; letter-spacing: .08em;
+  position: sticky; top: 68px; z-index: 3; background: var(--bg);
+}
+.rows { overflow-y: auto; flex: 1; padding-bottom: 20px; }
+.row {
+  padding: 12px 20px; border-bottom: 1px solid var(--line);
+  cursor: pointer; transition: background .12s;
+}
+.row:hover { background: var(--surface); }
+.row[aria-selected="true"] { background: var(--brand-soft); box-shadow: inset 3px 0 var(--brand); }
+.row__num { color: var(--brand); font: 600 12px var(--mono); }
+.row__num small { display: block; margin-top: 2px; color: var(--muted); font: 500 9.5px var(--mono); }
+.row__client { min-width: 0; }
+.row__client b { display: block; overflow: hidden; font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.row__client span { display: block; overflow: hidden; margin-top: 2px; color: var(--muted); font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+.row__route { min-width: 0; font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row__route span { display: block; overflow: hidden; margin-top: 2px; color: var(--muted); font-size: 11px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.row__price { font: 600 12.5px var(--mono); color: var(--ink); white-space: nowrap; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 9px; border-radius: 20px; border: 1px solid;
+  font-size: 10.5px; font-weight: 700; white-space: nowrap;
+}
+.row__head, .row__lower { display: contents; } /* на десктопе дети участвуют в сетке напрямую */
+.row__status, .row__dispatcher, .row__num, .row__age { min-width: 0; }
+.row__dispatcher b { display: block; overflow: hidden; font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.chip i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.chip[data-status="new"] { border-color: #C6DBF0; background: #F2F7FC; color: #1E5288; }
+.chip[data-status="processing"] { border-color: #F0DCA8; background: #FDF7E6; color: #8A5B0B; }
+.chip[data-status="transit"] { border-color: #BEE0DA; background: #EEF8F6; color: #12665C; }
+.chip[data-status="completed"] { border-color: #BFE0CB; background: #EFF8F2; color: #1D6642; }
+.chip[data-status="cancelled"] { border-color: #E0DAD5; background: #F5F3F1; color: #6E665F; }
+
+.age { font: 500 11px var(--mono); color: var(--muted); }
+.age--overdue { color: #A8322F; font-weight: 600; }
+.age--overdue::before { content: '⚠ '; }
+
+/* ---------- Карточка заявки ---------- */
+.detail {
+  display: flex; flex-direction: column;
+  background: var(--surface); border-left: 1px solid var(--line);
+  min-width: 0;
+}
+.detail__head { padding: 16px 18px 0; }
+.detail__title { display: flex; align-items: flex-start; gap: 10px; }
+.detail__title h2 { margin: 0; font-size: 17px; line-height: 1.25; letter-spacing: -.015em; }
+.detail__title p { margin: 5px 0 0; color: var(--muted); font-size: 11.5px; }
+.detail__close { margin-left: auto; color: var(--muted); font-size: 19px; line-height: 1; padding: 4px 6px; border-radius: 6px; }
+.detail__close:hover { background: var(--surface-2); color: var(--ink); }
+
+/* Шкала этапов */
+.steps { display: flex; gap: 3px; margin: 16px 0 0; }
+.steps__step { flex: 1; text-align: center; }
+.steps__bar { height: 4px; border-radius: 3px; background: var(--line); transition: background .2s; }
+.steps__step[data-state="done"] .steps__bar { background: var(--st-completed); }
+.steps__step[data-state="current"] .steps__bar { background: var(--brand); }
+.steps__label { display: block; margin-top: 6px; color: var(--muted); font-size: 9.5px; font-weight: 700; }
+.steps__step[data-state="current"] .steps__label { color: var(--brand); }
+.steps__step[data-state="done"] .steps__label { color: var(--ink-2); }
+
+/* Вкладки */
+.tabs { display: flex; gap: 2px; margin: 16px 0 0; padding: 0 18px; border-bottom: 1px solid var(--line); }
+.tab { padding: 9px 11px; border-bottom: 2px solid transparent; color: var(--muted); font-size: 12px; font-weight: 700; }
+.tab:hover { color: var(--ink-2); }
+.tab[aria-selected="true"] { border-color: var(--brand); color: var(--brand); }
+
+.detail__body { overflow-y: auto; padding: 16px 18px 24px; flex: 1; }
+.panel[hidden] { display: none; }
+
+/* Список фактов */
+.facts { display: grid; gap: 1px; margin: 0 0 16px; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: var(--line); }
+.fact { display: grid; grid-template-columns: 118px minmax(0, 1fr); gap: 10px; padding: 9px 12px; background: var(--surface); font-size: 12.5px; }
+.fact dt { color: var(--muted); font-size: 11.5px; }
+.fact dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.fact dd a { color: var(--brand); text-decoration: none; border-bottom: 1px solid var(--brand-line); }
+
+.section-title {
+  margin: 18px 0 9px; color: var(--muted);
+  font: 700 9.5px var(--mono); text-transform: uppercase; letter-spacing: .1em;
+}
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.actions .btn { width: 100%; justify-content: center; }
+.actions .btn--wide { grid-column: 1 / -1; }
+
+/* Лента заметок */
+.feed { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.feed li { position: relative; padding-left: 18px; }
+.feed li::before {
+  content: ''; position: absolute; left: 2px; top: 5px; width: 7px; height: 7px;
+  border: 2px solid var(--brand-line); border-radius: 50%; background: var(--surface);
+}
+.feed li[data-kind="status"]::before { border-color: var(--brand); background: var(--brand); }
+.feed__meta { display: flex; gap: 8px; align-items: baseline; }
+.feed__meta b { font-size: 12px; }
+.feed__meta time { color: var(--muted); font: 500 10px var(--mono); }
+.feed p { margin: 3px 0 0; color: var(--ink-2); font-size: 12px; }
+.note-form { display: grid; gap: 7px; margin-top: 14px; }
+.note-form textarea {
+  min-height: 68px; padding: 9px 11px; resize: vertical;
+  border: 1px solid var(--line); border-radius: 8px; font-size: 12.5px; outline: none;
+}
+.note-form textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(139,37,54,.1); }
+
+/* Заглушка выбранной заявки */
+.detail__empty { display: grid; place-items: center; height: 100%; padding: 30px; text-align: center; color: var(--muted); }
+.detail__empty b { display: block; margin-bottom: 6px; color: var(--ink-2); font-size: 14px; }
+
+/* ---------- Мобильная версия ---------- */
+.mobile-only { display: none; }
+
+@media (max-width: 1180px) {
+  .app { grid-template-columns: 200px minmax(0, 1fr); }
+  .detail { display: none; }
+}
+@media (max-width: 820px) {
+  .app { grid-template-columns: 1fr; }
+  .side, .table-head { display: none; }
+  .mobile-only { display: block; }
+  .topbar { padding: 12px 14px; gap: 10px; }
+  .topbar .conn { display: none; }
+  .rows { padding-bottom: 76px; }
+
+  /* На телефоне — карточки вместо таблицы.
+     Раскладка на flex: грид-области на узком экране давали наложение
+     имени клиента и диспетчера. */
+  .row {
+    display: flex; flex-direction: column; gap: 0;
+    padding: 14px 15px; border-radius: 12px; margin: 0 12px 10px;
+    background: var(--surface); border: 1px solid var(--line);
+  }
+  .row[aria-selected="true"] { box-shadow: inset 3px 0 var(--brand), var(--shadow-sm); }
+
+  .row__head { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }  .row__num { font-size: 12.5px; }
+  .row__num small { display: inline; margin: 0 0 0 7px; color: var(--muted); font: 500 10px var(--mono); }
+  .row__head .row__status { margin-left: auto; }
+
+  .row__client b { font-size: 15px; letter-spacing: -.01em; }
+  .row__client span { font-size: 12.5px; margin-top: 3px; }
+  .row__dispatcher { display: none; }
+
+  .row__lower { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 11px; }
+  .row__route { font-size: 13.5px; }
+  .row__route span { font-size: 11.5px; }
+  .row__price { font-size: 14px; white-space: nowrap; }
+  .row__age { margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--line); }
+
+  .mobile-nav {
+    position: fixed; inset: auto 0 0 0; z-index: 6;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    background: rgba(255,255,255,.96); border-top: 1px solid var(--line);
+    backdrop-filter: blur(12px);
+  }
+  .mobile-nav button {
+    display: grid; justify-items: center; gap: 3px; padding: 6px 2px;
+    border-radius: 8px; color: var(--muted); font-size: 9.5px; font-weight: 700;
+  }
+  .mobile-nav button[aria-current="true"] { background: var(--brand-soft); color: var(--brand); }
+  .mobile-nav b { font-size: 15px; font-weight: 700; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ================= Разделы ================= -->
+  <aside class="side">
+    <div class="side__brand">
+      <span class="side__mark">A</span>
+      <span><b>ASMA Lines</b><span>Диспетчерская</span></span>
+    </div>
+
+    <div>
+      <div class="side__label">Очередь</div>
+      <nav class="nav" id="nav">
+        <button class="nav__item" data-status="all" aria-current="true"><i class="nav__dot" style="background:var(--brand)"></i>Все заявки<span class="nav__count" data-count="all">7</span></button>
+        <button class="nav__item" data-status="new"><i class="nav__dot"></i>Новые<span class="nav__count" data-count="new">2</span></button>
+        <button class="nav__item" data-status="processing"><i class="nav__dot"></i>В работе<span class="nav__count" data-count="processing">2</span></button>
+        <button class="nav__item" data-status="transit"><i class="nav__dot"></i>В рейсе<span class="nav__count" data-count="transit">1</span></button>
+        <button class="nav__item" data-status="completed"><i class="nav__dot"></i>Завершены<span class="nav__count" data-count="completed">1</span></button>
+        <button class="nav__item" data-status="cancelled"><i class="nav__dot"></i>Отменены<span class="nav__count" data-count="cancelled">1</span></button>
+      </nav>
+    </div>
+
+    <div>
+      <div class="side__label">Справочники</div>
+      <nav class="nav">
+        <button class="nav__item">Автопарк и водители</button>
+        <button class="nav__item">Тарифы и маршруты</button>
+        <button class="nav__item">Доступ диспетчеров</button>
+      </nav>
+    </div>
+
+    <div class="side__alert">
+      <b>⚠ 2 заявки ждут ответа</b>
+      №104 без ответа 2 ч 40 мин, №107 — 1 ч 15 мин.
+    </div>
+  </aside>
+
+  <!-- ================= Список ================= -->
+  <main class="list-pane">
+    <div class="topbar">
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" id="search" placeholder="Имя, телефон, маршрут или номер заявки" autocomplete="off">
+      </label>
+      <span class="conn"><i></i>Синхронизировано</span>
+      <button class="btn btn--icon" title="Обновить" aria-label="Обновить">↻</button>
+      <button class="btn btn--primary">+ Заявка</button>
+    </div>
+
+    <div class="table-head">
+      <span>№</span><span>Клиент</span><span>Маршрут</span><span>Ставка</span><span>Статус</span><span>Диспетчер</span><span>В очереди</span>
+    </div>
+
+    <div class="rows" id="rows"></div>
+
+    <nav class="mobile-nav mobile-only" aria-label="Разделы">
+      <button aria-current="true"><b>☰</b>Заявки</button>
+      <button><b>🚚</b>Рейсы</button>
+      <button><b>₽</b>Тарифы</button>
+      <button><b>👤</b>Профиль</button>
+    </nav>
+  </main>
+
+  <!-- ================= Карточка заявки ================= -->
+  <section class="detail" id="detail">
+    <div class="detail__head">
+      <div class="detail__title">
+        <div>
+          <h2 id="d-title">дмитрий язотченко</h2>
+          <p id="d-sub">Заявка №104 · сайт, калькулятор · создана 5 октября, 11:17</p>
+        </div>
+        <button class="detail__close" aria-label="Закрыть карточку">×</button>
+      </div>
+
+      <div class="steps" id="steps">
+        <div class="steps__step" data-state="done"><div class="steps__bar"></div><span class="steps__label">Новая</span></div>
+        <div class="steps__step" data-state="current"><div class="steps__bar"></div><span class="steps__label">В работе</span></div>
+        <div class="steps__step"><div class="steps__bar"></div><span class="steps__label">В рейсе</span></div>
+        <div class="steps__step"><div class="steps__bar"></div><span class="steps__label">Завершена</span></div>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-tab="info">Заявка</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="feed">История</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="docs">Документы</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="money">Оплата</button>
+    </div>
+
+    <div class="detail__body">
+      <!-- Заявка -->
+      <div class="panel" data-panel="info">
+        <dl class="facts">
+          <div class="fact"><dt>Клиент</dt><dd id="f-name">дмитрий язотченко</dd></div>
+          <div class="fact"><dt>Телефон</dt><dd><a href="tel:+375293054436" id="f-phone">+375 (29) 305-44-36</a></dd></div>
+          <div class="fact"><dt>Маршрут</dt><dd id="f-route">Минск → Брест</dd></div>
+          <div class="fact"><dt>Расстояние</dt><dd id="f-dist">350 км</dd></div>
+          <div class="fact"><dt>Груз</dt><dd id="f-cargo">2.5 т · до 14 м³</dd></div>
+          <div class="fact"><dt>Транспорт</dt><dd id="f-vehicle">Газель</dd></div>
+          <div class="fact"><dt>Ставка</dt><dd id="f-price">708 BYN <span style="color:var(--muted);font-weight:500">(расчёт клиента)</span></dd></div>
+          <div class="fact"><dt>Комментарий</dt><dd id="f-comment">чтобы разгружал Прокопенко</dd></div>
+        </dl>
+
+        <div class="section-title">Действия</div>
+        <div class="actions">
+          <button class="btn">📞 Позвонить</button>
+          <button class="btn">💬 Написать в TG</button>
+          <button class="btn">🚚 Подобрать авто</button>
+          <button class="btn">💰 Согласовать ставку</button>
+          <button class="btn btn--wide">📄 Договор-заявка</button>
+        </div>
+      </div>
+
+      <!-- История -->
+      <div class="panel" data-panel="feed" hidden>
+        <ul class="feed">
+          <li data-kind="status">
+            <div class="feed__meta"><b>Иван Ефимович</b><time>сегодня, 14:02</time></div>
+            <p>Статус изменён: «В работе»</p>
+          </li>
+          <li>
+            <div class="feed__meta"><b>Иван Ефимович</b><time>сегодня, 13:48</time></div>
+            <p>Позвонил, просит подачу к 9:00. Уточнил, что разгрузка через Прокопенко.</p>
+          </li>
+          <li>
+            <div class="feed__meta"><b>Система</b><time>сегодня, 11:17</time></div>
+            <p>Заявка поступила с сайта (calculator_modal), ставка рассчитана сервером</p>
+          </li>
+        </ul>
+        <form class="note-form" onsubmit="return false">
+          <textarea placeholder="Добавить заметку по заявке"></textarea>
+          <button class="btn btn--primary">Сохранить заметку</button>
+        </form>
+      </div>
+
+      <!-- Документы -->
+      <div class="panel" data-panel="docs" hidden>
+        <dl class="facts">
+          <div class="fact"><dt>Договор-заявка</dt><dd style="color:var(--muted)">не создан</dd></div>
+          <div class="fact"><dt>ТТН</dt><dd style="color:var(--muted)">не создан</dd></div>
+          <div class="fact"><dt>Экспедиторская расписка</dt><dd style="color:var(--muted)">не создан</dd></div>
+        </dl>
+        <div class="section-title">Создать</div>
+        <div class="actions">
+          <button class="btn">Договор-заявка</button>
+          <button class="btn">ТТН</button>
+          <button class="btn btn--wide">Отправить клиенту в Telegram</button>
+        </div>
+      </div>
+
+      <!-- Оплата -->
+      <div class="panel" data-panel="money" hidden>
+        <dl class="facts">
+          <div class="fact"><dt>Ставка клиенту</dt><dd>820 BYN <span style="color:var(--muted);font-weight:500">с НДС</span></dd></div>
+          <div class="fact"><dt>Ставка перевозчику</dt><dd style="color:var(--muted)">не выбрана</dd></div>
+          <div class="fact"><dt>Маржа</dt><dd style="color:var(--muted)">—</dd></div>
+          <div class="fact"><dt>Статус оплаты</dt><dd>не выставлен счёт</dd></div>
+        </dl>
+        <div class="section-title">Оформление</div>
+        <div class="actions">
+          <button class="btn">Выбрать перевозчика</button>
+          <button class="btn">Выставить счёт</button>
+          <button class="btn btn--wide">Отметить оплату</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* Демонстрационные данные. Поля соответствуют реальной схеме D1. */
+const STATUS = {
+  new: 'Новая', processing: 'В работе', transit: 'В рейсе',
+  completed: 'Завершена', cancelled: 'Отменена'
+};
+
+const LEADS = [
+  { num: 104, client: 'дмитрий язотченко', phone: '+375 (29) 305-44-36', route: 'Минск → Брест', dist: '350 км',
+    price: '708 BYN', status: 'new', dispatcher: 'не назначен', age: '2 ч 40 мин', overdue: true, source: 'калькулятор',
+    cargo: '2.5 т · до 14 м³', vehicle: 'Газель', comment: 'чтобы разгружал Прокопенко' },
+  { num: 105, client: 'ООО «Белтранс-Логистик»', phone: '+375 (17) 200-14-58', route: 'Гомель → Витебск', dist: '335 км',
+    price: '1 240 BYN', status: 'new', dispatcher: 'не назначен', age: '58 мин', overdue: false, source: 'партнёры',
+    cargo: '18 т · 82 м³', vehicle: 'Тент 20 т', comment: 'нужен боковой доступ' },
+  { num: 103, client: 'Иван Ефимович', phone: '+375 (29) 388-61-55', route: 'Минск → Витебск', dist: '280 км',
+    price: '690 BYN', status: 'processing', dispatcher: 'Иван', age: '3 ч', overdue: true, source: 'сайт',
+    cargo: '5 т · 30 м³', vehicle: 'Изотерм 6 т', comment: 'уточнить время подачи' },
+  { num: 102, client: 'Иван Ефимович', phone: '+375 (29) 388-61-55', route: 'Гомель → Брест', dist: '645 км',
+    price: '1 473 BYN', status: 'processing', dispatcher: 'Дима', age: '1 д 2 ч', overdue: false, source: 'калькулятор',
+    cargo: '18 т · 86 м³', vehicle: 'Тент 20 т', comment: '—' },
+  { num: 106, client: 'ЧП «АгроСервис»', phone: '+375 (33) 412-77-90', route: 'Брест → Гродно', dist: '260 км',
+    price: '860 BYN', status: 'transit', dispatcher: 'Лля', age: '5 ч', overdue: false, source: 'телефон',
+    cargo: '10 т · 45 м³', vehicle: 'Тент 10 т', comment: 'водитель Сергей, +375 29 771-22-14' },
+  { num: 101, client: 'Тест Заказчик', phone: '+375 (29) 123-45-67', route: 'Минск → Брест', dist: '350 км',
+    price: '1 200 BYN', status: 'completed', dispatcher: 'Иван', age: 'закрыта', overdue: false, source: 'калькулятор',
+    cargo: '18 т · 86 м³', vehicle: 'Тент 20 т', comment: 'доставлено в срок' },
+  { num: 100, client: 'ООО «Мясокомбинат»', phone: '+375 (29) 640-11-08', route: 'Гомель → Могилёв', dist: '180 км',
+    price: '590 BYN', status: 'cancelled', dispatcher: 'Дима', age: 'отменена', overdue: false, source: 'сайт',
+    cargo: 'реф · 8 т', vehicle: 'Рефрижератор', comment: 'клиент перенёс рейс' }
+];
+
+let activeFilter = 'all';
+let activeQuery = '';
+let selected = LEADS[0];
+
+const rows = document.getElementById('rows');
+const nav = document.getElementById('nav');
+const search = document.getElementById('search');
+
+function visible() {
+  return LEADS.filter((lead) => {
+    const okStatus = activeFilter === 'all' || lead.status === activeFilter;
+    const haystack = `${lead.num} ${lead.client} ${lead.phone} ${lead.route} ${lead.dispatcher}`.toLowerCase();
+    return okStatus && (!activeQuery || haystack.includes(activeQuery));
+  });
+}
+
+function initials(text) {
+  return text.replace(/[«»"]/g, '').split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+}
+
+function renderRows() {
+  const list = visible();
+  rows.innerHTML = list.map((lead) => `
+    <article class="row" role="row" tabindex="0" data-num="${lead.num}"
+             aria-selected="${selected && selected.num === lead.num}">
+      <div class="row__head">
+        <div class="row__num">№${lead.num}<small>${lead.source}</small></div>
+        <div class="row__status"><span class="chip" data-status="${lead.status}"><i></i>${STATUS[lead.status]}</span></div>
+      </div>
+      <div class="row__client"><b>${lead.client}</b><span>${lead.phone}</span></div>
+      <div class="row__lower">
+        <div class="row__route">${lead.route}<span>${lead.dist} · ${lead.cargo}</span></div>
+        <div class="row__price">${lead.price}</div>
+      </div>
+      <div class="row__dispatcher"><b title="${lead.dispatcher}">${lead.dispatcher}</b></div>
+      <div class="row__age"><span class="age ${lead.overdue ? 'age--overdue' : ''}">${lead.age}</span></div>
+    </article>
+  `).join('') || '<p style="padding:40px 20px;color:var(--muted)">Ничего не найдено — измените фильтр или запрос.</p>';
+}
+
+function renderDetail(lead) {
+  if (!lead) return;
+  document.getElementById('d-title').textContent = lead.client;
+  document.getElementById('d-sub').textContent = `Заявка №${lead.num} · ${lead.source} · диспетчер: ${lead.dispatcher}`;
+  document.getElementById('f-name').textContent = lead.client;
+  document.getElementById('f-phone').textContent = lead.phone;
+  document.getElementById('f-phone').href = 'tel:' + lead.phone.replace(/\D/g, '');
+  document.getElementById('f-route').textContent = lead.route;
+  document.getElementById('f-dist').textContent = lead.dist;
+  document.getElementById('f-cargo').textContent = lead.cargo;
+  document.getElementById('f-vehicle').textContent = lead.vehicle;
+  document.getElementById('f-price').textContent = lead.price;
+  document.getElementById('f-comment').textContent = lead.comment;
+
+  const order = ['new', 'processing', 'transit', 'completed'];
+  const index = order.indexOf(lead.status);
+  document.querySelectorAll('#steps .steps__step').forEach((step, i) => {
+    step.dataset.state = lead.status === 'cancelled' ? '' : (i < index ? 'done' : i === index ? 'current' : '');
+  });
+}
+
+/* Выбор заявки */
+rows.addEventListener('click', (event) => {
+  const row = event.target.closest('.row');
+  if (!row) return;
+  selected = LEADS.find((lead) => String(lead.num) === row.dataset.num);
+  renderRows();
+  renderDetail(selected);
+});
+rows.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  const row = event.target.closest('.row');
+  if (row) row.click();
+});
+
+/* Фильтр по разделам */
+nav.addEventListener('click', (event) => {
+  const item = event.target.closest('.nav__item');
+  if (!item) return;
+  activeFilter = item.dataset.status;
+  nav.querySelectorAll('.nav__item').forEach((node) => node.setAttribute('aria-current', String(node === item)));
+  renderRows();
+});
+
+/* Поиск */
+search.addEventListener('input', (event) => {
+  activeQuery = event.target.value.trim().toLowerCase();
+  renderRows();
+});
+
+/* Вкладки карточки */
+document.querySelectorAll('.tab').forEach((tab) => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach((node) => node.setAttribute('aria-selected', String(node === tab)));
+    document.querySelectorAll('.panel').forEach((panel) => {
+      panel.hidden = panel.dataset.panel !== tab.dataset.tab;
+    });
+  });
+});
+
+/* Опрос счётчиков в сайдбаре по факту данных */
+const counts = { all: LEADS.length };
+for (const lead of LEADS) counts[lead.status] = (counts[lead.status] || 0) + 1;
+document.querySelectorAll('.nav__count').forEach((node) => {
+  node.textContent = counts[node.dataset.count] ?? 0;
+});
+
+renderRows();
+renderDetail(selected);
+</script>
+</body>
+</html>

@@ -17,6 +17,8 @@ _tests/
 _tests/**
 _tools/
 _tools/**
+_prototypes/
+_prototypes/**
 data/
 data/**
 functions/
