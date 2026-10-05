@@ -1140,7 +1140,7 @@ function corsHeaders(request, env) {
   const headers = {
     Vary: 'Origin',
     'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Telegram-Init-Data'
+    'Access-Control-Allow-Headers': 'Content-Type, X-Telegram-Init-Data, X-Requested-With'
   };
 
   if (!origin) return headers; // запрос самого сайта — Origin не приходит
@@ -1938,7 +1938,8 @@ export default {
           const secret = verifyWebhookSecret(request.headers.get('x-telegram-bot-api-secret-token'), env);
           if (!secret.ok) return jsonResponse({ ok: false, error: 'Unauthorized' }, 401, cors);
           const update = await readJson(request);
-          const crmAppUrl = env.CRM_APP_URL || `${url.origin}/crm.html`;
+          const crmAppUrl = env.CRM_APP_URL || `${url.origin}/crm`;
+          // /crm.html переадресуется на /crm — используем короткий адрес.
           ctx.waitUntil(handleBotUpdate(update, { store, config, crmAppUrl }));
           return jsonResponse({ ok: true }, 200, cors);
         }

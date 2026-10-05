@@ -43,21 +43,9 @@ document.addEventListener('click', (event) => {
     if (target) target.click();
     return;
   }
-  const docTab = event.target.closest('[data-doc-type]');
-  if (docTab) {
-    event.preventDefault();
-    if (typeof window.setDocType === 'function') window.setDocType(docTab.dataset.docType);
-    return;
-  }
-  if (event.target.closest('[data-action="toggle-edit-mode"]')) {
-    event.preventDefault();
-    if (typeof window.toggleEditMode === 'function') window.toggleEditMode();
-    return;
-  }
-  if (event.target.closest('[data-action="copy-document"]')) {
-    event.preventDefault();
-    if (typeof window.copyDocumentToClipboard === 'function') window.copyDocumentToClipboard();
-  }
+  /* Кнопки и вкладки страницы документа обрабатывает сам order-doc.js:
+     site.js на той странице не подключён, а дублирование обработчиков
+     привело бы к двойным срабатываниям. */
 });
 
 /* sticky header border */

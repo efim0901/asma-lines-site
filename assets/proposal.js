@@ -103,3 +103,17 @@
     }, 350);
   }
 })();
+
+/* Кнопки печатной формы. Раньше они обрабатывались в site.js, но на этой
+   странице site.js не подключён — кнопки просто не реагировали на клики. */
+document.querySelectorAll('[data-action="print"]').forEach(function (button) {
+  button.addEventListener('click', function () {
+    window.print();
+  });
+});
+
+document.querySelectorAll('[data-action="close-window"]').forEach(function (button) {
+  button.addEventListener('click', function () {
+    window.close();
+  });
+});

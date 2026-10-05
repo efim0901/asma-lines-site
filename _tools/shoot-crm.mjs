@@ -149,14 +149,65 @@ const harness = shell
     });
   </script>\n</body>`);
 
+/* ------- Страница защищённого документа: тот же приём со заглушкой ------- */
+
+const DOC_DEMO = JSON.stringify({
+  ok: true,
+  success: true,
+  lead: {
+    id: 'lead-demo',
+    leadNumber: '104',
+    name: 'Дмитрий Язотченко',
+    contact: '+375 29 305-44-36',
+    route: 'Минск → Брест',
+    distance: '350 км',
+    weight: '2.5 т',
+    vehicle: 'Газель',
+    price: '708 BYN',
+    comment: 'Разгрузка через Прокопенко, подача к 9:00',
+    dispatcher: 'Иван Ефимович'
+  },
+  operator: { name: 'Иван Ефимович' }
+});
+
+const DOC_STUB = `
+  const state = new URLSearchParams(location.search).get('state') || '';
+  const payload = ${DOC_DEMO};
+  const realFetch = window.fetch.bind(window);
+  window.fetch = (url, options) => {
+    if (String(url).includes('/api/crm/doc-data')) {
+      if (state === 'gate') {
+        return Promise.resolve(new Response(JSON.stringify({ ok: false, error: 'Требуется авторизация' }), { status: 401, headers: { 'content-type': 'application/json' } }));
+      }
+      return Promise.resolve(new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } }));
+    }
+    return realFetch(url, options);
+  };
+`;
+
+const docShell = fs.readFileSync(path.join(root, 'order-doc.html'), 'utf8');
+const docHarness = docShell
+  .replace('<head>', `<head>\n  <base href="${fileUri(root + path.sep).replace('%5C', '/')}">`)
+  .replace('<script src="assets/order-doc.js', `<script>${DOC_STUB}</script>\n  <script src="assets/order-doc.js`)
+  .replace('</body>', `<script>
+    window.addEventListener('load', () => {
+      const state = new URLSearchParams(location.search).get('state') || '';
+      if (state === 'kp') setTimeout(() => document.getElementById('tab-kp')?.click(), 500);
+      if (state === 'waybill') setTimeout(() => document.getElementById('tab-waybill')?.click(), 500);
+      if (state === 'edit') setTimeout(() => document.querySelector('[data-action="toggle-edit-mode"]')?.click(), 500);
+    });
+  </script>\n</body>`);
+
 const tmpRoot = os.tmpdir();
 fs.mkdirSync(tmpRoot, { recursive: true });
 const profileDir = fs.mkdtempSync(path.join(tmpRoot, 'asma-crm-shot-'));
 
-/* Стенд живёт во временном профиле: в репозитории он не нужен.
+/* Стенды живут во временном профиле: в репозитории они не нужны.
    Относительные пути к ассетам чинит <base href> на корень проекта. */
 const harnessPath = path.join(profileDir, 'crm-harness.html');
 fs.writeFileSync(harnessPath, harness);
+const docHarnessPath = path.join(profileDir, 'doc-harness.html');
+fs.writeFileSync(docHarnessPath, docHarness);
 
 const views = [
   { suffix: 'desktop', width: 1440, height: 900, query: '', note: 'ПК: список и карточка рядом' },
@@ -169,28 +220,42 @@ const views = [
   { suffix: 'login-mobile', width: 390, height: 844, query: '?state=login', note: 'телефон: вход по коду и QR' }
 ];
 
+const docViews = [
+  { suffix: 'doc-order', width: 1280, height: 900, query: '', note: 'документ: договор-заявка' },
+  { suffix: 'doc-kp', width: 1280, height: 900, query: '?state=kp', note: 'документ: вкладка КП' },
+  { suffix: 'doc-waybill', width: 1280, height: 900, query: '?state=waybill', note: 'документ: маршрутное поручение' },
+  { suffix: 'doc-gate', width: 1280, height: 900, query: '?state=gate', note: 'документ: без доступа' }
+];
+
+/** Снимает один кадр; для узких окон оборачивает страницу в iframe. */
+function capture(sourcePath, view, output) {
+  if (fs.existsSync(output)) fs.unlinkSync(output);
+  let url = fileUri(sourcePath) + view.query;
+  if (view.width < 500) {
+    const wrapper = path.join(profileDir, `wrapper-${view.suffix}.html`);
+    fs.writeFileSync(wrapper, `<!doctype html><html><head><meta charset="utf-8"><style>
+      html, body { margin: 0; padding: 0; background: #fff; }
+      iframe { display: block; border: 0; width: ${view.width}px; height: ${view.height}px; }
+    </style></head><body><iframe src="${url}"></iframe></body></html>`);
+    url = fileUri(wrapper);
+  }
+  execFileSync(browser, [
+    '--headless=new', '--disable-gpu', '--hide-scrollbars', '--allow-file-access-from-files',
+    '--force-device-scale-factor=1', `--user-data-dir=${profileDir}`, '--no-first-run',
+    '--no-default-browser-check', `--window-size=${view.width},${view.height}`,
+    '--virtual-time-budget=6000', `--screenshot=${output}`, url
+  ], { stdio: 'ignore' });
+  console.log(fs.existsSync(output)
+    ? `  ${view.suffix.padEnd(14)} ${view.width}×${view.height}  ${Math.round(fs.statSync(output).size / 1024)} КБ  — ${view.note}`
+    : `  ✖ ${view.suffix}: не удалось снять`);
+}
+
 try {
   for (const view of views) {
-    const output = path.join(outDir, `crm-new-${view.suffix}.png`);
-    if (fs.existsSync(output)) fs.unlinkSync(output);
-    let url = fileUri(harnessPath) + view.query;
-    if (view.width < 500) {
-      const wrapper = path.join(profileDir, `wrapper-${view.suffix}.html`);
-      fs.writeFileSync(wrapper, `<!doctype html><html><head><meta charset="utf-8"><style>
-        html, body { margin: 0; padding: 0; background: #fff; }
-        iframe { display: block; border: 0; width: ${view.width}px; height: ${view.height}px; }
-      </style></head><body><iframe src="${url}"></iframe></body></html>`);
-      url = fileUri(wrapper);
-    }
-    execFileSync(browser, [
-      '--headless=new', '--disable-gpu', '--hide-scrollbars', '--allow-file-access-from-files',
-      '--force-device-scale-factor=1', `--user-data-dir=${profileDir}`, '--no-first-run',
-      '--no-default-browser-check', `--window-size=${view.width},${view.height}`,
-      '--virtual-time-budget=6000', `--screenshot=${output}`, url
-    ], { stdio: 'ignore' });
-    console.log(fs.existsSync(output)
-      ? `  ${view.suffix.padEnd(14)} ${view.width}×${view.height}  ${Math.round(fs.statSync(output).size / 1024)} КБ  — ${view.note}`
-      : `  ✖ ${view.suffix}: не удалось снять`);
+    capture(harnessPath, view, path.join(outDir, `crm-new-${view.suffix}.png`));
+  }
+  for (const view of docViews) {
+    capture(docHarnessPath, view, path.join(outDir, `crm-new-${view.suffix}.png`));
   }
 } finally {
   fs.rmSync(profileDir, { recursive: true, force: true });

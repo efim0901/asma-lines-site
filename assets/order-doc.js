@@ -66,21 +66,13 @@ function escapeHtml(str) {
         } catch (e) {}
       }
 
-      // Fallback if lead data is not specified
+      // Данные не подтверждены — показываем экран «документ защищён».
+      // Раньше здесь подставлялся вымышленный документ, и страница выглядела
+      // открытой для любого, кто угадал адрес.
       if (!verifiedLead) {
-        verifiedLead = {
-          id: leadId || 'default',
-          leadNumber: leadNum || '101',
-          name: 'ООО «БЕЛТРАНС-ЛОГИСТИК»',
-          contact: '+375 (29) 682-14-30',
-          route: 'Гомель → Минск',
-          distance: '~310 км',
-          weight: '5.0 т',
-          vehicle: 'Тент (еврофура 86-92 м³)',
-          price: '680 BYN',
-          comment: 'Загрузка боковая/задняя. Доставка в согласованное время.',
-          dispatcher: 'Иван Ефимович'
-        };
+        loadingEl.style.display = 'none';
+        if (gateEl) gateEl.style.display = 'flex';
+        return;
       }
 
       // Access Granted! Render Document
@@ -168,10 +160,29 @@ function escapeHtml(str) {
 
       window.copyDocumentToClipboard = function() {
         const text = document.getElementById('doc-canvas').innerText;
+        const done = () => alert('✓ Текст документа скопирован в буфер обмена');
+        // Clipboard API может быть недоступен (нет разрешения или страница
+        // открыта не по HTTPS) — тогда копируем через временную область.
+        const fallback = () => {
+          const area = document.createElement('textarea');
+          area.value = text;
+          area.setAttribute('readonly', 'readonly');
+          area.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+          document.body.append(area);
+          area.select();
+          let copied = false;
+          try {
+            copied = document.execCommand('copy');
+          } catch (error) {
+            copied = false;
+          }
+          area.remove();
+          alert(copied ? '✓ Текст документа скопирован в буфер обмена' : 'Не удалось скопировать — выделите текст вручную');
+        };
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(() => {
-            alert('✓ Текст документа скопирован в буфер обмена');
-          });
+          navigator.clipboard.writeText(text).then(done, fallback);
+        } else {
+          fallback();
         }
       };
 
@@ -457,6 +468,26 @@ function escapeHtml(str) {
           </div>
         `;
       }
+
+      // ----------------------------------------------------
+      // ПАНЕЛЬ И ВКЛАДКИ
+      // ----------------------------------------------------
+
+      /* Кнопки панели и переключатели документов. Без этого блока разметка
+         была, а клики по ней не делали ничего: функции существовали, но
+         никто их не вызывал. */
+      document.querySelectorAll('.doc-tab-btn').forEach((button) => {
+        button.addEventListener('click', () => window.setDocType(button.dataset.docType));
+      });
+
+      document.querySelectorAll('[data-action]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const action = button.dataset.action;
+          if (action === 'print') window.print();
+          else if (action === 'copy-document') window.copyDocumentToClipboard();
+          else if (action === 'toggle-edit-mode') window.toggleEditMode();
+        });
+      });
 
       // Initial Render
       window.setDocType('order');

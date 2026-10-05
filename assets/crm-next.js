@@ -238,10 +238,11 @@
         $('#crm-offline').hidden = true;
         $('#crm-gate').hidden = true;
         setConnection(true, 'Синхронизировано');
+        // Способ входа нужен до отрисовки: от него зависит кнопка «Выйти».
+        state.via = data.via || (tg?.initData ? 'telegram' : 'cookie');
         syncSelection();
         render(true);
         autoSelectFirst();
-        state.via = data.via || (tg?.initData ? 'telegram' : 'cookie');
         if (showMessage) showToast('Заявки обновлены');
         return true;
       } catch (error) {
