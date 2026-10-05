@@ -369,7 +369,7 @@ input { font: inherit; }
 
   .mobile-nav {
     position: fixed; inset: auto 0 0 0; z-index: 6;
-    display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;
     padding: 5px 6px calc(5px + env(safe-area-inset-bottom));
     background: rgba(255,255,255,.97); border-top: 1px solid var(--line);
     backdrop-filter: blur(12px);
@@ -406,15 +406,6 @@ input { font: inherit; }
       </nav>
     </div>
 
-    <div>
-      <div class="side__label">Справочники</div>
-      <nav class="nav">
-        <button class="nav__item">Автопарк и водители</button>
-        <button class="nav__item">Тарифы и маршруты</button>
-        <button class="nav__item">Доступ диспетчеров</button>
-      </nav>
-    </div>
-
     <div class="side__alert">
       <b>⚠ 2 заявки ждут ответа</b>
       №104 без ответа 2 ч 40 мин, №107 — 1 ч 15 мин.
@@ -441,9 +432,7 @@ input { font: inherit; }
 
     <nav class="mobile-nav mobile-only" aria-label="Разделы">
       <button aria-current="true"><b>☰</b>Заявки</button>
-      <button><b>🚚</b>Рейсы</button>
       <button class="add"><b>+</b>Заявка</button>
-      <button><b>₽</b>Тарифы</button>
       <button><b>👤</b>Профиль</button>
     </nav>
   </main>
