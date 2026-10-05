@@ -1,0 +1,105 @@
+<svg width="1920" height="800" viewBox="0 0 1920 800" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="fa_sky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0A0608"/>
+      <stop offset="40%" stop-color="#1B0C15"/>
+      <stop offset="75%" stop-color="#35101D"/>
+      <stop offset="100%" stop-color="#0D060A"/>
+    </linearGradient>
+    <radialGradient id="fa_glow" cx="62%" cy="38%" r="55%">
+      <stop offset="0%" stop-color="#8B2536" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#0A0608" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fa_road" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1B1318"/>
+      <stop offset="100%" stop-color="#070406"/>
+    </linearGradient>
+    <linearGradient id="fa_beam" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#FFFDF0" stop-opacity="0.95"/>
+      <stop offset="30%" stop-color="#FFE0A0" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#8B2536" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="fa_goldline" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFD382" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#FFD382" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#FFD382" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="fa_shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity="0.65"/>
+    </filter>
+  </defs>
+
+  <rect width="1920" height="800" fill="url(#fa_sky)"/>
+  <rect width="1920" height="800" fill="url(#fa_glow)"/>
+
+  <!-- International Route Map Overlay in Sky -->
+  <g opacity="0.22">
+    <circle cx="1180" cy="180" r="140" stroke="#FFD382" stroke-width="1.2" stroke-dasharray="6 6"/>
+    <circle cx="1180" cy="180" r="260" stroke="#E6A9B4" stroke-width="1" stroke-dasharray="4 8"/>
+    <path d="M 850 140 L 1180 180 L 1520 120" stroke="#FFD382" stroke-width="1.5"/>
+    <path d="M 1180 180 L 1400 290 L 1650 240" stroke="#E6A9B4" stroke-width="1.2"/>
+    <circle cx="850" cy="140" r="5" fill="#FFD382"/>
+    <circle cx="1180" cy="180" r="7" fill="#8B2536" stroke="#FFD382" stroke-width="2"/>
+    <circle cx="1520" cy="120" r="5" fill="#FFD382"/>
+    <circle cx="1400" cy="290" r="4" fill="#E6A9B4"/>
+    <circle cx="1650" cy="240" r="4" fill="#E6A9B4"/>
+  </g>
+
+  <!-- Highway Surface -->
+  <path d="M 0 450 L 1920 450 L 1920 800 L 0 800 Z" fill="url(#fa_road)"/>
+  <line x1="0" y1="448" x2="1920" y2="448" stroke="#8B2536" stroke-width="4"/>
+  <line x1="0" y1="452" x2="1920" y2="452" stroke="#FFD382" stroke-width="1" opacity="0.4"/>
+
+  <!-- Road Dividers -->
+  <path d="M 0 620 L 1920 620" stroke="#FAF8F5" stroke-width="4" stroke-dasharray="70 45" opacity="0.38"/>
+  <line x1="0" y1="740" x2="1920" y2="740" stroke="#FFC048" stroke-width="3" opacity="0.45"/>
+
+  <!-- Highway Network Lines -->
+  <path d="M 0 490 L 1020 490" stroke="url(#fa_goldline)" stroke-width="2"/>
+
+  <!-- Benchmark Truck (Right Side) -->
+  <g transform="translate(1040, 280)" filter="url(#fa_shadow)">
+    <!-- Volumetric Headlight Cone -->
+    <polygon points="690,250 1380,160 1380,380 690,300" fill="url(#fa_beam)" opacity="0.6"/>
+
+    <!-- Truck Shadow -->
+    <ellipse cx="380" cy="315" rx="460" ry="24" fill="#000000" opacity="0.88"/>
+
+    <!-- Semi-Trailer Box -->
+    <rect x="0" y="30" width="500" height="240" rx="8" fill="#20181E" stroke="#483540" stroke-width="3"/>
+    <rect x="35" y="60" width="430" height="90" rx="6" fill="#120A0E" stroke="#8B2536" stroke-width="2"/>
+    <text x="60" y="112" fill="#FAF8F5" font-family="system-ui, sans-serif" font-size="34" font-weight="900" letter-spacing="4">ASMA LINES</text>
+    <text x="60" y="134" fill="#FFD382" font-family="system-ui, sans-serif" font-size="12" font-weight="700" letter-spacing="2">О КОМПАНИИ · НАДЁЖНОСТЬ И СТАНДАРТЫ</text>
+
+    <!-- Side Skirt -->
+    <rect x="50" y="235" width="260" height="32" rx="4" fill="#2E222A" stroke="#4A3844" stroke-width="1.5"/>
+    <line x1="60" y1="251" x2="300" y2="251" stroke="#FFD382" stroke-width="2" opacity="0.6"/>
+
+    <!-- Wheels -->
+    <g>
+      <circle cx="340" cy="290" r="26" fill="#0A0809" stroke="#524049" stroke-width="5"/>
+      <circle cx="400" cy="290" r="26" fill="#0A0809" stroke="#524049" stroke-width="5"/>
+      <circle cx="460" cy="290" r="26" fill="#0A0809" stroke="#524049" stroke-width="5"/>
+      <circle cx="340" cy="290" r="8" fill="#FFD382" opacity="0.6"/>
+      <circle cx="400" cy="290" r="8" fill="#FFD382" opacity="0.6"/>
+      <circle cx="460" cy="290" r="8" fill="#FFD382" opacity="0.6"/>
+    </g>
+
+    <!-- Tractor Cab -->
+    <path d="M495 270 L495 120 L530 80 L660 80 L695 130 L695 270 Z" fill="#6B1E2D" stroke="#8B2536" stroke-width="2"/>
+    <!-- Windshield -->
+    <path d="M575 92 L655 92 L680 135 L575 135 Z" fill="#182A36" stroke="#4A6575" stroke-width="2"/>
+    <!-- Cab Deflector & Decal -->
+    <path d="M525 80 L660 80 L650 68 L535 68 Z" fill="#42131C"/>
+    <line x1="505" y1="180" x2="685" y2="180" stroke="#FFD382" stroke-width="2.5"/>
+
+    <!-- Front Wheels -->
+    <circle cx="560" cy="290" r="28" fill="#0A0809" stroke="#682230" stroke-width="6"/>
+    <circle cx="650" cy="290" r="28" fill="#0A0809" stroke="#682230" stroke-width="6"/>
+    <circle cx="560" cy="290" r="9" fill="#FFD382" opacity="0.7"/>
+    <circle cx="650" cy="290" r="9" fill="#FFD382" opacity="0.7"/>
+
+    <!-- Headlight Unit -->
+    <rect x="682" y="215" width="12" height="26" rx="3" fill="#FFFDF0"/>
+  </g>
+</svg>

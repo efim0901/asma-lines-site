@@ -1,0 +1,36 @@
+{
+  "name": "asma-lines-site",
+  "version": "2.0.0",
+  "description": "ASMA Lines — организация автомобильных грузоперевозок по Беларуси (Cloudflare Pages + Worker + Telegram CRM)",
+  "type": "module",
+  "main": "_worker.js",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "test": "node _tests/run.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "check:syntax": "node --check _worker.js && node --check server.js && node --check assets/site.js && node --check assets/calculator.js && node --check assets/pricing-client.js && node --check assets/vehicles.js && node --check assets/crm-next.js && node --check assets/theme-init.js && node --check assets/order-doc.js && node --check assets/proposal.js",
+    "check:assets": "node _tools/sync-asset-versions.mjs",
+    "check:html": "node _tools/validate-html.mjs",
+    "smoke:crm": "node _tools/smoke-crm.mjs",
+    "assets:fix": "node _tools/sync-asset-versions.mjs --fix",
+    "check": "npm run check:syntax && npm run check:assets && npm run check:html && npm run lint && npm test",
+    "db:create": "wrangler d1 create asma-lines",
+    "db:migrate": "wrangler d1 execute asma-lines --remote --file=./schema.sql",
+    "db:migrate:local": "wrangler d1 execute asma-lines --local --file=./schema.sql",
+    "deploy": "wrangler pages deploy .",
+    "og:build": "python _tools/make_og_cover.py"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "nodemailer": "^6.9.16"
+  },
+  "devDependencies": {
+    "eslint": "^9.15.0"
+  }
+}

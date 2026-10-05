@@ -1,0 +1,47 @@
+# Файлы и каталоги, которые НЕ публикуются как статика.
+#
+# Поддерживается синтаксис .gitignore. Для каталогов нужны ОБА шаблона
+# («dir/» и «dir/**»). Отрицать («!») файлы внутри исключённого каталога нельзя.
+#
+# Проверка после деплоя: ни один путь ниже не должен отвечать 200.
+
+# Код, попадающий в бандл Worker как модуль, но не отдаваемый по HTTP.
+# _worker.js.map — карта исходников: её публикация раскрывает весь серверный код.
+_worker.js
+_worker.js.map
+
+# Внутренние каталоги проекта
+_shared/
+_shared/**
+_tests/
+_tests/**
+_tools/
+_tools/**
+data/
+data/**
+functions/
+functions/**
+
+# Зависимости и временные файлы сборки Wrangler.
+# Без этих строк /.wrangler/tmp/<hash>/_worker.js.map отдавался публично.
+node_modules/
+node_modules/**
+.wrangler/
+.wrangler/**
+
+# Конфигурация и служебные файлы
+server.js
+package.json
+package-lock.json
+wrangler.toml
+schema.sql
+eslint.config.js
+.dev.vars
+.dev.vars.example
+.gitignore
+.assetsignore
+.git/
+.git/**
+metadata.json
+DEPLOY-CLOUDFLARE.md
+_headers

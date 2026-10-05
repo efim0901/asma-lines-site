@@ -1,0 +1,107 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="cc_sky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0E080B"/>
+      <stop offset="35%" stop-color="#220D15"/>
+      <stop offset="70%" stop-color="#3D1320"/>
+      <stop offset="100%" stop-color="#10080B"/>
+    </linearGradient>
+    <radialGradient id="cc_glow" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#8B2536" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#0E080B" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cc_road" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1E171A"/>
+      <stop offset="100%" stop-color="#0A0708"/>
+    </linearGradient>
+    <pattern id="cc_dots" width="36" height="36" patternUnits="userSpaceOnUse">
+      <circle cx="18" cy="18" r="1.2" fill="#E6A9B4" fill-opacity="0.14"/>
+    </pattern>
+  </defs>
+
+  <!-- Sky Canvas -->
+  <rect width="1920" height="1080" fill="url(#cc_sky)"/>
+  <rect width="1920" height="1080" fill="url(#cc_dots)"/>
+  <rect width="1920" height="1080" fill="url(#cc_glow)"/>
+
+  <!-- Telecommunication Tower with Signal Waves (Gomel Hub Dispatcher) -->
+  <g transform="translate(1320, 220)" opacity="0.85">
+    <!-- Tower lattice -->
+    <path d="M0 320 L25 80 L50 320 Z" fill="none" stroke="#8B2536" stroke-width="2.5"/>
+    <line x1="12" y1="180" x2="38" y2="180" stroke="#8B2536" stroke-width="2"/>
+    <line x1="8" y1="240" x2="42" y2="240" stroke="#8B2536" stroke-width="2"/>
+    <line x1="25" y1="80" x2="25" y2="20" stroke="#8B2536" stroke-width="3"/>
+    <circle cx="25" cy="18" r="6" fill="#FF2E50"/>
+    <circle cx="25" cy="18" r="14" fill="none" stroke="#FF2E50" stroke-width="1.5" opacity="0.6"/>
+
+    <!-- Concentric Radio Communication Waves -->
+    <circle cx="25" cy="18" r="40" fill="none" stroke="#E6A9B4" stroke-width="1.8" stroke-dasharray="6 6" opacity="0.8"/>
+    <circle cx="25" cy="18" r="75" fill="none" stroke="#E6A9B4" stroke-width="1.5" stroke-dasharray="8 8" opacity="0.5"/>
+    <circle cx="25" cy="18" r="120" fill="none" stroke="#FFC048" stroke-width="1.2" stroke-dasharray="10 10" opacity="0.35"/>
+  </g>
+
+  <!-- Night City Skyline Silhouettes -->
+  <!-- Far Skyline Layer -->
+  <g fill="#1A1216" opacity="0.7">
+    <rect x="100" y="380" width="70" height="240"/>
+    <rect x="190" y="420" width="50" height="200"/>
+    <rect x="260" y="320" width="90" height="300"/>
+    <rect x="370" y="400" width="60" height="220"/>
+    <rect x="450" y="350" width="80" height="270"/>
+    <rect x="550" y="440" width="65" height="180"/>
+    <rect x="630" y="310" width="110" height="310"/>
+    <rect x="760" y="390" width="75" height="230"/>
+    <rect x="850" y="340" width="95" height="280"/>
+    <rect x="960" y="410" width="60" height="210"/>
+    <rect x="1040" y="290" width="120" height="330"/>
+    <rect x="1180" y="370" width="85" height="250"/>
+    <rect x="1420" y="330" width="100" height="290"/>
+    <rect x="1540" y="400" width="70" height="220"/>
+    <rect x="1630" y="350" width="90" height="270"/>
+    <rect x="1740" y="430" width="80" height="190"/>
+  </g>
+
+  <!-- Mid Skyline Layer with Illuminated Windows -->
+  <g fill="#281A1F">
+    <rect x="140" y="430" width="80" height="190"/>
+    <rect x="290" y="370" width="100" height="250"/>
+    <rect x="480" y="410" width="85" height="210"/>
+    <rect x="680" y="350" width="120" height="270"/>
+    <rect x="890" y="380" width="90" height="240"/>
+    <rect x="1100" y="330" width="110" height="290"/>
+    <rect x="1480" y="380" width="95" height="240"/>
+    <rect x="1680" y="400" width="100" height="220"/>
+  </g>
+
+  <!-- Yellow/Gold Windows in City Buildings -->
+  <g fill="#FFC048" opacity="0.75">
+    <rect x="160" y="460" width="8" height="12"/>
+    <rect x="180" y="460" width="8" height="12"/>
+    <rect x="160" y="490" width="8" height="12"/>
+    <rect x="310" y="400" width="10" height="14"/>
+    <rect x="340" y="400" width="10" height="14"/>
+    <rect x="310" y="440" width="10" height="14"/>
+    <rect x="360" y="440" width="10" height="14"/>
+    <rect x="500" y="430" width="9" height="12"/>
+    <rect x="530" y="430" width="9" height="12"/>
+    <rect x="710" y="380" width="12" height="16"/>
+    <rect x="740" y="380" width="12" height="16"/>
+    <rect x="710" y="420" width="12" height="16"/>
+    <rect x="760" y="420" width="12" height="16"/>
+    <rect x="910" y="410" width="9" height="14"/>
+    <rect x="940" y="410" width="9" height="14"/>
+    <rect x="1130" y="360" width="12" height="16"/>
+    <rect x="1160" y="360" width="12" height="16"/>
+    <rect x="1130" y="400" width="12" height="16"/>
+    <rect x="1510" y="410" width="10" height="14"/>
+    <rect x="1540" y="410" width="10" height="14"/>
+  </g>
+
+  <!-- Highway Ground & Access Corridor -->
+  <path d="M 0 620 L 1920 620 L 1920 1080 L 0 1080 Z" fill="url(#cc_road)"/>
+  <line x1="0" y1="618" x2="1920" y2="618" stroke="#8B2536" stroke-width="4"/>
+
+  <!-- Road Markings -->
+  <path d="M 0 810 L 1920 810" stroke="#FAF8F5" stroke-width="4" stroke-dasharray="65 40" opacity="0.4"/>
+  <line x1="0" y1="970" x2="1920" y2="970" stroke="#FFC048" stroke-width="3" opacity="0.45"/>
+</svg>

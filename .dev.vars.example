@@ -1,0 +1,48 @@
+# ASMA Lines — пример переменных окружения для ЛОКАЛЬНОЙ разработки.
+#
+# Скопируйте в .dev.vars (файл в .gitignore) и заполните реальными значениями.
+# В продакшне эти же переменные задаются в Cloudflare:
+#   Workers & Pages → ваш проект → Settings → Variables and Secrets
+# Подробная инструкция: DEPLOY-CLOUDFLARE.md
+
+# ── Обязательные ──────────────────────────────────────────────────────
+# Токен бота от @BotFather. В коде его больше нет — утечка устранена.
+TELEGRAM_BOT_TOKEN=
+
+# Кто главный администратор CRM. Укажите хотя бы одно значение.
+MASTER_ADMIN_USERNAME=plombit
+MASTER_ADMIN_ID=1014012851
+
+# Чат/канал для уведомлений о заявках (id вида -100xxxxxxxxxx для канала).
+TELEGRAM_CHAT_ID=
+
+# ── Рекомендуемые ─────────────────────────────────────────────────────
+# Секрет вебхука: Telegram присылает его в заголовке
+# X-Telegram-Bot-Api-Secret-Token. Пока не задан — проверка пропускается.
+TELEGRAM_WEBHOOK_SECRET=
+
+# Токен для служебных роутов /api/setup-webhook и /api/admin/import-legacy.
+# Пока не задан — эти роуты отключены (так и задумано).
+SETUP_TOKEN=
+
+# Публичный адрес CRM для кнопки в боте.
+CRM_APP_URL=https://asmalines.by/crm.html
+
+# Разрешённые источники для CORS (через запятую). Пусто = только домены проекта.
+ALLOWED_ORIGINS=https://asmalines.by,https://www.asmalines.by
+
+# ── Необязательные ────────────────────────────────────────────────────
+# Ключ Yandex Geocoder. Без него используется бесплатный OpenStreetMap Nominatim.
+YANDEX_GEOCODER_KEY=
+
+# E-mail уведомления о заявках (SMTP).
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM=
+LEAD_EMAIL_TO=
+
+# Порт локального сервера.
+PORT=3000
