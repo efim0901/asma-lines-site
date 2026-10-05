@@ -8,8 +8,8 @@
     "hash": "58939275bd49d252"
   },
   "site.js": {
-    "version": "20261005_v3",
-    "hash": "b0dee9944ddbfca6"
+    "version": "20261005",
+    "hash": "b278907e0e25acf4"
   },
   "pricing-client.js": {
     "version": "20261004_pricing",
@@ -28,12 +28,12 @@
     "hash": "697e1a7a9544116f"
   },
   "crm-next.js": {
-    "version": "20261005_v3",
-    "hash": "3968f9889c2b060b"
+    "version": "20261005",
+    "hash": "a9375144baa43d46"
   },
   "order-doc.js": {
-    "version": "20261005_v3",
-    "hash": "8635edcb00b6afb7"
+    "version": "20261005",
+    "hash": "1cb7ae460e612cdc"
   },
   "proposal.js": {
     "version": "20261005_v3",

@@ -383,13 +383,22 @@ function initRouteConstructorAndNetwork() {
       corridor = known.corridor;
       lead = known.lead;
       cost = known.baseCost;
+      if (window.ASMA_PRICING?.calculatePrice) {
+        const quote = window.ASMA_PRICING.calculatePrice({ distanceKm: km, weightTons: 2.5 });
+        if (quote) cost = quote.total;
+      }
     } else {
       km = calcFallbackKm(from, to);
       const hours = (km / 72).toFixed(1);
       time = `~${Math.max(1, (Number(hours) - 0.5)).toFixed(1)} – ${(Number(hours) + 0.6).toFixed(1)} ч`;
       corridor = `Прямой маршрут · ${km} км`;
       lead = "от 2.5 ч";
-      cost = Math.round(90 + km * 1.65 + 5 * 10);
+      if (window.ASMA_PRICING?.calculatePrice) {
+        const quote = window.ASMA_PRICING.calculatePrice({ distanceKm: km, weightTons: 2.5 });
+        cost = quote ? quote.total : Math.round(85 + km * 1.65 + 2.5 * 18);
+      } else {
+        cost = Math.round(85 + km * 1.65 + 2.5 * 18);
+      }
     }
 
     if (distVal) distVal.textContent = `${km} км`;

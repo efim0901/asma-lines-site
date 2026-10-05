@@ -133,11 +133,9 @@ function escapeHtml(str) {
 
       document.getElementById('doc-date-header').textContent = `Дата: ${dateStr}`;
 
-      let currentDoc = 'order';
       let isEditMode = false;
 
       window.setDocType = function(type) {
-        currentDoc = type;
         document.querySelectorAll('.doc-tab-btn').forEach(b => b.classList.remove('active'));
         const btn = document.getElementById(`tab-${type}`);
         if (btn) btn.classList.add('active');

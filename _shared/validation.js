@@ -118,7 +118,7 @@ export function normalizeLead(body, options = {}) {
     throw new ValidationError('Тело запроса должно быть JSON-объектом');
   }
 
-  const routeDetails = optionalString(body.route_details, LEAD_LIMITS.routeMax);
+  const routeDetails = optionalString(body.route_details || body.route, LEAD_LIMITS.routeMax);
   const parsedDetails = parseRouteDetails(routeDetails);
 
   const name = requiredString(body.name || body.contact_name, 'Имя', {

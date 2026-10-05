@@ -65,7 +65,7 @@ export function normalizeBelarusPhone(raw) {
   else if (digits.length === 11 && digits.startsWith('80')) local = digits.slice(2);
   else if (digits.length === 9) local = digits;
   if (!local) return null;
-  if (!/^(17|25|29|33|44)\d{7}$/.test(local)) return null;
+  if (!/^(15|16|17|21|22|23|25|29|33|44)\d{7}$/.test(local)) return null;
   return `+375${local}`;
 }
 

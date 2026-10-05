@@ -249,8 +249,10 @@
         diagnostic(`Ошибка загрузки: ${error.message}`, 'error');
         setConnection(false, error.status === 401 || error.status === 403 ? 'Нет доступа' : 'Нет связи с базой');
         if (error.status === 401 || error.status === 403) {
-          // 403 — доступ не выдан (гейт), 401 — сессии нет (экран входа).
-          if (error.status === 403) showGate(error.message);
+          // 403 — доступ не выдан (гейт), 401 — сессии нет (экран входа или ошибка initData в TG).
+          if (error.status === 403 || tg?.initData) {
+            showGate(error.message || (error.status === 401 ? 'Сессия в Telegram истекла — закройте и откройте диспетчерскую заново.' : ''));
+          }
           return false;
         }
         if (!state.authorized) {

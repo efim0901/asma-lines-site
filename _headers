@@ -16,10 +16,11 @@
   # чтобы правки разметки не залипали из-за immutable-кэша.
   Cache-Control: public, max-age=0, must-revalidate
 
-# Страницы CRM и документов: запрет встраивания и индексации на уровне заголовков.
+# Страницы CRM и документов: запрет индексации.
+# Для crm.html разрешаем встраивание в Telegram Web (web.telegram.org).
 /crm.html
   X-Robots-Tag: noindex, nofollow
-  X-Frame-Options: DENY
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self'; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors https://web.telegram.org https://*.telegram.org 'self'; upgrade-insecure-requests
   Cache-Control: no-store
 
 /order-doc.html

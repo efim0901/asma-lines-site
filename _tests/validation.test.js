@@ -27,6 +27,8 @@ describe('Валидация телефона', () => {
     assertEqual(normalizeBelarusPhone('80291234567'), '+375291234567');
     assertEqual(normalizeBelarusPhone('+375 (29) 123-45-67'), '+375291234567');
     assertEqual(normalizeBelarusPhone('291234567'), '+375291234567');
+    assertEqual(normalizeBelarusPhone('+375 (232) 50-00-00'), '+375232500000');
+    assertEqual(normalizeBelarusPhone('80162123456'), '+375162123456');
   });
 
   test('отклоняет мусор и чужие коды', () => {
