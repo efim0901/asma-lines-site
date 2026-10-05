@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ASMA Lines — вход в диспетчерскую</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* ============================================================
+   Макет экрана входа в БРАУЗЕРНУЮ версию диспетчерской.
+   Это МАКЕТ: реального входа здесь нет. Живой сценарий —
+   одноразовый код → подтверждение в Telegram → сессия в cookie;
+   описание и меры защиты — в README рядом.
+
+   Зачем: на компьютере работать в окне Telegram-WebApp неудобно.
+   Браузерную версию открывают по обычному адресу, а вход занимает
+   пять секунд — без логина и пароля, через уже существующий доступ
+   в Telegram-боте.
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  --brand: #8B2536;
+  --brand-dark: #6B1E2D;
+  --brand-soft: #FBF2F4;
+  --brand-line: #EBD9DD;
+
+  --bg: #F6F3EF;
+  --surface: #FFFFFF;
+  --ink: #1A1817;
+  --ink-2: #4A4441;
+  --muted: #7D746E;
+  --line: #E5DED7;
+
+  --font: 'Manrope', system-ui, -apple-system, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --shadow: 0 10px 30px rgba(26,24,23,.08);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; padding: 28px 20px;
+  display: grid; place-items: center;
+  background: var(--bg); color: var(--ink);
+  font: 400 14px/1.55 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+b, strong { font-weight: 700; }
+code { font: 600 .92em var(--mono); background: var(--brand-soft); border: 1px solid var(--brand-line); border-radius: 5px; padding: 1px 5px; }
+
+.card {
+  width: min(880px, 100%);
+  padding: 30px 34px 24px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+.brand { display: flex; align-items: center; gap: 10px; margin-bottom: 26px; }
+.brand__mark {
+  display: grid; place-items: center; width: 36px; height: 36px;
+  border-radius: 9px; background: linear-gradient(135deg, #A62C40, var(--brand));
+  color: #fff; font-weight: 800; font-size: 17px;
+}
+.brand__text b { display: block; font-size: 14.5px; letter-spacing: -.01em; }
+.brand__text span { display: block; color: var(--muted); font: 600 9.5px var(--mono); text-transform: uppercase; letter-spacing: .07em; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); gap: 38px; }
+
+h1 { margin: 0; font-size: 25px; letter-spacing: -.02em; }
+.lead { margin: 10px 0 0; color: var(--ink-2); font-size: 13.5px; }
+
+.code {
+  margin: 22px 0 0; padding: 15px 18px 14px;
+  border: 1px dashed var(--brand-line); border-radius: 12px; background: var(--brand-soft);
+}
+.code__label { display: block; color: var(--muted); font: 700 9.5px var(--mono); text-transform: uppercase; letter-spacing: .1em; }
+.code__value { display: block; margin: 5px 0 7px; font: 600 33px/1 var(--mono); letter-spacing: .14em; color: var(--brand); }
+.code p { margin: 0; color: var(--ink-2); font-size: 12px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; height: 46px; margin: 16px 0 0;
+  border: 1px solid var(--brand); border-radius: 10px; background: var(--brand);
+  color: #fff; font-size: 14px; font-weight: 700; text-decoration: none;
+}
+.btn:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+
+.status { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; color: var(--muted); font: 500 11.5px var(--mono); }
+.spinner {
+  width: 13px; height: 13px; flex: 0 0 auto; border-radius: 50%;
+  border: 2px solid var(--brand-line); border-top-color: var(--brand);
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.side h2 { margin: 0 0 10px; color: var(--muted); font: 700 9.5px var(--mono); text-transform: uppercase; letter-spacing: .1em; }
+.side ol { margin: 0; padding: 0 0 0 18px; display: grid; gap: 8px; color: var(--ink-2); font-size: 12.5px; }
+.side ol b { color: var(--ink); }
+
+.bot { margin: 16px 0 0; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: #F7F6F4; }
+.bot__msg {
+  padding: 9px 12px; border-radius: 11px 11px 11px 3px; background: var(--surface);
+  border: 1px solid var(--line); font-size: 12px; font-weight: 600;
+}
+.bot__msg small { display: block; margin-top: 3px; color: var(--muted); font: 500 10px var(--mono); font-weight: 500; }
+.bot__btn {
+  margin: 8px 0 0 auto; width: fit-content; padding: 7px 12px;
+  border-radius: 8px; background: var(--brand); color: #fff; font-size: 11.5px; font-weight: 700;
+}
+
+.qr { display: flex; align-items: center; gap: 12px; margin: 16px 0 0; }
+.qr img { border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.qr p { margin: 0; color: var(--muted); font-size: 11.5px; }
+
+.foot {
+  display: grid; gap: 5px; margin-top: 28px; padding-top: 15px;
+  border-top: 1px solid var(--line); color: var(--muted); font-size: 11.5px;
+}
+
+@media (max-width: 860px) {
+  body { padding: 0 0 20px; align-items: start; }
+  .card { border: 0; border-radius: 0; box-shadow: none; padding: 22px 18px 18px; }
+  .grid { grid-template-columns: 1fr; gap: 26px; }
+  .code__value { font-size: 30px; }
+}
+</style>
+</head>
+<body>
+<main class="card">
+  <header class="brand">
+    <span class="brand__mark">A</span>
+    <span class="brand__text"><b>ASMA Lines</b><span>Диспетчерская</span></span>
+  </header>
+
+  <div class="grid">
+    <div>
+      <h1>Вход в диспетчерскую</h1>
+      <p class="lead">Пароля нет: вход подтверждает ваш Telegram-аккаунт из списка доступа. Эта версия — для компьютера; с телефона диспетчерская по-прежнему открывается прямо в Telegram.</p>
+
+      <div class="code">
+        <span class="code__label">Код для входа</span>
+        <b class="code__value">482-173</b>
+        <p>Отправьте боту <b>@asmalinesbot</b> команду <code>/login 482-173</code> — или нажмите кнопку: код подставится сам.</p>
+      </div>
+
+      <a class="btn" href="https://t.me/asmalinesbot?start=login_482173">Открыть Telegram</a>
+
+      <p class="status"><i class="spinner" aria-hidden="true"></i>Ожидаем подтверждение · код действует 5 минут</p>
+    </div>
+
+    <aside class="side">
+      <h2>Как это работает</h2>
+      <ol>
+        <li>Нажмите <b>«Открыть Telegram»</b> — откроется чат с ботом.</li>
+        <li>Бот покажет устройство и время и попросит подтвердить вход.</li>
+        <li>Вернитесь в браузер: диспетчерская откроется сама.</li>
+      </ol>
+
+      <div class="bot" aria-hidden="true">
+        <div class="bot__msg">Подтвердите вход в диспетчерскую<small>Chrome · Windows · Минск · 18:58</small></div>
+        <div class="bot__btn">✅ Подтвердить вход</div>
+      </div>
+
+      <div class="qr">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQgAAAEIAQMAAACZOPi8AAAABlBMVEX///8AAABVwtN+AAAACXBIWXMAAA7EAAAOxAGVKw4bAAABwklEQVRoge2YwZHDMAhFyeSgo0tIKSrNLs2lpAQffciE5X9QLGe9swUIDklgXi5/QPpCJOMc6vGUaRe5va2wzJZOUR+PoCoPK+33qOpq6YbyLYkrYmZJTMWX/2OGwluxfGACir0o0bxAwCT+I0TKC03mYzoyETO3FQiGcMV+T2USt/5cB3F/W8nOdbacx3BEH0FAQLmOJELT9YFP05RTCmSb9sJ8NCLCEHNK4opVw7eyx8wlcSagYXVveVdoih4T+IS99VgSZ8JKVWml6KU6N3706VCEKVQ1nBICAL6L/yOJC6KuIrwJlV4KPafssXAGIxF0Albapmgxem2k0XNJfBFxKj3gJf2By5wLgm4qhyEs5jWsEXsMpzizNnNJnAlFj4WmXlj80MKp1eZ2JKLd+xTsTa+5RsuFYkl8ExqasqL+Opn0mNskvomlcguHrnNzGTehD+lgRAtIRLON4IqJWBK/CPXwJZJpilptWzjigxFNokm5U1J/nZhiUFCTuCDmttcWJ7CV9Kk8zvUBiWYNoNgTP0qbuST+IIpyQ+JeU5Hq5yYcifCZ695v4mv/z4YkiTNxnOuxY1O+Tvr3bRI9kdHHD47Po6WFYgzQAAAAAElFTkSuQmCC" width="120" height="120" alt="QR-код для входа через Telegram">
+        <p>Телефоном: наведите камеру — откроется тот же чат с ботом.</p>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="foot">
+    <span>Сессия живёт 30 дней и отзывается командой <code>/logout</code> в боте или кнопкой «Выйти» в интерфейсе.</span>
+    <span>Нет доступа? Попросите администратора добавить вас: <code>/add @username Имя</code>.</span>
+  </footer>
+</main>
+</body>
+</html>

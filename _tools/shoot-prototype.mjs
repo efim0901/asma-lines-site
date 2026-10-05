@@ -1,14 +1,26 @@
 /**
- * Съёмка скриншотов прототипов интерфейса в трёх разрешениях.
+ * Съёмка скриншотов прототипов интерфейса.
  *
  * Нужен, чтобы после правок макета быстро получить картинки для Figma
  * или для показа заказчику. Использует headless Chrome из системы.
  *
  * Запуск: node _tools/shoot-prototype.mjs [имя-файла.html]
+ *
+ * Каждый макет снимается в трёх разрешениях (1440, 1180, 390). Для
+ * crm-v2.html дополнительно снимаются состояния с открытой карточкой
+ * заявки — она открывается по хэшу #detail.
+ *
+ * Chrome запускается с временным профилем: если этим не управлять,
+ * headless-запуск молча падает, когда у пользователя уже открыт браузер.
+ *
+ * Отдельная тонкость: окно уже ~500px Chrome не отдаёт, поэтому узкие
+ * макеты снимаются через iframe нужной ширины — иначе страница получает
+ * не ту ширину, медиазапросы срабатывают неправильно, а снимок обрезан.
  */
 
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -48,12 +60,43 @@ const viewports = [
   { suffix: 'mobile', width: 390, height: 844, note: 'телефон' }
 ];
 
-// Первый аргумент — URL. Для локального файла пробелы в пути кодируем.
+/** Дополнительные состояния макета, которые открываются хэшем URL. */
+const EXTRA_SHOTS = {
+  'crm-v2.html': [
+    { suffix: 'laptop-detail', width: 1180, height: 860, hash: '#detail', note: 'ноутбук: карточка выдвинута поверх списка' },
+    { suffix: 'mobile-detail', width: 390, height: 844, hash: '#detail', note: 'телефон: карточка-шторка' }
+  ]
+};
+
+// URL локального файла: пробелы в пути кодируем.
 const fileUrl = `file:///${source.replace(/\\/g, '/').split('/').map(encodeURIComponent).join('/')}`;
 
-for (const viewport of viewports) {
-  const output = path.join(prototypeDir, `${base}-${viewport.suffix}.png`);
+// Временный профиль Chrome: чтобы запуск не зависел от уже открытого браузера.
+// В некоторых окружениях TMP указывает на ещё не созданный каталог — создаём его.
+const tmpRoot = os.tmpdir();
+fs.mkdirSync(tmpRoot, { recursive: true });
+const profileDir = fs.mkdtempSync(path.join(tmpRoot, 'asma-shot-'));
+
+/** Окно уже ~500 px Chrome не открывает: макет получил бы чужую ширину. */
+const MIN_WINDOW_WIDTH = 500;
+
+function shoot(viewport, output) {
   if (fs.existsSync(output)) fs.unlinkSync(output);
+
+  let url = fileUrl + (viewport.hash || '');
+  if (viewport.width < MIN_WINDOW_WIDTH) {
+    // Узкий макет оборачиваем в iframe нужной ширины: внутри фрейма
+    // медиазапросы считают корректную ширину, а снимок = область фрейма.
+    const wrapperPath = path.join(profileDir, `wrapper-${viewport.suffix}.html`);
+    fs.writeFileSync(
+      wrapperPath,
+      `<!doctype html><html><head><meta charset="utf-8"><style>
+        html, body { margin: 0; padding: 0; background: #fff; }
+        iframe { display: block; border: 0; width: ${viewport.width}px; height: ${viewport.height}px; }
+      </style></head><body><iframe src="${url}"></iframe></body></html>`
+    );
+    url = `file:///${wrapperPath.replace(/\\/g, '/').split('/').map(encodeURIComponent).join('/')}`;
+  }
 
   execFileSync(
     browser,
@@ -61,11 +104,15 @@ for (const viewport of viewports) {
       '--headless=new',
       '--disable-gpu',
       '--hide-scrollbars',
+      '--allow-file-access-from-files',
       '--force-device-scale-factor=1',
+      `--user-data-dir=${profileDir}`,
+      '--no-first-run',
+      '--no-default-browser-check',
       `--window-size=${viewport.width},${viewport.height}`,
-      '--virtual-time-budget=4000',
+      '--virtual-time-budget=5000',
       `--screenshot=${output}`,
-      fileUrl
+      url
     ],
     { stdio: 'ignore' }
   );
@@ -73,10 +120,21 @@ for (const viewport of viewports) {
   if (!fs.existsSync(output)) {
     console.error(`  ✖ ${viewport.suffix}: не удалось снять`);
     process.exitCode = 1;
-    continue;
+    return;
   }
   const size = Math.round(fs.statSync(output).size / 1024);
-  console.log(`  ${viewport.suffix.padEnd(8)} ${viewport.width}×${viewport.height}  ${size} КБ  — ${viewport.note}`);
+  console.log(`  ${viewport.suffix.padEnd(14)} ${viewport.width}×${viewport.height}  ${size} КБ  — ${viewport.note}`);
+}
+
+try {
+  for (const viewport of viewports) {
+    shoot(viewport, path.join(prototypeDir, `${base}-${viewport.suffix}.png`));
+  }
+  for (const viewport of EXTRA_SHOTS[target] || []) {
+    shoot(viewport, path.join(prototypeDir, `${base}-${viewport.suffix}.png`));
+  }
+} finally {
+  fs.rmSync(profileDir, { recursive: true, force: true });
 }
 
 console.log(`\nГотово. Картинки в ${prototypeDir}`);
