@@ -1,9 +1,10 @@
 /**
  * ASMA Lines — Cloudflare Worker (production entry point).
  *
- * Файл СОЗНАТЕЛЬНО самодостаточный: никаких импортов из соседних каталогов.
- * Так деплой не зависит от того, как Pages-сборщик разрешает модули вне assets,
- * и не требует шага сборки.
+ * Общий код (доступ, браузерный вход, QR) берётся из `_shared/*`: и Worker,
+ * и локальный сервер, и тесты используют одни модули, поэтому две
+ * реализации не разойдутся. Wrangler собирает их в бандл, а `.assetsignore`
+ * не даёт отдать эти файлы как статику.
  *
  * Что исправлено по сравнению с прежней версией:
  *  - нет захардкоженных секретов (токен бота, chat_id, id админа, PIN-коды);
@@ -16,6 +17,33 @@
  *
  * Инструкция по настройке: DEPLOY-CLOUDFLARE.md
  */
+
+import {
+  SESSION_COOKIE,
+  authenticateOperator,
+  cancelLoginCode,
+  checkCsrf,
+  clearedSessionCookieHeader,
+  confirmLoginCode,
+  describeDevice,
+  describePlace,
+  formatLoginCode,
+  formatLoginTime,
+  hashToken,
+  loginConfirmText,
+  loginState,
+  logoutSession,
+  normalizeLoginCode,
+  parseCookies,
+  readHeaderValue,
+  sessionCookieHeader,
+  startLogin
+} from './_shared/sessions.js';
+import { qrSvg } from './_shared/qr.js';
+import { SESSION_SCHEMA_STATEMENTS, withLoginSupport } from './_shared/store.js';
+
+/* Имя бота для ссылки входа: в Cloudflare задаётся TELEGRAM_BOT_USERNAME. */
+const DEFAULT_BOT_USERNAME = 'asmalinesbot';
 
 /* ================================================================== */
 /* БАЗОВЫЕ УТИЛИТЫ                                                    */
@@ -360,7 +388,6 @@ function buildLeadMessage(lead) {
 /* TELEGRAM: ПОДПИСЬ, АВТОРИЗАЦИЯ, API                                */
 /* ================================================================== */
 
-const INIT_DATA_MAX_AGE_SECONDS = 24 * 60 * 60;
 const encoder = new TextEncoder();
 
 function toHex(buffer) {
@@ -387,36 +414,8 @@ function timingSafeEqual(a, b) {
   return diff === 0;
 }
 
-/** Проверка подписи Telegram Web App initData + защита от replay по auth_date. */
-async function verifyTelegramWebAppData(initDataStr, botToken) {
-  if (!initDataStr || !botToken) return null;
-  try {
-    const params = new URLSearchParams(initDataStr);
-    const hash = params.get('hash');
-    if (!hash) return null;
-    params.delete('hash');
-
-    const dataCheckString = Array.from(params.keys())
-      .sort()
-      .map(key => `${key}=${params.get(key)}`)
-      .join('\n');
-
-    const secretHex = await hmacSha256Hex('WebAppData', botToken);
-    const secretBytes = Uint8Array.from(secretHex.match(/.{2}/g).map(byte => parseInt(byte, 16)));
-    const calculated = await hmacSha256Hex(secretBytes, dataCheckString);
-    if (!timingSafeEqual(calculated, hash.toLowerCase())) return null;
-
-    const authDate = Number(params.get('auth_date') || 0);
-    if (!authDate) return null;
-    const ageSeconds = Math.floor(Date.now() / 1000) - authDate;
-    if (ageSeconds > INIT_DATA_MAX_AGE_SECONDS || ageSeconds < -300) return null;
-
-    const userRaw = params.get('user');
-    return userRaw ? JSON.parse(userRaw) : null;
-  } catch {
-    return null;
-  }
-}
+/* Подпись initData проверяется в `_shared/telegram.js` (модуль подключён выше):
+   одна реализация на Worker, локальный сервер и тесты. */
 
 function readAccessConfig(env = {}) {
   const masterAdminUsername = String(env.MASTER_ADMIN_USERNAME || '').toLowerCase().replace(/^@/, '');
@@ -469,35 +468,61 @@ function isUserAdmin(tgUser, authorizedUsers = [], config = {}) {
   });
 }
 
+
 /**
- * Читает заголовок из любого представления: Fetch API Headers, обычный
- * объект (req.headers в Express) или Map. Без этого авторизация молча
- * ломается там, где приходит не Headers.
+ * Авторизация запроса к диспетчерской. Работают два входа:
+ *  - Telegram WebApp присылает подписанный initData (телефон),
+ *  - браузер — сессионную cookie, выданную по коду через бота (ПК).
+ * Для запросов с cookie дополнительно проверяются источник и заголовок
+ * X-Requested-With (защита от CSRF).
  */
-function readHeader(headers, name) {
-  if (!headers) return '';
-  if (typeof headers.get === 'function') return headers.get(name) || '';
-  const lower = name.toLowerCase();
-  if (typeof headers === 'object') return headers[lower] || headers[name] || '';
-  return '';
+function requireOperator(request, data, store, config) {
+  return authenticateOperator({
+    headers: request.headers,
+    method: request.method,
+    url: request.url,
+    data,
+    store,
+    config
+  });
 }
 
-async function requireUser(headers, store, config) {
-  const initData = readHeader(headers, 'x-telegram-init-data');
-  const user = await verifyTelegramWebAppData(initData, config.botToken);
-  if (!user) throw new AuthError('Доступ запрещён: требуется авторизация через Telegram Web App');
-  if (!isUserAuthorized(user, store.authorizedUsers, config)) {
-    throw new AuthError('Ваш аккаунт не найден в списке доступа ASMA Lines', 403);
-  }
-  return user;
+async function requireUser(request, data, store, config) {
+  return (await requireOperator(request, data, store, config)).user;
 }
 
-async function requireAdmin(headers, store, config) {
-  const user = await requireUser(headers, store, config);
-  if (!isUserAdmin(user, store.authorizedUsers, config)) {
+async function requireAdmin(request, data, store, config) {
+  const user = await requireUser(request, data, store, config);
+  if (!isUserAdmin(user, data.authorizedUsers, config)) {
     throw new AuthError('Действие доступно только администратору', 403);
   }
   return user;
+}
+
+/** Бот сообщает оператору о новом браузерном входе — неожиданный вход виден. */
+async function notifyLogin(user, { config, userAgent, place }) {
+  if (!config.botToken || !user?.id) return;
+  try {
+    await callTelegramApi(config, 'sendMessage', {
+      chat_id: String(user.id),
+      parse_mode: 'HTML',
+      text:
+        '🔓 <b>Вход в диспетчерскую с компьютера</b>\n' +
+        '───────────────────────\n' +
+        `Устройство: ${escapeHtml(describeDevice(userAgent))}\n` +
+        `Место: ${escapeHtml(place || 'неизвестно')}\n` +
+        `Время: ${escapeHtml(formatLoginTime(new Date().toISOString()))}\n\n` +
+        'Если это не вы — отправьте /logout: все входы закроются.'
+    });
+  } catch (error) {
+    console.error('login notify failed:', error.message);
+  }
+}
+
+/** Ссылка на бота с кодом входа — её же кодирует QR на экране входа. */
+function loginDeepLink(code, env = {}) {
+  const username = String(env.TELEGRAM_BOT_USERNAME || DEFAULT_BOT_USERNAME).replace(/^@/, '');
+  return `https://t.me/${username}?start=login_${normalizeLoginCode(code)}`;
 }
 
 async function callTelegramApi(config, method, payload) {
@@ -600,7 +625,9 @@ const SCHEMA_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS employees (
     id TEXT PRIMARY KEY, name TEXT, role TEXT, telegram_id TEXT, created_at TEXT NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS counters (name TEXT PRIMARY KEY, value INTEGER NOT NULL DEFAULT 0)`,
-  `CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)`
+  `CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)`,
+  // Таблицы браузерного входа — из общего списка, чтобы определения не расходились.
+  ...SESSION_SCHEMA_STATEMENTS
 ];
 
 const LEAD_COLUMNS = [
@@ -934,6 +961,10 @@ class LegacyReadOnlyStore {
   }
 }
 
+/* Методы сессий и кодов входа те же, что в _shared/store.js: копируем их
+   на локальный класс, чтобы не поддерживать две реализации входа. */
+withLoginSupport(D1Store);
+
 async function createStore(env = {}) {
   if (env.DB && typeof env.DB.prepare === 'function') return new D1Store(env.DB);
   if (env.STORE && typeof env.STORE.loadAll === 'function') return env.STORE;
@@ -1075,7 +1106,8 @@ async function fetchTile(z, x, y) {
 async function setTelegramWebhook(webhookUrl, env = {}) {
   const botToken = String(env.TELEGRAM_BOT_TOKEN || '');
   if (!botToken) throw new ConfigError('TELEGRAM_BOT_TOKEN не задан — регистрация вебхука невозможна');
-  const body = { url: webhookUrl, allowed_updates: ['message', 'channel_post'] };
+  // callback_query нужен для кнопок подтверждения входа в браузерную версию.
+  const body = { url: webhookUrl, allowed_updates: ['message', 'channel_post', 'callback_query'] };
   if (env.TELEGRAM_WEBHOOK_SECRET) body.secret_token = String(env.TELEGRAM_WEBHOOK_SECRET);
   const response = await fetchWithTimeout(`https://api.telegram.org/bot${botToken}/setWebhook`, {
     method: 'POST',
@@ -1127,8 +1159,15 @@ function jsonResponse(data, status = 200, extraHeaders = {}) {
 }
 
 function errorResponse(error, extraHeaders = {}) {
+  // Классы ошибок сравниваем по имени, а не через instanceof: часть проверок
+  // живёт в `_shared/*`, и instanceof с локальными классами давал бы 500
+  // вместо честных 401/403/400.
+  const name = error?.name || '';
   const status =
-    error instanceof ValidationError ? 400 : error instanceof AuthError ? error.status : error instanceof ConfigError ? 500 : 500;
+    name === 'ValidationError' ? 400
+      : name === 'AuthError' ? (Number.isInteger(error?.status) ? error.status : 401)
+        : name === 'ConfigError' ? 500
+          : 500;
   const body = { ok: false, success: false, error: error?.message || 'Внутренняя ошибка сервера' };
   if (error?.field) body.field = error.field;
   if (status === 500) console.error('API error:', error?.stack || error);
@@ -1185,7 +1224,11 @@ async function notifyLead(lead, config) {
 /* ================================================================== */
 
 async function handleBotUpdate(update, { store, config, crmAppUrl }) {
-  const chatId = update.message?.chat?.id || update.channel_post?.chat?.id || update.edited_message?.chat?.id;
+  const chatId =
+    update.message?.chat?.id ||
+    update.channel_post?.chat?.id ||
+    update.edited_message?.chat?.id ||
+    update.callback_query?.message?.chat?.id;
   const send = async (text, extra = {}) => {
     if (!config.botToken || !chatId) return;
     try {
@@ -1195,12 +1238,64 @@ async function handleBotUpdate(update, { store, config, crmAppUrl }) {
     }
   };
 
-  if (update.callback_query && config.botToken) {
-    try {
-      await callTelegramApi(config, 'answerCallbackQuery', { callback_query_id: update.callback_query.id });
-    } catch {
-      /* некритично */
+  /* Кнопки подтверждения входа (inline-клавиатура в боте). */
+  if (update.callback_query) {
+    const query = update.callback_query;
+    const from = query.from || {};
+    const answer = async (text) => {
+      if (!config.botToken) return undefined;
+      try {
+        await callTelegramApi(config, 'answerCallbackQuery', { callback_query_id: query.id, text: text || undefined });
+      } catch {
+        /* некритично */
+      }
+      return undefined;
+    };
+    const editText = async (text) => {
+      if (!config.botToken || !chatId || !query.message?.message_id) return;
+      try {
+        await callTelegramApi(config, 'editMessageText', {
+          chat_id: chatId,
+          message_id: query.message.message_id,
+          text,
+          parse_mode: 'HTML'
+        });
+      } catch (error) {
+        console.error('editMessageText failed:', error.message);
+      }
+    };
+
+    const match = String(query.data || '').match(/^login:(ok|no):(\d{6})$/);
+    if (!match) return answer('');
+
+    const callerData = await store.loadAll();
+    if (!isUserAuthorized({ id: from.id, username: from.username }, callerData.authorizedUsers, config)) {
+      return answer('У вас нет доступа к диспетчерской');
     }
+
+    if (match[1] === 'no') {
+      await cancelLoginCode({ store, code: match[2] });
+      await answer('Вход отменён');
+      await editText('⛔ <b>Вход отменён</b>\n\nЕсли это были не вы — сообщите администратору и отправьте /logout.');
+      return undefined;
+    }
+
+    const confirmed = await confirmLoginCode({ store, code: match[2], user: from });
+    if (!confirmed.ok) {
+      const reasons = {
+        invalid: 'Код не распознан — начните вход заново в браузере.',
+        'not-found': 'Код не найден — обновите страницу входа и получите новый.',
+        used: 'Этот код уже использован.',
+        expired: 'Код истёк (живёт 5 минут) — получите новый на странице входа.',
+        'already-confirmed': 'Код уже подтверждён — вернитесь в браузер.'
+      };
+      await answer(reasons[confirmed.reason] || 'Не удалось подтвердить вход');
+      return undefined;
+    }
+
+    await answer('Вход подтверждён');
+    await editText('✅ <b>Вход подтверждён</b>\n\nВернитесь в браузер — диспетчерская откроется сама.');
+    return undefined;
   }
 
   const message = update.message || update.channel_post || update.edited_message;
@@ -1233,6 +1328,51 @@ async function handleBotUpdate(update, { store, config, crmAppUrl }) {
     );
   }
 
+  /* Вход в браузерную версию: ссылка /start login_482173 или команда /login 482-173. */
+  const startLoginMatch = text.match(/^\/start\s+login_(\d{3}-?\d{3})$/i);
+  const loginCommandMatch = text.match(/^\/login(?:\s+(.+))?$/i);
+  if (startLoginMatch || loginCommandMatch) {
+    if (!authorized) {
+      return send(
+        `⛔ <b>Доступ ограничен</b>\n\n` +
+          `Ваш профиль (@${escapeHtml(senderUsername || 'нет юзернейма')}, ID: <code>${escapeHtml(senderId)}</code>) ` +
+          'не найден в списке диспетчеров ASMA Lines.'
+      );
+    }
+    const code = normalizeLoginCode(startLoginMatch ? startLoginMatch[1] : loginCommandMatch[1] || '');
+    if (!code) {
+      return send(
+        'ℹ️ <b>Вход с компьютера</b>\n\nОткройте диспетчерскую в браузере — на экране входа будет код.\n' +
+          'Подтвердить его можно так: <code>/login 482-173</code>'
+      );
+    }
+    const record = await store.getLoginCode(code);
+    if (!record) return send('❓ Код не найден. Обновите страницу входа в браузере и получите новый.');
+    if (record.usedAt) return send('⚠️ Этот код уже использован. Обновите страницу входа.');
+    if (new Date(record.expiresAt).getTime() <= Date.now()) {
+      return send('⌛️ Код истёк — он живёт 5 минут. Обновите страницу входа и получите новый.');
+    }
+    if (record.confirmedAt) return send('✅ Этот код уже подтверждён — вернитесь в браузер.');
+    return send(loginConfirmText(record), {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '✅ Подтвердить вход', callback_data: `login:ok:${code}` }],
+          [{ text: '⛔ Это не я', callback_data: `login:no:${code}` }]
+        ]
+      }
+    });
+  }
+
+  if (text.startsWith('/logout')) {
+    if (!authorized) return send('⛔ У вас нет доступа к этой команде.');
+    const revoked = await store.revokeUserSessions(senderId);
+    return send(
+      revoked
+        ? `🔒 <b>Сессии закрыты</b>\n\nОтозвано входов: ${revoked}. Чтобы войти снова, подтвердите новый код в боте.`
+        : '🔒 <b>Активных браузерных сессий нет</b>'
+    );
+  }
+
   if (['/start', '/crm', '/app', '/help'].some(cmd => text.startsWith(cmd)) || text.toLowerCase() === 'диспетчерская') {
     if (!authorized) {
       return send(
@@ -1244,7 +1384,8 @@ async function handleBotUpdate(update, { store, config, crmAppUrl }) {
     let reply =
       `🚛 <b>Диспетчерская ASMA Lines</b>\n\n` +
       `Здравствуйте, <b>${escapeHtml(senderName)}</b>!\n` +
-      `Система управления заявками готова к работе.`;
+      `Система управления заявками готова к работе.\n\n` +
+      `💻 <b>С компьютера:</b> откройте диспетчерскую в браузере и подтвердите вход кодом (команда /login).`;
     if (admin) {
       reply += `\n\n👑 <b>Управление доступом:</b>\n• <code>/add @username Имя</code>\n• <code>/remove @username</code>\n• <code>/users</code>\n• <code>/test</code>`;
     }
@@ -1381,11 +1522,110 @@ export default {
         );
       }
 
+      /* ---------------------- Браузерный вход ------------------- */
+
+      if (url.pathname === '/api/login/start' && request.method === 'POST') {
+        const limit = rateLimit(`login-start:${clientKey(request)}`, 20, 60_000);
+        if (!limit.ok) {
+          return jsonResponse({ ok: false, error: 'Слишком много запросов' }, 429, {
+            ...cors,
+            'Retry-After': String(limit.retryAfter)
+          });
+        }
+        const started = await startLogin({
+          store,
+          ip: clientKey(request),
+          userAgent: request.headers.get('user-agent') || '',
+          place: describePlace(request.cf)
+        });
+        return jsonResponse(
+          {
+            ok: true,
+            success: true,
+            code: formatLoginCode(started.code),
+            token: started.token,
+            expiresAt: started.expiresAt,
+            deepLink: loginDeepLink(started.code, env)
+          },
+          200,
+          { ...cors, 'Cache-Control': 'no-store' }
+        );
+      }
+
+      /* QR рисует сервер: ссылка меняется вместе с кодом, а сторонние сервисы
+         для этого не нужны. Запрос идёт с секретным токеном опроса. */
+      if (url.pathname === '/api/login/qr' && request.method === 'GET') {
+        const token = url.searchParams.get('token') || '';
+        const record = token ? await store.getLoginCodeByToken(await hashToken(token)) : null;
+        const alive = record && !record.usedAt && new Date(record.expiresAt).getTime() > Date.now();
+        if (!alive) {
+          return new Response('QR-код недоступен', { status: 404, headers: { ...cors, 'Cache-Control': 'no-store' } });
+        }
+        return new Response(qrSvg(loginDeepLink(record.code, env), { scale: 6, margin: 2 }), {
+          status: 200,
+          headers: { 'Content-Type': 'image/svg+xml; charset=utf-8', 'Cache-Control': 'no-store', ...cors }
+        });
+      }
+
+      if (url.pathname === '/api/login/status' && request.method === 'GET') {
+        const limit = rateLimit(`login-status:${clientKey(request)}`, 240, 60_000);
+        if (!limit.ok) {
+          return jsonResponse({ ok: false, error: 'Слишком много запросов' }, 429, {
+            ...cors,
+            'Retry-After': String(limit.retryAfter)
+          });
+        }
+        const token = url.searchParams.get('token') || '';
+        if (!token) throw new ValidationError('Не указан токен опроса', 'token');
+        const state = await loginState({
+          store,
+          token,
+          ip: clientKey(request),
+          userAgent: request.headers.get('user-agent') || '',
+          place: describePlace(request.cf)
+        });
+        const headers = { ...cors, 'Cache-Control': 'no-store' };
+        if (state.status === 'confirmed') {
+          headers['Set-Cookie'] = sessionCookieHeader(state.token);
+          ctx.waitUntil(notifyLogin(state.user, {
+            config,
+            userAgent: request.headers.get('user-agent') || '',
+            place: describePlace(request.cf)
+          }));
+        }
+        return jsonResponse(
+          {
+            ok: true,
+            success: true,
+            status: state.status,
+            user: state.user ? { name: state.user.name } : null
+          },
+          200,
+          headers
+        );
+      }
+
+      /* Выход не требует действующей сессии: важно лишь погасить cookie,
+         поэтому проверяется только защита от CSRF. */
+      if (url.pathname === '/api/logout' && request.method === 'POST') {
+        const csrf = checkCsrf({ method: request.method, headers: request.headers, url: request.url });
+        if (!csrf.ok) throw new AuthError(`Запрос отклонён: ${csrf.reason}`, 403);
+        const token = parseCookies(readHeaderValue(request.headers, 'cookie'))[SESSION_COOKIE] || '';
+        await logoutSession({ store, token });
+        return jsonResponse({ ok: true, success: true }, 200, { ...cors, 'Set-Cookie': clearedSessionCookieHeader() });
+      }
+
       /* ------------------------- CRM ---------------------------- */
 
       if (url.pathname === '/api/crm' || url.pathname === '/api/crm/data') {
         const data = await store.loadAll();
-        const user = await requireUser(request.headers, data, config);
+        const auth = await requireOperator(request, data, store, config);
+        const user = auth.user;
+        // Скользящее продление: клиенту возвращаем обновлённую cookie.
+        const corsWithSession =
+          auth.via === 'cookie' && auth.sliding && auth.token
+            ? { ...cors, 'Set-Cookie': sessionCookieHeader(auth.token) }
+            : cors;
 
         if (request.method === 'GET') {
           return jsonResponse(
@@ -1400,10 +1640,11 @@ export default {
                 username: user.username,
                 name: [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username
               },
-              isAdmin: isUserAdmin(user, data.authorizedUsers, config)
+              isAdmin: isUserAdmin(user, data.authorizedUsers, config),
+              via: auth.via
             },
             200,
-            cors
+            corsWithSession
           );
         }
 
@@ -1477,7 +1718,7 @@ export default {
       const leadMatch = url.pathname.match(/^\/api\/crm\/lead\/([^/]+)(\/note)?$/);
       if (leadMatch) {
         const data = await store.loadAll();
-        const user = await requireUser(request.headers, data, config);
+        const user = await requireUser(request, data, store, config);
         const leadId = decodeURIComponent(leadMatch[1]);
 
         if (leadMatch[2] && request.method === 'POST') {
@@ -1514,12 +1755,12 @@ export default {
         const data = await store.loadAll();
 
         if (request.method === 'GET') {
-          await requireUser(request.headers, data, config);
+          await requireUser(request, data, store, config);
           return jsonResponse({ ok: true, success: true, users: data.authorizedUsers }, 200, cors);
         }
 
         if (request.method === 'POST') {
-          await requireAdmin(request.headers, data, config);
+          await requireAdmin(request, data, store, config);
           const body = await readJson(request);
           const action = String(body.action || '');
 
@@ -1577,12 +1818,12 @@ export default {
 
       if (url.pathname === '/api/crm/employees') {
         const data = await store.loadAll();
-        await requireUser(request.headers, data, config);
+        await requireUser(request, data, store, config);
         if (request.method === 'GET') {
           return jsonResponse({ ok: true, success: true, employees: await store.listEmployees() }, 200, cors);
         }
         if (request.method === 'POST') {
-          await requireAdmin(request.headers, data, config);
+          await requireAdmin(request, data, store, config);
           const body = await readJson(request);
           const name = clampText(String(body.name || '').trim(), 100);
           if (name.length < 2) throw new ValidationError('Укажите имя сотрудника', 'name');
@@ -1601,7 +1842,7 @@ export default {
 
       const employeeMatch = url.pathname.match(/^\/api\/crm\/employee\/([^/]+)$/);
       if (employeeMatch && request.method === 'DELETE') {
-        await requireAdmin(request.headers, await store.loadAll(), config);
+        await requireAdmin(request, await store.loadAll(), store, config);
         const removed = await store.deleteEmployee(decodeURIComponent(employeeMatch[1]));
         if (!removed) return jsonResponse({ ok: false, error: 'Сотрудник не найден' }, 404, cors);
         return jsonResponse({ ok: true, success: true }, 200, cors);
@@ -1611,7 +1852,7 @@ export default {
 
       if (url.pathname === '/api/crm/doc-ticket' && request.method === 'POST') {
         const data = await store.loadAll();
-        const user = await requireUser(request.headers, data, config);
+        const user = await requireUser(request, data, store, config);
         const body = await readJson(request);
         const ticket = await createDocTicket(body.leadId, user, config);
         return jsonResponse({ ok: true, success: true, ticket }, 200, cors);
@@ -1622,7 +1863,7 @@ export default {
         const body = await readJson(request);
         let operator = null;
         try {
-          operator = await requireUser(request.headers, data, config);
+          operator = await requireUser(request, data, store, config);
         } catch {
           const ticket = await verifyDocTicket(body.ticket, data, config);
           if (ticket) operator = { id: ticket.username, username: ticket.username, first_name: ticket.operatorName };

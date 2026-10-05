@@ -53,7 +53,12 @@
     loadPromise: null,
     timer: null,
     listSignature: '',
-    detailSignature: ''
+    detailSignature: '',
+    // Способ входа: telegram (WebApp) или cookie (браузер).
+    via: '',
+    loginToken: '',
+    loginPoll: null,
+    loginTimer: null
   };
 
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -236,13 +241,16 @@
         syncSelection();
         render(true);
         autoSelectFirst();
+        state.via = data.via || (tg?.initData ? 'telegram' : 'cookie');
         if (showMessage) showToast('Заявки обновлены');
+        return true;
       } catch (error) {
         diagnostic(`Ошибка загрузки: ${error.message}`, 'error');
         setConnection(false, error.status === 401 || error.status === 403 ? 'Нет доступа' : 'Нет связи с базой');
         if (error.status === 401 || error.status === 403) {
-          showGate(error.message);
-          return;
+          // 403 — доступ не выдан (гейт), 401 — сессии нет (экран входа).
+          if (error.status === 403) showGate(error.message);
+          return false;
         }
         if (!state.authorized) {
           $('#crm-loading').hidden = true;
@@ -259,11 +267,103 @@
   }
 
   function showGate(message) {
+    stopLoginFlow();
     $('#crm-loading').hidden = true;
     $('#crm-offline').hidden = true;
+    $('#crm-login').hidden = true;
     $('#crm-gate').hidden = false;
     root.hidden = true;
     $('#gate-message').textContent = message || 'Откройте диспетчерскую через Telegram-бот ASMA Lines.';
+  }
+
+  /* ------------------------ Вход с компьютера ------------------------- */
+
+  /**
+   * Браузер без сессии: показываем код и QR, ждём подтверждения в боте.
+   * Пароля нет — вход подтверждает сам Telegram-аккаунт из списка доступа.
+   */
+  function showLogin() {
+    stopLoginFlow();
+    root.hidden = true;
+    $('#crm-loading').hidden = true;
+    $('#crm-offline').hidden = true;
+    $('#crm-gate').hidden = true;
+    $('#crm-login').hidden = false;
+    startLoginFlow();
+  }
+
+  async function startLoginFlow() {
+    stopLoginFlow();
+    const statusNode = $('#login-status');
+    const codeNode = $('#login-code');
+    const qrNode = $('#login-qr');
+    codeNode.textContent = '—';
+    qrNode.hidden = true;
+    qrNode.removeAttribute('src');
+    statusNode.dataset.state = '';
+    statusNode.textContent = 'Готовим код…';
+    $('#login-timer').textContent = '';
+
+    try {
+      const data = await api('/api/login/start', { method: 'POST', body: JSON.stringify({}) });
+      state.loginToken = data.token;
+      codeNode.textContent = data.code;
+      $('#login-hint-code').textContent = `/login ${data.code}`;
+      if (data.deepLink) $('#login-open').href = data.deepLink;
+
+      const qrUrl = new URL('/api/login/qr', location.origin);
+      qrUrl.searchParams.set('token', data.token);
+      qrNode.src = qrUrl.toString();
+      qrNode.hidden = false;
+
+      const expiresAt = new Date(data.expiresAt).getTime();
+      statusNode.textContent = 'Ждём подтверждения в Telegram…';
+      state.loginTimer = setInterval(() => {
+        const left = Math.max(0, expiresAt - Date.now());
+        const minutes = Math.floor(left / 60000);
+        const seconds = Math.floor((left % 60000) / 1000);
+        $('#login-timer').textContent = left > 0
+          ? `действует ${minutes}:${String(seconds).padStart(2, '0')}`
+          : 'код истёк';
+      }, 500);
+      state.loginPoll = setInterval(pollLogin, 2500);
+      diagnostic('Выдан код входа для браузерной версии');
+    } catch (error) {
+      statusNode.dataset.state = 'error';
+      statusNode.textContent = error.message;
+    }
+  }
+
+  async function pollLogin() {
+    if (!state.loginToken) return;
+    try {
+      const data = await api(`/api/login/status?token=${encodeURIComponent(state.loginToken)}`);
+      if (data.status === 'confirmed') {
+        stopLoginFlow();
+        const statusNode = $('#login-status');
+        statusNode.dataset.state = 'ok';
+        statusNode.textContent = 'Вход подтверждён — открываем диспетчерскую…';
+        diagnostic('Вход подтверждён в боте', 'success');
+        setTimeout(() => location.reload(), 600);
+        return;
+      }
+      if (['expired', 'used', 'unknown'].includes(data.status)) {
+        stopLoginFlow();
+        const statusNode = $('#login-status');
+        statusNode.dataset.state = 'error';
+        statusNode.textContent = 'Код больше не действует — нажмите «Новый код».';
+      }
+    } catch {
+      /* сеть моргнула — следующий опрос повторит */
+    }
+  }
+
+  function stopLoginFlow() {
+    clearInterval(state.loginPoll);
+    clearInterval(state.loginTimer);
+    state.loginPoll = null;
+    state.loginTimer = null;
+    state.loginToken = '';
   }
 
   /** На широком экране карточка живёт рядом со списком: пустой блок справа
@@ -560,6 +660,8 @@
     $('#profile-avatar').textContent = initials;
     $('#btn-access').hidden = !state.isAdmin;
     $('#btn-profile-access').hidden = !state.isAdmin;
+    // «Выйти» показываем только браузерному входу: в Telegram сессии нет.
+    $('#btn-profile-logout').hidden = state.via !== 'cookie';
   }
 
   /* --------------------------- Выбор и карточка ------------------------- */
@@ -743,6 +845,17 @@
     $('#btn-access').addEventListener('click', openAccess);
     $('#btn-profile-access').addEventListener('click', openAccess);
     $('#btn-profile-refresh').addEventListener('click', () => { closeSheets(); refresh(true); });
+    $('#login-restart').addEventListener('click', startLoginFlow);
+    $('#btn-profile-logout').addEventListener('click', async () => {
+      closeSheets();
+      try {
+        await api('/api/logout', { method: 'POST', body: JSON.stringify({}) });
+        diagnostic('Сессия закрыта', 'success');
+      } catch (error) {
+        diagnostic(`Выход: ${error.message}`, 'error');
+      }
+      location.reload();
+    });
     $('#btn-profile-diagnostics').addEventListener('click', () => {
       closeSheets();
       const panel = $('#diagnostic-panel');
@@ -892,12 +1005,19 @@
     renderOperator();
 
     if (!tg?.initData) {
-      // Браузерный вход появится после внедрения сессий; пока — только Telegram.
-      showGate('Откройте диспетчерскую через @asmalinesbot, чтобы подтвердить доступ.');
+      // Браузер: пробуем сессионную cookie, иначе показываем вход по коду.
+      const authorized = await refresh();
+      if (authorized) startAutoRefresh();
+      else if ($('#crm-login').hidden) showLogin();
       return;
     }
 
-    await refresh();
+    const authorized = await refresh();
+    if (!authorized) return;
+    startAutoRefresh();
+  }
+
+  function startAutoRefresh() {
     state.timer = setInterval(() => {
       if (!document.hidden) refresh();
     }, POLL_INTERVAL);

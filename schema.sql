@@ -73,6 +73,42 @@ CREATE TABLE IF NOT EXISTS employees (
   created_at TEXT NOT NULL
 );
 
+-- Сессии браузерного входа: в базе только sha256-хеш токена cookie,
+-- сам токен нигде не хранится. Скользящий срок — 30 дней.
+CREATE TABLE IF NOT EXISTS sessions (
+  id TEXT PRIMARY KEY,
+  telegram_id TEXT,
+  username TEXT,
+  name TEXT,
+  created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  last_seen_at TEXT NOT NULL,
+  user_agent TEXT,
+  ip TEXT,
+  place TEXT,
+  revoked INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(telegram_id);
+
+-- Одноразовые коды входа: живут 5 минут, подтверждаются только в боте.
+CREATE TABLE IF NOT EXISTS login_codes (
+  code TEXT PRIMARY KEY,
+  token_hash TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  confirmed_at TEXT,
+  used_at TEXT,
+  telegram_id TEXT,
+  username TEXT,
+  name TEXT,
+  ip TEXT,
+  user_agent TEXT,
+  place TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_login_codes_token ON login_codes(token_hash);
+
 CREATE TABLE IF NOT EXISTS counters (
   name TEXT PRIMARY KEY,
   value INTEGER NOT NULL DEFAULT 0

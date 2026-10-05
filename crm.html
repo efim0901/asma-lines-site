@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
-  <link rel="stylesheet" href="assets/crm-next.css?v=20261005">
+  <link rel="stylesheet" href="assets/crm-next.css?v=20261005_v2">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -122,6 +122,7 @@
         <button class="btn" type="button" id="btn-profile-refresh">Обновить заявки</button>
         <button class="btn" type="button" id="btn-profile-access" hidden>Доступ диспетчеров</button>
         <button class="btn" type="button" id="btn-profile-diagnostics">Состояние системы</button>
+        <button class="btn btn--danger" type="button" id="btn-profile-logout" hidden>Выйти на этом устройстве</button>
         <a class="btn" href="https://t.me/asmalinesbot" target="_blank" rel="noopener">Бот диспетчерской в Telegram</a>
       </div>
     </div>
@@ -143,6 +144,32 @@
       <button class="btn btn--primary" id="btn-retry" type="button">Повторить</button>
     </div>
   </section>
+  <!-- ------------------- Вход с компьютера ------------------- -->
+  <section class="gate gate--login" id="crm-login" hidden>
+    <div class="gate-panel gate-panel--wide">
+      <img src="assets/brand/asma-mark.svg" alt="ASMA Lines">
+      <h1>Вход в диспетчерскую</h1>
+      <p>Откройте Telegram-бот и подтвердите вход — на телефоне это одно касание.</p>
+      <div class="login">
+        <div class="login__code">
+          <span>Код входа</span>
+          <b id="login-code">—</b>
+          <small id="login-timer"></small>
+        </div>
+        <div class="login__qr">
+          <img id="login-qr" alt="QR-код: откройте бота и подтвердите вход" hidden>
+          <small>Наведите камеру телефона — Telegram откроется с этим кодом</small>
+        </div>
+      </div>
+      <p class="login__status" id="login-status">Готовим код…</p>
+      <div class="login__actions">
+        <a class="btn btn--primary" id="login-open" href="https://t.me/asmalinesbot" target="_blank" rel="noopener">Открыть Telegram</a>
+        <button class="btn" type="button" id="login-restart">Новый код</button>
+      </div>
+      <p class="login__hint">Можно и текстом: отправьте боту <code id="login-hint-code">/login 482-173</code>.</p>
+    </div>
+  </section>
+
   <section class="gate" id="crm-gate" hidden>
     <div class="gate-panel">
       <img src="assets/brand/asma-mark.svg" alt="ASMA Lines">
@@ -205,6 +232,6 @@
   </details>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="assets/crm-next.js?v=20261005"></script>
+  <script src="assets/crm-next.js?v=20261005_v2"></script>
 </body>
 </html>

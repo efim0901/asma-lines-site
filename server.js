@@ -25,8 +25,6 @@ import { buildLeadMessage, buildLeadPlainText } from './_shared/notify.js';
 import { geocode, route, fetchTile, setTelegramWebhook } from './_shared/geo.js';
 import {
   readAccessConfig,
-  requireUser,
-  requireAdmin,
   isUserAdmin,
   isUserAuthorized,
   verifyWebhookSecret,
@@ -34,6 +32,25 @@ import {
   verifyDocTicket,
   callTelegramApi
 } from './_shared/telegram.js';
+import {
+  SESSION_COOKIE,
+  authenticateOperator,
+  cancelLoginCode,
+  checkCsrf,
+  clearedSessionCookieHeader,
+  confirmLoginCode,
+  formatLoginCode,
+  hashToken,
+  loginConfirmText,
+  loginState,
+  logoutSession,
+  normalizeLoginCode,
+  parseCookies,
+  readHeaderValue,
+  sessionCookieHeader,
+  startLogin
+} from './_shared/sessions.js';
+import { qrSvg } from './_shared/qr.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -78,6 +95,37 @@ if (!accessConfig.botToken) {
 }
 
 const store = createJsonFileStore(STATE_FILE, fs.promises);
+
+/* Имя бота для ссылки входа (в Cloudflare — TELEGRAM_BOT_USERNAME). */
+const DEFAULT_BOT_USERNAME = 'asmalinesbot';
+
+const loginDeepLink = (code) => {
+  const username = String(ENV.TELEGRAM_BOT_USERNAME || DEFAULT_BOT_USERNAME).replace(/^@/, '');
+  return `https://t.me/${username}?start=login_${normalizeLoginCode(code)}`;
+};
+
+/**
+ * Авторизация: подписанный initData (WebApp) или сессионная cookie (браузер).
+ * Тот же контракт, что и в _worker.js, — код один и тот же.
+ */
+async function requireUser(req, data, config) {
+  return (await authenticateOperator({
+    headers: req.headers,
+    method: req.method,
+    url: `${req.protocol}://${req.get('host')}${req.originalUrl}`,
+    data,
+    store,
+    config
+  })).user;
+}
+
+async function requireAdmin(req, data, config) {
+  const user = await requireUser(req, data, config);
+  if (!isUserAdmin(user, data.authorizedUsers, config)) {
+    throw new AuthError('Действие доступно только администратору', 403);
+  }
+  return user;
+}
 
 /* ------------------------------------------------------------------ */
 /* Ограничение частоты запросов                                       */
@@ -234,7 +282,19 @@ app.get(
   ['/api/crm', '/api/crm/data'],
   asyncRoute(async (req, res) => {
     const data = await store.loadAll();
-    const user = await requireUser(req.headers, data, accessConfig);
+    const auth = await authenticateOperator({
+      headers: req.headers,
+      method: req.method,
+      url: `${req.protocol}://${req.get('host')}${req.originalUrl}`,
+      data,
+      store,
+      config: accessConfig
+    });
+    const user = auth.user;
+    // Скользящее продление сессии — как в _worker.js.
+    if (auth.via === 'cookie' && auth.sliding && auth.token) {
+      res.set('Set-Cookie', sessionCookieHeader(auth.token));
+    }
     res.json({
       ok: true,
       success: true,
@@ -246,7 +306,8 @@ app.get(
         username: user.username,
         name: [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username
       },
-      isAdmin: isUserAdmin(user, data.authorizedUsers, accessConfig)
+      isAdmin: isUserAdmin(user, data.authorizedUsers, accessConfig),
+      via: auth.via
     });
   })
 );
@@ -255,7 +316,7 @@ app.post(
   '/api/crm',
   asyncRoute(async (req, res) => {
     const data = await store.loadAll();
-    const user = await requireUser(req.headers, data, accessConfig);
+    const user = await requireUser(req, data, accessConfig);
     const action = String(req.body?.action || '');
     const operatorName =
       [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || 'Диспетчер';
@@ -323,7 +384,7 @@ app.post(
   '/api/crm/lead',
   asyncRoute(async (req, res) => {
     const data = await store.loadAll();
-    const user = await requireUser(req.headers, data, accessConfig);
+    const user = await requireUser(req, data, accessConfig);
     const lead = normalizeLead(req.body, { allowTelegramHandle: true });
     lead.id = `lead-${crypto.randomUUID()}`;
     lead.leadNumber = await store.nextLeadNumber();
@@ -340,7 +401,7 @@ app.patch(
   '/api/crm/lead/:id',
   asyncRoute(async (req, res) => {
     const data = await store.loadAll();
-    await requireUser(req.headers, data, accessConfig);
+    await requireUser(req, data, accessConfig);
     const lead = await store.updateLead(req.params.id, req.body || {});
     if (!lead) return res.status(404).json({ ok: false, error: 'Заявка не найдена' });
     res.json({ ok: true, success: true, lead });
@@ -351,7 +412,7 @@ app.delete(
   '/api/crm/lead/:id',
   asyncRoute(async (req, res) => {
     const data = await store.loadAll();
-    const user = await requireUser(req.headers, data, accessConfig);
+    const user = await requireUser(req, data, accessConfig);
     const removed = await store.deleteLead(req.params.id, String(user.id || ''));
     if (!removed) return res.status(404).json({ ok: false, error: 'Заявка не найдена' });
     res.json({ ok: true, success: true });
@@ -362,7 +423,7 @@ app.post(
   '/api/crm/lead/:id/note',
   asyncRoute(async (req, res) => {
     const data = await store.loadAll();
-    const user = await requireUser(req.headers, data, accessConfig);
+    const user = await requireUser(req, data, accessConfig);
     const text = String(req.body?.text || '').trim().slice(0, 2000);
     if (!text) throw new ValidationError('Текст заметки пуст', 'text');
     const current = await store.getLead(req.params.id);
@@ -387,7 +448,7 @@ app.get(
   '/api/crm/access',
   asyncRoute(async (req, res) => {
     const data = await store.loadAll();
-    await requireUser(req.headers, data, accessConfig);
+    await requireUser(req, data, accessConfig);
     res.json({ ok: true, success: true, users: data.authorizedUsers });
   })
 );
@@ -396,7 +457,7 @@ app.post(
   '/api/crm/access',
   asyncRoute(async (req, res) => {
     const data = await store.loadAll();
-    await requireAdmin(req.headers, data, accessConfig);
+    await requireAdmin(req, data, accessConfig);
     const action = String(req.body?.action || '');
 
     if (action === 'add') {
@@ -451,7 +512,7 @@ app.get(
   '/api/crm/employees',
   asyncRoute(async (req, res) => {
     const data = await store.loadAll();
-    await requireUser(req.headers, data, accessConfig);
+    await requireUser(req, data, accessConfig);
     res.json({ ok: true, success: true, employees: await store.listEmployees() });
   })
 );
@@ -460,7 +521,7 @@ app.post(
   '/api/crm/employee',
   asyncRoute(async (req, res) => {
     const data = await store.loadAll();
-    await requireAdmin(req.headers, data, accessConfig);
+    await requireAdmin(req, data, accessConfig);
     const name = String(req.body?.name || '').trim().slice(0, 100);
     if (name.length < 2) throw new ValidationError('Укажите имя сотрудника', 'name');
     const employee = {
@@ -479,7 +540,7 @@ app.delete(
   '/api/crm/employee/:id',
   asyncRoute(async (req, res) => {
     const data = await store.loadAll();
-    await requireAdmin(req.headers, data, accessConfig);
+    await requireAdmin(req, data, accessConfig);
     const removed = await store.deleteEmployee(req.params.id);
     if (!removed) return res.status(404).json({ ok: false, error: 'Сотрудник не найден' });
     res.json({ ok: true, success: true });
@@ -494,7 +555,7 @@ app.post(
   '/api/crm/doc-ticket',
   asyncRoute(async (req, res) => {
     const data = await store.loadAll();
-    const user = await requireUser(req.headers, data, accessConfig);
+    const user = await requireUser(req, data, accessConfig);
     const ticket = await createDocTicket(req.body?.leadId, user, accessConfig);
     res.json({ ok: true, success: true, ticket });
   })
@@ -506,7 +567,7 @@ app.post(
     const data = await store.loadAll();
     let operator = null;
     try {
-      operator = await requireUser(req.headers, data, accessConfig);
+      operator = await requireUser(req, data, accessConfig);
     } catch {
       const ticket = await verifyDocTicket(req.body?.ticket, data, accessConfig);
       if (ticket) operator = { id: ticket.username, username: ticket.username, first_name: ticket.operatorName };
@@ -569,6 +630,87 @@ app.get(
 /* API: Telegram                                                      */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/* API: браузерный вход (код + подтверждение в боте)                  */
+/* ------------------------------------------------------------------ */
+
+app.post(
+  '/api/login/start',
+  rateLimitMiddleware('login-start', 20, 60_000),
+  asyncRoute(async (req, res) => {
+    const started = await startLogin({
+      store,
+      ip: req.ip || '',
+      userAgent: req.get('user-agent') || '',
+      place: ''
+    });
+    res.set('Cache-Control', 'no-store');
+    res.json({
+      ok: true,
+      success: true,
+      code: formatLoginCode(started.code),
+      token: started.token,
+      expiresAt: started.expiresAt,
+      deepLink: loginDeepLink(started.code)
+    });
+  })
+);
+
+app.get(
+  '/api/login/qr',
+  asyncRoute(async (req, res) => {
+    const token = String(req.query.token || '');
+    const record = token ? await store.getLoginCodeByToken(await hashToken(token)) : null;
+    const alive = record && !record.usedAt && new Date(record.expiresAt).getTime() > Date.now();
+    if (!alive) return res.status(404).send('QR-код недоступен');
+    res.set('Content-Type', 'image/svg+xml; charset=utf-8');
+    res.set('Cache-Control', 'no-store');
+    res.send(qrSvg(loginDeepLink(record.code), { scale: 6, margin: 2 }));
+  })
+);
+
+app.get(
+  '/api/login/status',
+  rateLimitMiddleware('login-status', 240, 60_000),
+  asyncRoute(async (req, res) => {
+    const token = String(req.query.token || '');
+    if (!token) throw new ValidationError('Не указан токен опроса', 'token');
+    const state = await loginState({
+      store,
+      token,
+      ip: req.ip || '',
+      userAgent: req.get('user-agent') || '',
+      place: ''
+    });
+    res.set('Cache-Control', 'no-store');
+    if (state.status === 'confirmed') {
+      res.set('Set-Cookie', sessionCookieHeader(state.token));
+    }
+    res.json({
+      ok: true,
+      success: true,
+      status: state.status,
+      user: state.user ? { name: state.user.name } : null
+    });
+  })
+);
+
+app.post(
+  '/api/logout',
+  asyncRoute(async (req, res) => {
+    const csrf = checkCsrf({
+      method: req.method,
+      headers: req.headers,
+      url: `${req.protocol}://${req.get('host')}${req.originalUrl}`
+    });
+    if (!csrf.ok) throw new AuthError(`Запрос отклонён: ${csrf.reason}`, 403);
+    const token = parseCookies(readHeaderValue(req.headers, 'cookie'))[SESSION_COOKIE] || '';
+    await logoutSession({ store, token });
+    res.set('Set-Cookie', clearedSessionCookieHeader());
+    res.json({ ok: true, success: true });
+  })
+);
+
 app.get('/api/telegram-webhook', (req, res) => {
   res.json({
     ok: true,
@@ -611,14 +753,16 @@ app.post(
 /* ------------------------------------------------------------------ */
 
 async function handleBotUpdate(update) {
+  const query = update.callback_query;
   const message = update.message || update.channel_post || update.edited_message;
-  if (!message?.text) return;
+  const chatId = message?.chat?.id || query?.message?.chat?.id;
+  if (!chatId) return;
+  if (!message?.text && !query) return;
 
-  const chatId = message.chat.id;
-  const from = message.from || message.chat || {};
+  const from = message?.from || message?.chat || query?.from || {};
   const senderId = String(from.id || '');
   const senderUsername = String(from.username || '');
-  const text = String(message.text).trim().replace(/@\w+bot/i, '').trim();
+  const text = String(message?.text || '').trim().replace(/@\w+bot/i, '').trim();
 
   const data = await store.loadAll();
   const pseudoUser = { id: senderId, username: senderUsername };
@@ -636,6 +780,55 @@ async function handleBotUpdate(update) {
   };
 
   const button = { reply_markup: { inline_keyboard: [[{ text: '🚀 Открыть CRM', web_app: { url: crmUrl } }]] } };
+
+  /* Кнопки подтверждения входа в браузерную версию (локальная проверка). */
+  if (query) {
+    const answer = async (text) => {
+      if (!accessConfig.botToken) return;
+      try {
+        await callTelegramApi(accessConfig, 'answerCallbackQuery', { callback_query_id: query.id, text: text || undefined });
+      } catch (error) {
+        console.error('answerCallbackQuery failed:', error.message);
+      }
+    };
+    const match = String(query.data || '').match(/^login:(ok|no):(\d{6})$/);
+    if (!match) return answer('');
+    if (!authorized) return answer('У вас нет доступа к диспетчерской');
+    if (match[1] === 'no') {
+      await cancelLoginCode({ store, code: match[2] });
+      return answer('Вход отменён');
+    }
+    const confirmed = await confirmLoginCode({ store, code: match[2], user: from });
+    return answer(confirmed.ok ? 'Вход подтверждён' : 'Не удалось подтвердить вход');
+  }
+
+  /* Вход в браузерную версию: /start login_482173 или /login 482-173. */
+  const startLoginMatch = text.match(/^\/start\s+login_(\d{3}-?\d{3})$/i);
+  const loginCommandMatch = text.match(/^\/login(?:\s+(.+))?$/i);
+  if (startLoginMatch || loginCommandMatch) {
+    if (!authorized) return send(`⛔ Доступ ограничен. Ваш Telegram ID: <code>${escapeHtml(senderId)}</code>`);
+    const code = normalizeLoginCode(startLoginMatch ? startLoginMatch[1] : loginCommandMatch[1] || '');
+    if (!code) return send('ℹ️ Откройте диспетчерскую в браузере — на экране входа будет код. Подтвердить: <code>/login 482-173</code>');
+    const record = await store.getLoginCode(code);
+    if (!record) return send('❓ Код не найден — обновите страницу входа.');
+    if (record.usedAt) return send('⚠️ Этот код уже использован.');
+    if (new Date(record.expiresAt).getTime() <= Date.now()) return send('⌛️ Код истёк — получите новый.');
+    if (record.confirmedAt) return send('✅ Этот код уже подтверждён — вернитесь в браузер.');
+    return send(loginConfirmText(record), {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '✅ Подтвердить вход', callback_data: `login:ok:${code}` }],
+          [{ text: '⛔ Это не я', callback_data: `login:no:${code}` }]
+        ]
+      }
+    });
+  }
+
+  if (text.startsWith('/logout')) {
+    if (!authorized) return send('⛔ У вас нет доступа к этой команде.');
+    const revoked = await store.revokeUserSessions(senderId);
+    return send(revoked ? `🔒 Сессии закрыты: ${revoked}.` : '🔒 Активных браузерных сессий нет.');
+  }
 
   if (text.startsWith('/start') || text.startsWith('/crm') || text.startsWith('/help')) {
     if (!authorized) {

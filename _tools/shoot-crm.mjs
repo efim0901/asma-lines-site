@@ -24,6 +24,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { qrSvg } from '../_shared/qr.js';
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = path.join(root, '_prototypes');
 fs.mkdirSync(outDir, { recursive: true });
@@ -47,7 +49,13 @@ const fileUri = (file) => 'file:///' + file.replace(/\\/g, '/').split('/').map(e
 
 /* Демонстрационные заявки. Поля совпадают с реальной схемой D1, поэтому
    карточка и таблица рисуются ровно так же, как с боевыми данными. */
+/* Экран входа: QR рисуем тем же модулем, что и сервер, — видно настоящий код. */
+const DEMO_QR_SVG = JSON.stringify(qrSvg('https://t.me/asmalinesbot?start=login_482173', { scale: 6, margin: 2 }));
+
 const DEMO = `
+  const LOGIN_MODE = /(^|[?&])state=login/.test(location.search);
+  const QR_SVG = ${DEMO_QR_SVG};
+  window.__QR_SVG = QR_SVG;
   const now = Date.now();
   const iso = (minAgo) => new Date(now - minAgo * 60000).toISOString();
   const LEADS = [
@@ -84,8 +92,8 @@ const DEMO = `
     user: { id: 1014012851, username: 'plombit', name: 'Иван Ефимович' }, isAdmin: true
   };
   window.Telegram = { WebApp: {
-    initData: 'auth_date=1&user=%7B%22id%22%3A1014012851%7D&hash=demo',
-    initDataUnsafe: { user: { id: 1014012851, first_name: 'Иван', last_name: 'Ефимович', username: 'plombit' } },
+    initData: LOGIN_MODE ? '' : 'auth_date=1&user=%7B%22id%22%3A1014012851%7D&hash=demo',
+    initDataUnsafe: LOGIN_MODE ? {} : { user: { id: 1014012851, first_name: 'Иван', last_name: 'Ефимович', username: 'plombit' } },
     ready() {}, expand() {}, disableVerticalSwipes() {}, setHeaderColor() {}, setBackgroundColor() {},
     enableClosingConfirmation() {}, disableClosingConfirmation() {},
     BackButton: { show() {}, hide() {}, onClick() {} },
@@ -93,9 +101,33 @@ const DEMO = `
     showConfirm(message, callback) { callback(true); }
   } };
   const realFetch = window.fetch.bind(window);
-  window.fetch = (url, options) => String(url).includes('/api/crm')
-    ? Promise.resolve(new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } }))
-    : realFetch(url, options);
+  const json = (body, status = 200) => Promise.resolve(
+    new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
+  );
+  window.fetch = (url, options) => {
+    const target = String(url);
+    if (!LOGIN_MODE) {
+      return target.includes('/api/crm')
+        ? json(payload)
+        : realFetch(url, options);
+    }
+    // Браузер без сессии: CRM отвечает 401, вход выдаёт код и QR.
+    if (target.includes('/api/login/start')) {
+      return json({
+        ok: true,
+        code: '482-173',
+        token: 'demo-token',
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+        deepLink: 'https://t.me/asmalinesbot?start=login_482173'
+      });
+    }
+    if (target.includes('/api/login/qr')) {
+      return Promise.resolve(new Response(QR_SVG, { status: 200, headers: { 'content-type': 'image/svg+xml' } }));
+    }
+    if (target.includes('/api/login/status')) return json({ ok: true, status: 'pending' });
+    if (target.includes('/api/crm')) return json({ ok: false, error: 'Требуется вход' }, 401);
+    return realFetch(url, options);
+  };
 `;
 
 const shell = fs.readFileSync(path.join(root, 'crm.html'), 'utf8');
@@ -107,6 +139,13 @@ const harness = shell
       const params = new URLSearchParams(location.search);
       if (params.get('state') === 'detail') setTimeout(() => document.querySelector('.row')?.click(), 600);
       if (params.get('tab')) setTimeout(() => document.querySelector('[data-tab="' + params.get('tab') + '"]')?.click(), 900);
+      // Заглушка не может подменить <img src> через fetch: подставляем QR вручную.
+      if (params.get('state') === 'login') {
+        setTimeout(() => {
+          const qr = document.getElementById('login-qr');
+          if (qr && window.__QR_SVG) qr.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(window.__QR_SVG);
+        }, 1200);
+      }
     });
   </script>\n</body>`);
 
@@ -125,7 +164,9 @@ const views = [
   { suffix: 'laptop-detail', width: 1180, height: 860, query: '?state=detail', note: 'ноутбук: карточка выдвинута' },
   { suffix: 'mobile', width: 390, height: 844, query: '', note: 'телефон: плотный список' },
   { suffix: 'mobile-detail', width: 390, height: 844, query: '?state=detail', note: 'телефон: карточка-шторка' },
-  { suffix: 'mobile-history', width: 390, height: 844, query: '?state=detail&tab=feed', note: 'телефон: история заявки' }
+  { suffix: 'mobile-history', width: 390, height: 844, query: '?state=detail&tab=feed', note: 'телефон: история заявки' },
+  { suffix: 'login-desktop', width: 1440, height: 900, query: '?state=login', note: 'ПК: вход по коду и QR' },
+  { suffix: 'login-mobile', width: 390, height: 844, query: '?state=login', note: 'телефон: вход по коду и QR' }
 ];
 
 try {

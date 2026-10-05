@@ -192,6 +192,89 @@ const keepMaster = await call('/api/crm/access', {
 });
 check('отклонено с 400', keepMaster.status === 400, `получено ${keepMaster.status}`);
 
+/* ------------------ Браузерный вход: код + подтверждение в боте ------------------ */
+
+const webhookSecret = process.argv[5] || '';
+
+/** Служебное обновление Telegram в вебхук — эмуляция бота. */
+async function telegramUpdate(update) {
+  const response = await fetch(`${baseUrl}/api/telegram-webhook`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(webhookSecret ? { 'X-Telegram-Bot-Api-Secret-Token': webhookSecret } : {})
+    },
+    body: JSON.stringify(update)
+  });
+  return response.status;
+}
+
+console.log('16. Браузерный вход: выдача кода');
+const started = await call('/api/login/start', { method: 'POST', body: '{}' }, null);
+const codeDigits = String(started.body?.code || '').replace(/\D/g, '');
+check('код выдан', started.status === 200 && /^\d{3}-\d{3}$/.test(started.body?.code || ''), `статус ${started.status}`);
+check('есть токен опроса и ссылка в бота', Boolean(started.body?.token) && Boolean(started.body?.deepLink));
+
+console.log('17. QR-код рисует сервер');
+const qr = await fetch(`${baseUrl}/api/login/qr?token=${encodeURIComponent(started.body?.token || '')}`);
+check('отдан SVG', qr.status === 200 && (qr.headers.get('content-type') || '').includes('svg'), `статус ${qr.status}`);
+const qrBad = await fetch(`${baseUrl}/api/login/qr?token=чужой-токен`);
+check('чужой токен — 404', qrBad.status === 404, `получено ${qrBad.status}`);
+
+console.log('18. Без подтверждения вход закрыт');
+const pending = await call(`/api/login/status?token=${encodeURIComponent(started.body?.token || '')}`, {}, null);
+check('статус pending', pending.body?.status === 'pending', JSON.stringify(pending.body));
+
+console.log('19. Подтверждение в боте');
+const commandStatus = await telegramUpdate({
+  message: { chat: { id: Number(adminId) }, from: admin, text: `/login ${started.body?.code}` }
+});
+check('бот принял команду /login', commandStatus === 200, `получено ${commandStatus}`);
+const callbackStatus = await telegramUpdate({
+  callback_query: {
+    id: 'smoke-callback',
+    from: admin,
+    data: `login:ok:${codeDigits}`,
+    message: { message_id: 1, chat: { id: Number(adminId) } }
+  }
+});
+check('нажатие «Подтвердить вход» принято', callbackStatus === 200, `получено ${callbackStatus}`);
+
+console.log('20. Выдача сессии и работа с cookie');
+const sessionResponse = await fetch(`${baseUrl}/api/login/status?token=${encodeURIComponent(started.body?.token || '')}`);
+const sessionBody = await sessionResponse.json().catch(() => ({}));
+const setCookie = sessionResponse.headers.get('set-cookie') || '';
+const sessionToken = (setCookie.match(/asma_session=([^;]+)/) || [])[1] || '';
+check('вход подтверждён', sessionBody.status === 'confirmed', JSON.stringify(sessionBody));
+check('cookie защищена флагами (HttpOnly, SameSite=Lax)', /HttpOnly/i.test(setCookie) && /SameSite=Lax/i.test(setCookie));
+
+const cookieHeaders = { cookie: `asma_session=${sessionToken}` };
+const withCookie = await fetch(`${baseUrl}/api/crm`, { headers: cookieHeaders });
+const withCookieBody = await withCookie.json().catch(() => ({}));
+check('список заявок доступен по cookie', withCookie.status === 200, `статус ${withCookie.status}`);
+check('вход распознан как браузерный', withCookieBody.via === 'cookie', JSON.stringify(withCookieBody.via));
+
+const csrfBlocked = await fetch(`${baseUrl}/api/crm`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', ...cookieHeaders },
+  body: JSON.stringify({ action: 'add_note', leadId: 'нет-такой', note: 'проверка' })
+});
+check('POST без X-Requested-With отклонён (CSRF)', csrfBlocked.status === 403, `получено ${csrfBlocked.status}`);
+
+console.log('21. Выход из браузерной сессии');
+const logout = await fetch(`${baseUrl}/api/logout`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'asma-crm',
+    origin: baseUrl,
+    ...cookieHeaders
+  }
+});
+check('выход принят', logout.status === 200, `получено ${logout.status}`);
+const afterLogout = await fetch(`${baseUrl}/api/crm`, { headers: cookieHeaders });
+check('после выхода доступ закрыт', afterLogout.status === 401, `получено ${afterLogout.status}`);
+
 console.log(`\n${failures === 0 ? 'Все проверки пройдены ✅' : `Провалено проверок: ${failures}`}`);
 
 /*

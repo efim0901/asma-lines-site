@@ -11,7 +11,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const files = ['pricing.test.js', 'client-pricing.test.js', 'validation.test.js', 'security.test.js', 'store.test.js'];
+const files = [
+  'pricing.test.js',
+  'client-pricing.test.js',
+  'validation.test.js',
+  'security.test.js',
+  'store.test.js',
+  'qr.test.js',
+  'sessions.test.js'
+];
 
 if (process.argv.includes('--single')) {
   // Режим одного файла: выполняем тесты, печатаем отчёт и явно завершаемся.

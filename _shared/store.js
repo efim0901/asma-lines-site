@@ -17,6 +17,79 @@ export const SCHEMA_VERSION = 2;
 /** URL прежнего публичного хранилища. Только для разовой миграции данных. */
 export const LEGACY_STORE_URL = 'https://json.extendsclass.com/bin/becdbda';
 
+/**
+ * Таблицы браузерного входа: сессии и одноразовые коды.
+ * Вынесены отдельным списком: тот же набор нужен хранилищу внутри
+ * `_worker.js`, чтобы определение таблиц жило в одном месте.
+ */
+export const SESSION_SCHEMA_STATEMENTS = [
+  `CREATE TABLE IF NOT EXISTS sessions (
+    id TEXT PRIMARY KEY,
+    telegram_id TEXT,
+    username TEXT,
+    name TEXT,
+    created_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    last_seen_at TEXT NOT NULL,
+    user_agent TEXT,
+    ip TEXT,
+    place TEXT,
+    revoked INTEGER NOT NULL DEFAULT 0)`,
+  'CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(telegram_id)',
+  `CREATE TABLE IF NOT EXISTS login_codes (
+    code TEXT PRIMARY KEY,
+    token_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    confirmed_at TEXT,
+    used_at TEXT,
+    telegram_id TEXT,
+    username TEXT,
+    name TEXT,
+    ip TEXT,
+    user_agent TEXT,
+    place TEXT)`,
+  'CREATE INDEX IF NOT EXISTS idx_login_codes_token ON login_codes(token_hash)'
+];
+
+/**
+ * Методы сессий и кодов входа берутся из D1Store: их копирует на себя
+ * хранилище внутри Worker'а, чтобы две реализации не разошлись.
+ */
+export const SESSION_METHOD_NAMES = [
+  'saveLoginCode',
+  'getLoginCode',
+  'getLoginCodeByToken',
+  'countLoginCodes',
+  'confirmLoginCode',
+  'consumeLoginCode',
+  'deleteLoginCode',
+  'deleteExpiredLoginCodes',
+  'createSession',
+  'getSession',
+  'touchSession',
+  'revokeSession',
+  'revokeUserSessions',
+  'countActiveSessions',
+  'deleteExpiredSessions'
+];
+
+/**
+ * Добавляет классу-хранилищу методы браузерного входа.
+ * Обёртка заодно готовит схему: в Worker'е таблицы создаются лениво при
+ * первом обращении, а код входа может быть самым первым запросом.
+ */
+export function withLoginSupport(StoreClass) {
+  for (const name of SESSION_METHOD_NAMES) {
+    const method = D1Store.prototype[name];
+    StoreClass.prototype[name] = async function runWithSchema(...args) {
+      if (typeof this.ensureSchema === 'function') await this.ensureSchema();
+      return method.apply(this, args);
+    };
+  }
+  return StoreClass;
+}
+
 export const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS leads (
   id TEXT PRIMARY KEY,
@@ -84,6 +157,9 @@ CREATE TABLE IF NOT EXISTS employees (
   telegram_id TEXT,
   created_at TEXT NOT NULL
 );
+
+/* Таблицы браузерного входа — общий список SESSION_SCHEMA_STATEMENTS. */
+${SESSION_SCHEMA_STATEMENTS.join(';\n')};
 
 CREATE TABLE IF NOT EXISTS counters (
   name TEXT PRIMARY KEY,
@@ -157,6 +233,43 @@ export function rowToLead(row) {
 }
 
 /** Преобразует объект заявки в параметры для SQL. */
+/** Строка login_codes → запись кода входа. */
+export function rowToLoginCode(row) {
+  if (!row) return null;
+  return {
+    code: row.code,
+    tokenHash: row.token_hash,
+    createdAt: row.created_at,
+    expiresAt: row.expires_at,
+    confirmedAt: row.confirmed_at || null,
+    usedAt: row.used_at || null,
+    telegramId: row.telegram_id || null,
+    username: row.username || null,
+    name: row.name || null,
+    ip: row.ip || '',
+    userAgent: row.user_agent || '',
+    place: row.place || ''
+  };
+}
+
+/** Строка sessions → запись сессии. */
+export function rowToSession(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    telegramId: row.telegram_id || '',
+    username: row.username || '',
+    name: row.name || '',
+    createdAt: row.created_at,
+    expiresAt: row.expires_at,
+    lastSeenAt: row.last_seen_at,
+    userAgent: row.user_agent || '',
+    ip: row.ip || '',
+    place: row.place || '',
+    revoked: Boolean(row.revoked)
+  };
+}
+
 export function leadToParams(lead) {
   return [
     lead.id,
@@ -330,6 +443,146 @@ export class D1Store {
     return true;
   }
 
+  /* ------------------- Сессии и коды входа ------------------- */
+
+  async saveLoginCode(record) {
+    await this.db
+      .prepare(
+        `INSERT INTO login_codes (code, token_hash, created_at, expires_at, ip, user_agent, place)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(code) DO UPDATE SET token_hash = excluded.token_hash,
+           created_at = excluded.created_at, expires_at = excluded.expires_at,
+           ip = excluded.ip, user_agent = excluded.user_agent, place = excluded.place,
+           confirmed_at = NULL, used_at = NULL, telegram_id = NULL, username = NULL, name = NULL`
+      )
+      .bind(
+        String(record.code),
+        String(record.tokenHash),
+        String(record.createdAt),
+        String(record.expiresAt),
+        String(record.ip || ''),
+        String(record.userAgent || ''),
+        String(record.place || '')
+      )
+      .run();
+    return true;
+  }
+
+  async getLoginCode(code) {
+    const row = await this.db.prepare('SELECT * FROM login_codes WHERE code = ?').bind(String(code)).first();
+    return rowToLoginCode(row);
+  }
+
+  async getLoginCodeByToken(tokenHash) {
+    const row = await this.db
+      .prepare('SELECT * FROM login_codes WHERE token_hash = ? ORDER BY created_at DESC LIMIT 1')
+      .bind(String(tokenHash))
+      .first();
+    return rowToLoginCode(row);
+  }
+
+  async countLoginCodes(ip, sinceIso) {
+    const row = await this.db
+      .prepare('SELECT COUNT(*) AS total FROM login_codes WHERE ip = ? AND created_at >= ?')
+      .bind(String(ip), String(sinceIso))
+      .first();
+    return Number(row?.total || 0);
+  }
+
+  async confirmLoginCode(code, { telegramId, username, name, at }) {
+    const result = await this.db
+      .prepare(
+        `UPDATE login_codes SET confirmed_at = ?, telegram_id = ?, username = ?, name = ?
+         WHERE code = ? AND used_at IS NULL AND confirmed_at IS NULL`
+      )
+      .bind(String(at), String(telegramId || ''), String(username || ''), String(name || ''), String(code))
+      .run();
+    return Number(result?.meta?.changes || 0) > 0;
+  }
+
+  /** Гасит код ровно один раз: два параллельных запроса не выдадут две сессии. */
+  async consumeLoginCode(code, tokenHash, usedAt) {
+    const result = await this.db
+      .prepare(
+        `UPDATE login_codes SET used_at = ?
+         WHERE code = ? AND token_hash = ? AND used_at IS NULL AND confirmed_at IS NOT NULL`
+      )
+      .bind(String(usedAt), String(code), String(tokenHash))
+      .run();
+    return Number(result?.meta?.changes || 0) > 0;
+  }
+
+  async deleteLoginCode(code) {
+    await this.db.prepare('DELETE FROM login_codes WHERE code = ?').bind(String(code)).run();
+    return true;
+  }
+
+  async deleteExpiredLoginCodes(beforeIso) {
+    await this.db.prepare('DELETE FROM login_codes WHERE created_at < ?').bind(String(beforeIso)).run();
+    return true;
+  }
+
+  async createSession(record) {
+    await this.db
+      .prepare(
+        `INSERT INTO sessions (id, telegram_id, username, name, created_at, expires_at, last_seen_at, user_agent, ip, place, revoked)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`
+      )
+      .bind(
+        String(record.id),
+        String(record.telegramId || ''),
+        String(record.username || ''),
+        String(record.name || ''),
+        String(record.createdAt),
+        String(record.expiresAt),
+        String(record.lastSeenAt),
+        String(record.userAgent || ''),
+        String(record.ip || ''),
+        String(record.place || '')
+      )
+      .run();
+    return true;
+  }
+
+  async getSession(id) {
+    const row = await this.db.prepare('SELECT * FROM sessions WHERE id = ?').bind(String(id)).first();
+    return rowToSession(row);
+  }
+
+  async touchSession(id, { lastSeenAt, expiresAt }) {
+    await this.db
+      .prepare('UPDATE sessions SET last_seen_at = ?, expires_at = ? WHERE id = ?')
+      .bind(String(lastSeenAt), String(expiresAt), String(id))
+      .run();
+    return true;
+  }
+
+  async revokeSession(id) {
+    await this.db.prepare('UPDATE sessions SET revoked = 1 WHERE id = ?').bind(String(id)).run();
+    return true;
+  }
+
+  async revokeUserSessions(telegramId) {
+    const result = await this.db
+      .prepare('UPDATE sessions SET revoked = 1 WHERE telegram_id = ? AND revoked = 0')
+      .bind(String(telegramId))
+      .run();
+    return Number(result?.meta?.changes || 0);
+  }
+
+  async countActiveSessions(telegramId, nowIso) {
+    const row = await this.db
+      .prepare('SELECT COUNT(*) AS total FROM sessions WHERE telegram_id = ? AND revoked = 0 AND expires_at > ?')
+      .bind(String(telegramId), String(nowIso))
+      .first();
+    return Number(row?.total || 0);
+  }
+
+  async deleteExpiredSessions(beforeIso) {
+    await this.db.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(String(beforeIso)).run();
+    return true;
+  }
+
   async replaceUsers(users) {
     const statements = [this.db.prepare('DELETE FROM access_users')];
     for (const user of users) {
@@ -482,6 +735,68 @@ export class LegacyReadOnlyStore {
     throw new ConfigError('Управление доступами недоступно: не настроен биндинг D1 (переменная DB)');
   }
 
+  /* Вход в браузере невозможен без базы: сессии должны переживать перезапуск. */
+
+  async saveLoginCode() {
+    throw new ConfigError('Вход по коду недоступен: не настроен биндинг D1 (переменная DB)');
+  }
+
+  async getLoginCode() {
+    return null;
+  }
+
+  async getLoginCodeByToken() {
+    return null;
+  }
+
+  async countLoginCodes() {
+    return 0;
+  }
+
+  async confirmLoginCode() {
+    return false;
+  }
+
+  async consumeLoginCode() {
+    return false;
+  }
+
+  async deleteLoginCode() {
+    return false;
+  }
+
+  async deleteExpiredLoginCodes() {
+    return 0;
+  }
+
+  async createSession() {
+    throw new ConfigError('Вход в браузере недоступен: не настроен биндинг D1 (переменная DB)');
+  }
+
+  async getSession() {
+    return null;
+  }
+
+  async touchSession() {
+    return false;
+  }
+
+  async revokeSession() {
+    return false;
+  }
+
+  async revokeUserSessions() {
+    return 0;
+  }
+
+  async countActiveSessions() {
+    return 0;
+  }
+
+  async deleteExpiredSessions() {
+    return false;
+  }
+
   async upsertEmployee() {
     throw new ConfigError('Сотрудники недоступны: не настроен биндинг D1 (переменная DB)');
   }
@@ -515,7 +830,9 @@ export class JsonFileStore {
       leads: [],
       deletedIds: [],
       authorizedUsers: [],
-      employees: []
+      employees: [],
+      loginCodes: [],
+      sessions: []
     };
     this.loaded = false;
   }
@@ -549,7 +866,9 @@ export class JsonFileStore {
             leads: Array.isArray(parsed.leads) ? parsed.leads.map(normalizeStoredLead).filter(Boolean) : [],
             deletedIds: Array.isArray(parsed.deletedIds) ? parsed.deletedIds : [],
             authorizedUsers: Array.isArray(parsed.authorizedUsers) ? parsed.authorizedUsers : [],
-            employees: Array.isArray(parsed.employees) ? parsed.employees : []
+            employees: Array.isArray(parsed.employees) ? parsed.employees : [],
+            loginCodes: Array.isArray(parsed.loginCodes) ? parsed.loginCodes : [],
+            sessions: Array.isArray(parsed.sessions) ? parsed.sessions : []
           };
         } catch (error) {
           if (error.code !== 'ENOENT') {
@@ -637,6 +956,132 @@ export class JsonFileStore {
     });
   }
 
+  /* ------------------- Сессии и коды входа ------------------- */
+
+  /** Общий шаблон для изменяющих операций: блокировка → правка → запись на диск. */
+  async updateState(mutator) {
+    return this.withLock(async () => {
+      await this.ensureLoaded();
+      const result = await mutator();
+      await this.persist();
+      return result;
+    });
+  }
+
+  async saveLoginCode(record) {
+    return this.updateState(() => {
+      this.state.loginCodes = this.state.loginCodes.filter(item => item.code !== record.code);
+      this.state.loginCodes.push({ ...record });
+      return true;
+    });
+  }
+
+  async getLoginCode(code) {
+    await this.ensureLoaded();
+    const found = this.state.loginCodes.find(item => item.code === code);
+    return found ? { ...found } : null;
+  }
+
+  async getLoginCodeByToken(tokenHash) {
+    await this.ensureLoaded();
+    const found = [...this.state.loginCodes].reverse().find(item => item.tokenHash === tokenHash);
+    return found ? { ...found } : null;
+  }
+
+  async countLoginCodes(ip, sinceIso) {
+    await this.ensureLoaded();
+    return this.state.loginCodes.filter(item => item.ip === ip && item.createdAt >= sinceIso).length;
+  }
+
+  async confirmLoginCode(code, { telegramId, username, name, at }) {
+    return this.updateState(() => {
+      const record = this.state.loginCodes.find(item => item.code === code);
+      if (!record || record.usedAt || record.confirmedAt) return false;
+      Object.assign(record, { confirmedAt: at, telegramId, username, name });
+      return true;
+    });
+  }
+
+  async consumeLoginCode(code, tokenHash, usedAt) {
+    return this.updateState(() => {
+      const record = this.state.loginCodes.find(item => item.code === code);
+      if (!record || record.tokenHash !== tokenHash || record.usedAt || !record.confirmedAt) return false;
+      record.usedAt = usedAt;
+      return true;
+    });
+  }
+
+  async deleteLoginCode(code) {
+    return this.updateState(() => {
+      this.state.loginCodes = this.state.loginCodes.filter(item => item.code !== code);
+      return true;
+    });
+  }
+
+  async deleteExpiredLoginCodes(beforeIso) {
+    return this.updateState(() => {
+      const before = this.state.loginCodes.length;
+      this.state.loginCodes = this.state.loginCodes.filter(item => item.createdAt >= beforeIso);
+      return before - this.state.loginCodes.length;
+    });
+  }
+
+  async createSession(record) {
+    return this.updateState(() => {
+      this.state.sessions = this.state.sessions.filter(item => item.id !== record.id);
+      this.state.sessions.push({ ...record });
+      return true;
+    });
+  }
+
+  async getSession(id) {
+    await this.ensureLoaded();
+    const found = this.state.sessions.find(item => item.id === id);
+    return found ? { ...found } : null;
+  }
+
+  async touchSession(id, { lastSeenAt, expiresAt }) {
+    return this.updateState(() => {
+      const record = this.state.sessions.find(item => item.id === id);
+      if (!record) return false;
+      Object.assign(record, { lastSeenAt, expiresAt });
+      return true;
+    });
+  }
+
+  async revokeSession(id) {
+    return this.updateState(() => {
+      const record = this.state.sessions.find(item => item.id === id);
+      if (record) record.revoked = true;
+      return Boolean(record);
+    });
+  }
+
+  async revokeUserSessions(telegramId) {
+    return this.updateState(() => {
+      let count = 0;
+      for (const record of this.state.sessions) {
+        if (record.telegramId === telegramId && !record.revoked) {
+          record.revoked = true;
+          count += 1;
+        }
+      }
+      return count;
+    });
+  }
+
+  async countActiveSessions(telegramId, nowIso) {
+    await this.ensureLoaded();
+    return this.state.sessions.filter(item => item.telegramId === telegramId && !item.revoked && item.expiresAt > nowIso).length;
+  }
+
+  async deleteExpiredSessions(beforeIso) {
+    return this.updateState(() => {
+      this.state.sessions = this.state.sessions.filter(item => item.expiresAt >= beforeIso);
+      return true;
+    });
+  }
+
   async replaceUsers(users) {
     return this.withLock(async () => {
       await this.ensureLoaded();
@@ -710,6 +1155,8 @@ export class MemoryStore {
     this.deletedIds = seed.deletedIds || [];
     this.authorizedUsers = seed.authorizedUsers || [];
     this.employees = seed.employees || [];
+    this.loginCodes = seed.loginCodes || [];
+    this.sessions = seed.sessions || [];
     this.counter = 100 + this.leads.length;
   }
 
@@ -749,6 +1196,97 @@ export class MemoryStore {
 
   async replaceUsers(users) {
     this.authorizedUsers = users.map(user => ({ ...user }));
+  }
+
+  /* ------------------- Сессии и коды входа ------------------- */
+
+  async saveLoginCode(record) {
+    this.loginCodes = this.loginCodes.filter(item => item.code !== record.code);
+    this.loginCodes.push({ ...record });
+    return true;
+  }
+
+  async getLoginCode(code) {
+    const found = this.loginCodes.find(item => item.code === code);
+    return found ? { ...found } : null;
+  }
+
+  async getLoginCodeByToken(tokenHash) {
+    const found = [...this.loginCodes].reverse().find(item => item.tokenHash === tokenHash);
+    return found ? { ...found } : null;
+  }
+
+  async countLoginCodes(ip, sinceIso) {
+    return this.loginCodes.filter(item => item.ip === ip && item.createdAt >= sinceIso).length;
+  }
+
+  async confirmLoginCode(code, { telegramId, username, name, at }) {
+    const record = this.loginCodes.find(item => item.code === code);
+    if (!record || record.usedAt || record.confirmedAt) return false;
+    Object.assign(record, { confirmedAt: at, telegramId, username, name });
+    return true;
+  }
+
+  async consumeLoginCode(code, tokenHash, usedAt) {
+    const record = this.loginCodes.find(item => item.code === code);
+    if (!record || record.tokenHash !== tokenHash || record.usedAt || !record.confirmedAt) return false;
+    record.usedAt = usedAt;
+    return true;
+  }
+
+  async deleteLoginCode(code) {
+    this.loginCodes = this.loginCodes.filter(item => item.code !== code);
+    return true;
+  }
+
+  async deleteExpiredLoginCodes(beforeIso) {
+    const before = this.loginCodes.length;
+    this.loginCodes = this.loginCodes.filter(item => item.createdAt >= beforeIso);
+    return before - this.loginCodes.length;
+  }
+
+  async createSession(record) {
+    this.sessions = this.sessions.filter(item => item.id !== record.id);
+    this.sessions.push({ ...record });
+    return true;
+  }
+
+  async getSession(id) {
+    const found = this.sessions.find(item => item.id === id);
+    return found ? { ...found } : null;
+  }
+
+  async touchSession(id, { lastSeenAt, expiresAt }) {
+    const record = this.sessions.find(item => item.id === id);
+    if (!record) return false;
+    Object.assign(record, { lastSeenAt, expiresAt });
+    return true;
+  }
+
+  async revokeSession(id) {
+    const record = this.sessions.find(item => item.id === id);
+    if (record) record.revoked = true;
+    return Boolean(record);
+  }
+
+  async revokeUserSessions(telegramId) {
+    let count = 0;
+    for (const record of this.sessions) {
+      if (record.telegramId === telegramId && !record.revoked) {
+        record.revoked = true;
+        count += 1;
+      }
+    }
+    return count;
+  }
+
+  async countActiveSessions(telegramId, nowIso) {
+    return this.sessions.filter(item => item.telegramId === telegramId && !item.revoked && item.expiresAt > nowIso).length;
+  }
+
+  async deleteExpiredSessions(beforeIso) {
+    this.sessions = this.sessions.filter(item => item.expiresAt >= beforeIso);
+    return true;
   }
 
   async listEmployees() {
