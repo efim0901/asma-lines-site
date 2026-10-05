@@ -29,6 +29,9 @@ function escapeHtml(str) {
 
       let verifiedLead = null;
       let verifiedOperator = { name: 'Иван Ефимович', username: 'plombit' };
+      // Почему не открылось: 'expired' (ссылка старая), 'denied' (нет доступа),
+      // 'offline' (сервер не ответил) — тексты на экране блокировки разные.
+      let verificationError = '';
 
       // 1. Authenticate with backend /api/crm/doc-data
       try {
@@ -46,9 +49,14 @@ function escapeHtml(str) {
           if (json.success && json.lead) {
             verifiedLead = json.lead;
             if (json.operator) verifiedOperator = json.operator;
+          } else {
+            verificationError = 'denied';
           }
+        } else {
+          verificationError = res.status === 403 ? 'expired' : 'denied';
         }
       } catch (err) {
+        verificationError = 'offline';
         console.warn('Backend doc verification note:', err);
       }
 
@@ -71,7 +79,18 @@ function escapeHtml(str) {
       // открытой для любого, кто угадал адрес.
       if (!verifiedLead) {
         loadingEl.style.display = 'none';
-        if (gateEl) gateEl.style.display = 'flex';
+        if (gateEl) {
+          const titleEl = gateEl.querySelector('.access-gate-title');
+          const descEl = gateEl.querySelector('.access-gate-desc');
+          if (titleEl && descEl && verificationError === 'expired') {
+            titleEl.textContent = 'Ссылка устарела';
+            descEl.textContent = 'Ссылка на документ действует два часа. Откройте заявку в диспетчерской и нажмите «Договор-заявка» ещё раз — придёт новая ссылка.';
+          } else if (titleEl && descEl && verificationError === 'offline') {
+            titleEl.textContent = 'Нет связи с сервером';
+            descEl.textContent = 'Не удалось проверить доступ: сервер не ответил. Обновите страницу или откройте документ из диспетчерской.';
+          }
+          gateEl.style.display = 'flex';
+        }
         return;
       }
 

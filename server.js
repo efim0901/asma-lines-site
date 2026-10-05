@@ -572,7 +572,13 @@ app.post(
       const ticket = await verifyDocTicket(req.body?.ticket, data, accessConfig);
       if (ticket) operator = { id: ticket.username, username: ticket.username, first_name: ticket.operatorName };
     }
-    if (!operator) throw new AuthError('Требуется авторизация или действующий тикет');
+    if (!operator) {
+      // «Нет доступа» и «ссылка устарела» — разные случаи (как в _worker.js).
+      if (req.body?.ticket) {
+        throw new AuthError('Срок действия ссылки на документ истёк — откройте её заново из диспетчерской', 403);
+      }
+      throw new AuthError('Требуется авторизация через Telegram или вход в диспетчерскую', 401);
+    }
     const leadId = String(req.body?.leadId || '');
     const lead = leadId ? await store.getLead(leadId) : null;
     res.json({

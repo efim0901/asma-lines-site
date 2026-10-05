@@ -1868,7 +1868,14 @@ export default {
           const ticket = await verifyDocTicket(body.ticket, data, config);
           if (ticket) operator = { id: ticket.username, username: ticket.username, first_name: ticket.operatorName };
         }
-        if (!operator) throw new AuthError('Требуется авторизация или действующий тикет');
+        if (!operator) {
+          // Разделяем «нет доступа» и «ссылка устарела»: диспетчеру важно
+          // понимать, что документ открыт неправильно, а не что доступ отозвали.
+          if (body.ticket) {
+            throw new AuthError('Срок действия ссылки на документ истёк — откройте её заново из диспетчерской', 403);
+          }
+          throw new AuthError('Требуется авторизация через Telegram или вход в диспетчерскую', 401);
+        }
         const lead = body.leadId ? await store.getLead(String(body.leadId)) : null;
         return jsonResponse(
           {

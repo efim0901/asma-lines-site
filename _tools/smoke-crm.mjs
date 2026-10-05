@@ -152,7 +152,9 @@ if (lead) {
     { method: 'POST', body: JSON.stringify({ leadId: lead.id, ticket: forgedTicket }) },
     null
   );
-  check('отклонён', docBad.status === 401, `получено ${docBad.status}`);
+  // Тикет передан, но подделан: отвечаем 403 («ссылка недействительна»),
+  // чтобы диспетчер отличал это от «нет доступа» (401).
+  check('отклонён с 403', docBad.status === 403, `получено ${docBad.status}`);
 } else {
   console.log('  ⚠ заявок нет — шаги 4-10 пропущены (отправьте заявку через /api/lead)');
 }
