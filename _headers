@@ -1,5 +1,15 @@
-# Заголовки для Cloudflare Pages.
+# Заголовки для Cloudflare.
 # Полный список директив: https://developers.cloudflare.com/pages/configuration/headers/
+#
+# ВАЖНО: этот файл НЕ единственный источник заголовков.
+# По документации Cloudflare правила из `_headers` не применяются к ответам,
+# которые формирует код Worker:
+#   https://developers.cloudflare.com/workers/static-assets/headers/
+# А `_worker.js` перехватывает все не-API пути и сам вызывает env.ASSETS.fetch(),
+# поэтому те же заголовки выставлены в `_worker.js` в функции withStaticHeaders().
+# Правило для /crm.html здесь не срабатывало — отсюда и дублирование.
+#
+# Правите заголовки — правьте оба места и сверяйте ответ реального запроса.
 
 /*
   X-Content-Type-Options: nosniff

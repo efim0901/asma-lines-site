@@ -695,7 +695,14 @@ function corsHeaders(request, env) {
 function jsonResponse(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...extraHeaders }
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+      // Правила из `_headers` к ответам, которые формирует Worker, не применяются,
+      // поэтому закрываем индексацию прямо здесь.
+      'X-Robots-Tag': 'noindex, nofollow',
+      ...extraHeaders
+    }
   });
 }
 
@@ -713,6 +720,66 @@ function errorResponse(error, extraHeaders = {}) {
   if (error?.field) body.field = error.field;
   if (status === 500) console.error('API error:', error?.stack || error);
   return jsonResponse(body, status, extraHeaders);
+}
+
+/* ================================================================== */
+/* ЗАГОЛОВКИ ДЛЯ СТАТИКИ                                              */
+/* ================================================================== */
+
+/*
+ * Почему заголовки заданы здесь, а не только в `_headers`.
+ *
+ * По документации Cloudflare правила из `_headers` НЕ применяются к ответам,
+ * которые формирует код Worker:
+ * https://developers.cloudflare.com/workers/static-assets/headers/
+ *
+ * А этот Worker перехватывает все не-API пути и сам вызывает
+ * `env.ASSETS.fetch()`. Из-за этого правило для `/crm.html` не срабатывало,
+ * и страница диспетчерской уходила с `frame-ancestors 'none'` — то есть
+ * встраивание в Telegram Web было запрещено, хотя задумано обратное.
+ *
+ * Значения совпадают с `_headers`, чтобы поведение осталось прежним.
+ * Заголовки ставятся через `set`, поэтому дублирования не будет.
+ */
+
+const CSP_DEFAULT = "default-src 'self'; script-src 'self' https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://nominatim.openstreetmap.org https://router.project-osrm.org https://*.tile.openstreetmap.org; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests";
+
+// Для диспетчерской разрешаем встраивание: Mini App открывается во фрейме
+// на web.telegram.org. Список источников уже, чем у обычных страниц.
+const CSP_CRM = "default-src 'self'; script-src 'self' https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self'; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors https://web.telegram.org https://*.telegram.org 'self'; upgrade-insecure-requests";
+
+/** Переносит на ответ статики заголовки, которые раньше задавал `_headers`. */
+function withStaticHeaders(response, pathname) {
+  const headers = new Headers(response.headers);
+
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()');
+  headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  headers.set('Content-Security-Policy', CSP_DEFAULT);
+
+  if (pathname === '/crm.html') {
+    headers.set('Content-Security-Policy', CSP_CRM);
+    headers.set('X-Robots-Tag', 'noindex, nofollow');
+    headers.set('Cache-Control', 'no-store');
+  } else if (pathname === '/order-doc.html' || pathname === '/proposal.html') {
+    headers.set('X-Robots-Tag', 'noindex, nofollow');
+    headers.set('X-Frame-Options', 'DENY');
+    headers.set('Cache-Control', 'no-store');
+  } else if (pathname.startsWith('/assets/brand/') || pathname === '/favicon.ico') {
+    headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+  } else if (pathname.startsWith('/assets/')) {
+    // Эти файлы версионируются через ?v=, поэтому кэш можно держать год.
+    headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+  } else {
+    headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
 }
 
 async function readJson(request, maxBytes = 128 * 1024) {
@@ -1015,8 +1082,10 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
 
     if (!url.pathname.startsWith('/api/')) {
-      if (env.ASSETS) return env.ASSETS.fetch(request);
-      return new Response('Not found', { status: 404 });
+      if (!env.ASSETS) return new Response('Not found', { status: 404 });
+      const asset = await env.ASSETS.fetch(request);
+      // Заголовки ставим здесь: `_headers` к ответам Worker не применяется.
+      return withStaticHeaders(asset, url.pathname);
     }
 
     let config;
