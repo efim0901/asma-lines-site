@@ -157,6 +157,17 @@ npm run check
 
 Для HTML стоит `max-age=0, must-revalidate` — разметка обновляется сразу.
 
+**Про `package-lock.json`.** Замок обязан совпадать с `package.json`: сборочное
+окружение Cloudflare ставит зависимости командой `npm ci`, а она отказывается
+работать при расхождении — падает с `Missing: eslint@… from lock file` или
+`lock file's nodemailer@… does not satisfy …`, и сборка обрывается на первом
+шаге. После любой правки `package.json` обновите замок и проверьте:
+
+```powershell
+npm install --package-lock-only    # пересобрать замок из package.json
+npm ci --dry-run                   # убедиться, что npm ci пройдёт
+```
+
 ---
 
 ## 6. Проверка после деплоя
