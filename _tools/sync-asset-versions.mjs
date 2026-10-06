@@ -28,6 +28,31 @@ function todayStamp() {
   return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
 }
 
+/**
+ * Версия для ассета с учётом того, что правок за день бывает несколько.
+ *
+ * Раньше версия была просто датой, и вторая правка за сутки не меняла ?v= —
+ * браузер отдавал старый файл из кэша (для /assets/* стоит immutable на год).
+ * Поэтому при совпадении с текущей версией добавляется буквенный суффикс:
+ * 20261006 → 20261006b → 20261006c.
+ */
+function nextStamp(currentVersion, manifest) {
+  const base = todayStamp();
+  if (currentVersion !== base) return base;
+
+  const used = new Set(
+    Object.values(manifest)
+      .map((entry) => entry && entry.version)
+      .filter((version) => typeof version === 'string' && version.startsWith(base))
+  );
+  for (const letter of 'bcdefghijklmnopqrstuvwxyz') {
+    const candidate = `${base}${letter}`;
+    if (!used.has(candidate)) return candidate;
+  }
+  // Крайний случай: суффиксы кончились — добавляем метку времени.
+  return `${base}${Date.now().toString(36).slice(-4)}`;
+}
+
 function hashFile(file) {
   return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex').slice(0, 16);
 }
@@ -125,9 +150,19 @@ if (!fix) {
   process.exit(1);
 }
 
-const stamp = todayStamp();
 const assetsToBump = changed.map((item) => item.asset);
-console.log(`\nПроставляю v=${stamp} для: ${assetsToBump.join(', ')}`);
+
+// У каждого ассета может быть своя версия: если правка уже была сегодня,
+// дата та же, и нужен суффикс (20261006b), иначе ?v= не изменится.
+const stamps = new Map();
+for (const item of changed) {
+  stamps.set(item.asset, nextStamp(item.version, nextManifest));
+}
+
+console.log('\nПроставляю версии:');
+for (const asset of assetsToBump) {
+  console.log(`  ${asset}: ${changed.find((i) => i.asset === asset).version} → ${stamps.get(asset)}`);
+}
 
 for (const page of htmlFiles) {
   const file = path.join(root, page);
@@ -135,7 +170,10 @@ for (const page of htmlFiles) {
   const before = content;
   for (const asset of assetsToBump) {
     const escaped = asset.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    content = content.replace(new RegExp(`(assets/${escaped})\\?v=[A-Za-z0-9_-]+`, 'g'), `$1?v=${stamp}`);
+    content = content.replace(
+      new RegExp(`(assets/${escaped})\\?v=[A-Za-z0-9_-]+`, 'g'),
+      `$1?v=${stamps.get(asset)}`
+    );
   }
   if (content !== before) {
     fs.writeFileSync(file, content, 'utf8');
@@ -145,7 +183,7 @@ for (const page of htmlFiles) {
 
 // Обновляем манифест: новая версия + новый хеш.
 for (const asset of assetsToBump) {
-  nextManifest[asset] = { version: stamp, hash: hashFile(path.join(root, 'assets', asset)) };
+  nextManifest[asset] = { version: stamps.get(asset), hash: hashFile(path.join(root, 'assets', asset)) };
 }
 fs.writeFileSync(manifestPath, `${JSON.stringify(nextManifest, null, 2)}\n`, 'utf8');
 console.log('\nГотово: манифест обновлён, запустите проверку без --fix для контроля.');

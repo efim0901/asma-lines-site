@@ -19,6 +19,9 @@ _tools/
 _tools/**
 _prototypes/
 _prototypes/**
+# Снимки экранов для проверки вёрстки и тем — публиковать нельзя.
+_shots/
+_shots/**
 data/
 data/**
 functions/

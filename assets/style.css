@@ -33,6 +33,34 @@
   --shadow-sm: 0 1px 3px rgba(26, 26, 26, .06);
   --shadow-md: 0 8px 24px rgba(26, 26, 26, .08);
   --shadow-lg: 0 24px 60px rgba(26, 26, 26, .14);
+
+  /* Полосы с иллюстрациями (герой, CTA, миниатюры услуг).
+     Раньше фон у них был зашит тёмным, из-за чего в светлой теме
+     оставались тёмные блоки. Теперь цвет фона, текста и оверлея
+     переключаются вместе с темой. */
+  --band-bg: #F1EAE1;
+  --band-text: #181516;
+  --band-text-soft: #4A4341;
+  --band-accent: #6B1E2D;
+  --band-badge-bg: rgba(107, 30, 45, .06);
+  --band-badge-border: rgba(107, 30, 45, .22);
+  --band-chip-bg: rgba(255, 255, 255, .62);
+  --band-chip-border: rgba(26, 26, 26, .16);
+  --band-chip-bg-hover: rgba(255, 255, 255, .9);
+  --band-text-shadow: none;
+  /* Горизонтальный оверлей гасит картинку под текстом слева,
+     а справа оставляет машину открытой. Вертикальный — лёгкий: в светлой
+     теме тёмный текст на светлой сцене читается и без плотной пелены. */
+  --band-overlay: linear-gradient(90deg,
+    rgba(250, 248, 244, .95) 0%,
+    rgba(250, 248, 244, .72) 44%,
+    rgba(250, 248, 244, .18) 76%,
+    rgba(250, 248, 244, 0) 100%);
+  --band-overlay-vertical: linear-gradient(180deg,
+    rgba(250, 248, 244, .08) 0%,
+    rgba(250, 248, 244, .22) 55%,
+    rgba(250, 248, 244, .45) 100%);
+  --band-thumb-veil: linear-gradient(180deg, rgba(250, 248, 244, .05), rgba(250, 248, 244, .45));
 }
 
 [data-theme='light'] {
@@ -80,6 +108,28 @@
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, .4);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, .5);
   --shadow-lg: 0 24px 60px rgba(0, 0, 0, .7);
+
+  /* Полосы с иллюстрациями в тёмной теме — как было задумано изначально. */
+  --band-bg: #140A0D;
+  --band-text: #FFFFFF;
+  --band-text-soft: rgba(248, 247, 239, .92);
+  --band-accent: #FFD382;
+  --band-badge-bg: rgba(255, 255, 255, .08);
+  --band-badge-border: rgba(255, 211, 130, .35);
+  --band-chip-bg: rgba(255, 255, 255, .12);
+  --band-chip-border: rgba(255, 255, 255, .28);
+  --band-chip-bg-hover: rgba(255, 255, 255, .22);
+  --band-text-shadow: 0 2px 14px rgba(0, 0, 0, .6);
+  --band-overlay: linear-gradient(90deg,
+    rgba(15, 10, 13, .88) 0%,
+    rgba(15, 10, 13, .7) 42%,
+    rgba(15, 10, 13, .2) 75%,
+    rgba(15, 10, 13, .05) 100%);
+  --band-overlay-vertical: linear-gradient(180deg,
+    rgba(16, 10, 13, .35) 0%,
+    rgba(16, 10, 13, .72) 45%,
+    rgba(16, 10, 13, .95) 100%);
+  --band-thumb-veil: linear-gradient(180deg, rgba(15, 12, 10, .05), rgba(15, 12, 10, .35));
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -352,7 +402,7 @@ html[data-theme='dark'] .theme-toggle {
   letter-spacing: .18em;
   text-transform: uppercase;
 }
-.hero-photo .kicker, .dark-section .kicker, .photo-band .kicker { color: #FFD382; }
+.hero-photo .kicker, .dark-section .kicker, .photo-band .kicker { color: var(--band-accent); }
 
 h1, h2, h3 { margin: 0; font-weight: 700; letter-spacing: -.024em; }
 .display-1 {
@@ -377,7 +427,7 @@ h1, h2, h3 { margin: 0; font-weight: 700; letter-spacing: -.024em; }
   font-size: 17px;
   line-height: 1.65;
 }
-.hero-photo .lede, .dark-section .lede, .photo-band .lede { color: rgba(248, 247, 239, 0.92); }
+.hero-photo .lede, .dark-section .lede, .photo-band .lede { color: var(--band-text-soft); }
 .body-text { max-width: var(--text-max); color: var(--ink-soft); font-size: 17px; line-height: 1.72; }
 
 .btn {
@@ -422,21 +472,20 @@ h1, h2, h3 { margin: 0; font-weight: 700; letter-spacing: -.024em; }
   min-height: clamp(520px, 72vh, 720px);
   display: flex;
   align-items: center;
-  color: var(--on-ink);
-  background: #140A0D;
+  color: var(--band-text);
+  background: var(--band-bg);
   overflow: hidden;
 }
 .hero-photo__bg {
   position: absolute; inset: 0;
+  /* Картинка подставляется блоком «scenes» в конце файла — по одной на тему. */
   background-size: cover;
   background-position: center right;
   background-repeat: no-repeat;
 }
 .hero-photo__overlay {
   position: absolute; inset: 0;
-  background:
-    linear-gradient(90deg, rgba(15,10,13,.88) 0%, rgba(15,10,13,.7) 42%, rgba(15,10,13,.2) 75%, rgba(15,10,13,.05) 100%),
-    linear-gradient(180deg, rgba(15,10,13,.35) 0%, transparent 40%, rgba(15,10,13,.45) 100%);
+  background: var(--band-overlay), var(--band-overlay-vertical);
 }
 .hero-photo__inner {
   position: relative;
@@ -446,11 +495,12 @@ h1, h2, h3 { margin: 0; font-weight: 700; letter-spacing: -.024em; }
 }
 .hero-photo__content { max-width: 780px; }
 .hero-photo .display-1 {
-  text-shadow: 0 2px 20px rgba(0,0,0,.6);
+  text-shadow: var(--band-text-shadow);
 }
 .hero-photo .lede {
-  text-shadow: 0 1px 10px rgba(0,0,0,.7);
+  text-shadow: var(--band-text-shadow);
 }
+
 .hero-badge-pill {
   display: inline-flex;
   align-items: center;
@@ -1473,8 +1523,8 @@ body[data-theme='dark'] .chip-name {
   min-height: clamp(340px, 48vh, 520px);
   display: flex;
   align-items: center;
-  background: var(--charcoal-deep);
-  color: #FFFFFF;
+  background: var(--band-bg);
+  color: var(--band-text);
 }
 .photo-band__bg {
   position: absolute; inset: 0;
@@ -1485,7 +1535,7 @@ body[data-theme='dark'] .chip-name {
 }
 .photo-band__overlay {
   position: absolute; inset: 0;
-  background: linear-gradient(90deg, #100a0d 0%, rgba(16,10,13,0.92) 48%, rgba(16,10,13,0.3) 85%, rgba(16,10,13,0.1) 100%);
+  background: var(--band-overlay);
   pointer-events: none;
 }
 .photo-band__inner {
@@ -1501,12 +1551,12 @@ body[data-theme='dark'] .chip-name {
   z-index: 2;
 }
 .photo-band .display-2 {
-  color: #FFFFFF;
-  text-shadow: 0 2px 14px rgba(0,0,0,0.6);
+  color: var(--band-text);
+  text-shadow: var(--band-text-shadow);
 }
 .photo-band .lede {
-  color: rgba(248, 247, 239, 0.92);
-  text-shadow: 0 1px 8px rgba(0,0,0,0.6);
+  color: var(--band-text-soft);
+  text-shadow: var(--band-text-shadow);
 }
 .photo-band__badges {
   display: flex;
@@ -1518,11 +1568,11 @@ body[data-theme='dark'] .chip-name {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--band-badge-bg);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 211, 130, 0.35);
-  color: #FFD382;
+  border: 1px solid var(--band-badge-border);
+  color: var(--band-accent);
   font-size: 13px;
   font-weight: 600;
   padding: 5px 13px;
@@ -1536,16 +1586,16 @@ body[data-theme='dark'] .chip-name {
   align-items: center;
 }
 .photo-band .btn-secondary-light {
-  background: rgba(255, 255, 255, 0.12);
-  color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: var(--band-chip-bg);
+  color: var(--band-text);
+  border: 1px solid var(--band-chip-border);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 .photo-band .btn-secondary-light:hover {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.5);
-  color: #FFFFFF;
+  background: var(--band-chip-bg-hover);
+  border-color: var(--band-chip-border);
+  color: var(--band-text);
 }
 
 .service-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
@@ -1560,14 +1610,14 @@ body[data-theme='dark'] .chip-name {
 .service-thumb {
   aspect-ratio: 16 / 10;
   position: relative;
-  background: linear-gradient(135deg, #2b1116 0%, #6f2a2c 55%, #b6602f 100%);
+  background-color: var(--band-bg);
   background-size: cover;
   background-position: center;
 }
 .service-thumb::after {
   content: '';
   position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(15,12,10,.05), rgba(15,12,10,.35));
+  background: var(--band-thumb-veil);
 }
 .service-card-body { padding: 24px 26px 28px; }
 .service-card-body h3 {
@@ -2013,7 +2063,7 @@ body[data-theme='dark'] .faq-aside .kicker { color: #FFD382; }
     opacity: 0.35;
   }
   .photo-band__overlay {
-    background: linear-gradient(180deg, rgba(16,10,13,0.92) 0%, rgba(16,10,13,0.72) 50%, rgba(16,10,13,0.95) 100%);
+    background: var(--band-overlay-vertical);
   }
   .hero-photo { min-height: 480px; }
   .hero-photo__bg { background-position: center bottom; background-size: cover; }
@@ -2315,7 +2365,7 @@ body[data-theme='dark'] .faq-aside .kicker { color: #FFD382; }
     background-size: cover;
   }
   .hero-photo__overlay {
-    background: linear-gradient(180deg, rgba(16,10,13,.92) 0%, rgba(16,10,13,.72) 45%, rgba(16,10,13,.95) 100%);
+    background: var(--band-overlay-vertical);
   }
   .hero-photo__content {
     display: flex;
@@ -6970,5 +7020,107 @@ body[data-theme='dark'] .gcc-info {
   color: #94A3B8;
 }
 
-
-
+/* scenes:start — блок создаётся _tools/wire-scenes.mjs, не правьте руками */
+.hero-photo__bg[data-scene='about-road'],
+.photo-band__bg[data-scene='about-road'],
+.service-thumb[data-scene='about-road'] { background-image: url('img/about-road.svg?v=80ac036d'); }
+[data-theme='light'] .hero-photo__bg[data-scene='about-road'],
+[data-theme='light'] .photo-band__bg[data-scene='about-road'],
+[data-theme='light'] .service-thumb[data-scene='about-road'] { background-image: url('img/light/about-road.svg?v=45466cd5'); }
+.hero-photo__bg[data-scene='approach-truck'],
+.photo-band__bg[data-scene='approach-truck'],
+.service-thumb[data-scene='approach-truck'] { background-image: url('img/approach-truck.svg?v=2cb1df56'); }
+[data-theme='light'] .hero-photo__bg[data-scene='approach-truck'],
+[data-theme='light'] .photo-band__bg[data-scene='approach-truck'],
+[data-theme='light'] .service-thumb[data-scene='approach-truck'] { background-image: url('img/light/approach-truck.svg?v=2a17cc40'); }
+.hero-photo__bg[data-scene='calc-road'],
+.photo-band__bg[data-scene='calc-road'],
+.service-thumb[data-scene='calc-road'] { background-image: url('img/calc-road.svg?v=1141a35b'); }
+[data-theme='light'] .hero-photo__bg[data-scene='calc-road'],
+[data-theme='light'] .photo-band__bg[data-scene='calc-road'],
+[data-theme='light'] .service-thumb[data-scene='calc-road'] { background-image: url('img/light/calc-road.svg?v=13a7d7df'); }
+.hero-photo__bg[data-scene='contacts-city'],
+.photo-band__bg[data-scene='contacts-city'],
+.service-thumb[data-scene='contacts-city'] { background-image: url('img/contacts-city.svg?v=5873eedd'); }
+[data-theme='light'] .hero-photo__bg[data-scene='contacts-city'],
+[data-theme='light'] .photo-band__bg[data-scene='contacts-city'],
+[data-theme='light'] .service-thumb[data-scene='contacts-city'] { background-image: url('img/light/contacts-city.svg?v=0806db31'); }
+.hero-photo__bg[data-scene='faq-road'],
+.photo-band__bg[data-scene='faq-road'],
+.service-thumb[data-scene='faq-road'] { background-image: url('img/faq-road.svg?v=0c393d2a'); }
+[data-theme='light'] .hero-photo__bg[data-scene='faq-road'],
+[data-theme='light'] .photo-band__bg[data-scene='faq-road'],
+[data-theme='light'] .service-thumb[data-scene='faq-road'] { background-image: url('img/light/faq-road.svg?v=9ca0de4d'); }
+.hero-photo__bg[data-scene='footer-about'],
+.photo-band__bg[data-scene='footer-about'],
+.service-thumb[data-scene='footer-about'] { background-image: url('img/footer-about.svg?v=2cb1df56'); }
+[data-theme='light'] .hero-photo__bg[data-scene='footer-about'],
+[data-theme='light'] .photo-band__bg[data-scene='footer-about'],
+[data-theme='light'] .service-thumb[data-scene='footer-about'] { background-image: url('img/light/footer-about.svg?v=2a17cc40'); }
+.hero-photo__bg[data-scene='footer-calc'],
+.photo-band__bg[data-scene='footer-calc'],
+.service-thumb[data-scene='footer-calc'] { background-image: url('img/footer-calc.svg?v=2cb1df56'); }
+[data-theme='light'] .hero-photo__bg[data-scene='footer-calc'],
+[data-theme='light'] .photo-band__bg[data-scene='footer-calc'],
+[data-theme='light'] .service-thumb[data-scene='footer-calc'] { background-image: url('img/light/footer-calc.svg?v=2a17cc40'); }
+.hero-photo__bg[data-scene='footer-contacts'],
+.photo-band__bg[data-scene='footer-contacts'],
+.service-thumb[data-scene='footer-contacts'] { background-image: url('img/footer-contacts.svg?v=2cb1df56'); }
+[data-theme='light'] .hero-photo__bg[data-scene='footer-contacts'],
+[data-theme='light'] .photo-band__bg[data-scene='footer-contacts'],
+[data-theme='light'] .service-thumb[data-scene='footer-contacts'] { background-image: url('img/light/footer-contacts.svg?v=2a17cc40'); }
+.hero-photo__bg[data-scene='footer-faq'],
+.photo-band__bg[data-scene='footer-faq'],
+.service-thumb[data-scene='footer-faq'] { background-image: url('img/footer-faq.svg?v=2cb1df56'); }
+[data-theme='light'] .hero-photo__bg[data-scene='footer-faq'],
+[data-theme='light'] .photo-band__bg[data-scene='footer-faq'],
+[data-theme='light'] .service-thumb[data-scene='footer-faq'] { background-image: url('img/light/footer-faq.svg?v=2a17cc40'); }
+.hero-photo__bg[data-scene='footer-partners'],
+.photo-band__bg[data-scene='footer-partners'],
+.service-thumb[data-scene='footer-partners'] { background-image: url('img/footer-partners.svg?v=2cb1df56'); }
+[data-theme='light'] .hero-photo__bg[data-scene='footer-partners'],
+[data-theme='light'] .photo-band__bg[data-scene='footer-partners'],
+[data-theme='light'] .service-thumb[data-scene='footer-partners'] { background-image: url('img/light/footer-partners.svg?v=2a17cc40'); }
+.hero-photo__bg[data-scene='footer-services'],
+.photo-band__bg[data-scene='footer-services'],
+.service-thumb[data-scene='footer-services'] { background-image: url('img/footer-services.svg?v=2cb1df56'); }
+[data-theme='light'] .hero-photo__bg[data-scene='footer-services'],
+[data-theme='light'] .photo-band__bg[data-scene='footer-services'],
+[data-theme='light'] .service-thumb[data-scene='footer-services'] { background-image: url('img/light/footer-services.svg?v=2a17cc40'); }
+.hero-photo__bg[data-scene='hero-truck'],
+.photo-band__bg[data-scene='hero-truck'],
+.service-thumb[data-scene='hero-truck'] { background-image: url('img/hero-truck.svg?v=4c055d56'); }
+[data-theme='light'] .hero-photo__bg[data-scene='hero-truck'],
+[data-theme='light'] .photo-band__bg[data-scene='hero-truck'],
+[data-theme='light'] .service-thumb[data-scene='hero-truck'] { background-image: url('img/light/hero-truck.svg?v=605e5eba'); }
+.hero-photo__bg[data-scene='partners-fleet'],
+.photo-band__bg[data-scene='partners-fleet'],
+.service-thumb[data-scene='partners-fleet'] { background-image: url('img/partners-fleet.svg?v=477982ff'); }
+[data-theme='light'] .hero-photo__bg[data-scene='partners-fleet'],
+[data-theme='light'] .photo-band__bg[data-scene='partners-fleet'],
+[data-theme='light'] .service-thumb[data-scene='partners-fleet'] { background-image: url('img/light/partners-fleet.svg?v=0b172ed3'); }
+.hero-photo__bg[data-scene='service-auto'],
+.photo-band__bg[data-scene='service-auto'],
+.service-thumb[data-scene='service-auto'] { background-image: url('img/service-auto.svg?v=6d5fed0b'); }
+[data-theme='light'] .hero-photo__bg[data-scene='service-auto'],
+[data-theme='light'] .photo-band__bg[data-scene='service-auto'],
+[data-theme='light'] .service-thumb[data-scene='service-auto'] { background-image: url('img/light/service-auto.svg?v=0715a5b4'); }
+.hero-photo__bg[data-scene='service-express'],
+.photo-band__bg[data-scene='service-express'],
+.service-thumb[data-scene='service-express'] { background-image: url('img/service-express.svg?v=47a4f052'); }
+[data-theme='light'] .hero-photo__bg[data-scene='service-express'],
+[data-theme='light'] .photo-band__bg[data-scene='service-express'],
+[data-theme='light'] .service-thumb[data-scene='service-express'] { background-image: url('img/light/service-express.svg?v=229ace7f'); }
+.hero-photo__bg[data-scene='service-ltl'],
+.photo-band__bg[data-scene='service-ltl'],
+.service-thumb[data-scene='service-ltl'] { background-image: url('img/service-ltl.svg?v=e550dca3'); }
+[data-theme='light'] .hero-photo__bg[data-scene='service-ltl'],
+[data-theme='light'] .photo-band__bg[data-scene='service-ltl'],
+[data-theme='light'] .service-thumb[data-scene='service-ltl'] { background-image: url('img/light/service-ltl.svg?v=b5b7523b'); }
+.hero-photo__bg[data-scene='service-thermo'],
+.photo-band__bg[data-scene='service-thermo'],
+.service-thumb[data-scene='service-thermo'] { background-image: url('img/service-thermo.svg?v=430619c4'); }
+[data-theme='light'] .hero-photo__bg[data-scene='service-thermo'],
+[data-theme='light'] .photo-band__bg[data-scene='service-thermo'],
+[data-theme='light'] .service-thumb[data-scene='service-thermo'] { background-image: url('img/light/service-thermo.svg?v=4c25602f'); }
+/* scenes:end */
