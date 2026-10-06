@@ -114,13 +114,19 @@ if (missing.length) {
 const style = fs.readFileSync(stylePath, 'utf8');
 const hasBlock = style.includes(START) && style.includes(END);
 
+// Git на Windows отдаёт файл с CRLF, а генератор пишет LF. Без учёта этого
+// проверка ложно ругается на чистом клоне, а вставка блока даёт лишний шум.
+const usesCrlf = style.includes('\r\n');
+const blockForFile = usesCrlf ? block.replace(/\n/g, '\r\n') : block;
+const normalize = (text) => text.replace(/\r\n/g, '\n');
+
 if (checkOnly) {
   if (!hasBlock) {
     console.log('✖ В style.css нет блока сцен — выполните: node _tools/wire-scenes.mjs');
     process.exit(1);
   }
   const existing = style.slice(style.indexOf(START), style.indexOf(END) + END.length);
-  if (existing !== block) {
+  if (normalize(existing) !== normalize(blockForFile)) {
     console.log('✖ Блок сцен в style.css устарел (изменились картинки или разметка).');
     console.log('  Выполните: node _tools/wire-scenes.mjs');
     process.exit(1);
@@ -138,9 +144,9 @@ let updated;
 if (hasBlock) {
   const from = style.indexOf(START);
   const to = style.indexOf(END) + END.length;
-  updated = style.slice(0, from) + block + style.slice(to);
+  updated = style.slice(0, from) + blockForFile + style.slice(to);
 } else {
-  updated = `${style.trimEnd()}\n\n${block}\n`;
+  updated = `${style.trimEnd()}\n\n${blockForFile}\n`;
 }
 
 fs.writeFileSync(stylePath, updated, 'utf8');

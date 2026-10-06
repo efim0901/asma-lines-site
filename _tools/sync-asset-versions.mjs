@@ -33,23 +33,27 @@ function todayStamp() {
  *
  * Раньше версия была просто датой, и вторая правка за сутки не меняла ?v= —
  * браузер отдавал старый файл из кэша (для /assets/* стоит immutable на год).
- * Поэтому при совпадении с текущей версией добавляется буквенный суффикс:
- * 20261006 → 20261006b → 20261006c.
+ * Поэтому цепочка продолжается буквами: 20261006 → 20261006b → 20261006c.
+ *
+ * Версия только растёт. Если сейчас 20261006b, следующей будет 20261006c,
+ * а не 20261006: иначе можно вернуться к адресу, под которым уже отдавался
+ * другой файл, и посетитель получит старую версию из кэша.
  */
-function nextStamp(currentVersion, manifest) {
+function nextStamp(currentVersion) {
   const base = todayStamp();
-  if (currentVersion !== base) return base;
+  const letters = 'bcdefghijklmnopqrstuvwxyz'.split('');
 
-  const used = new Set(
-    Object.values(manifest)
-      .map((entry) => entry && entry.version)
-      .filter((version) => typeof version === 'string' && version.startsWith(base))
-  );
-  for (const letter of 'bcdefghijklmnopqrstuvwxyz') {
-    const candidate = `${base}${letter}`;
-    if (!used.has(candidate)) return candidate;
-  }
-  // Крайний случай: суффиксы кончились — добавляем метку времени.
+  // Другая дата или версии ещё нет — начинаем день с базовой метки.
+  if (!currentVersion || !currentVersion.startsWith(base)) return base;
+
+  // Та же дата: продолжаем цепочку суффиксов.
+  const suffix = currentVersion.slice(base.length);
+  if (!suffix) return `${base}b`;
+
+  const index = letters.indexOf(suffix[0]);
+  if (index >= 0 && index + 1 < letters.length) return `${base}${letters[index + 1]}`;
+
+  // Сутки с более чем 25 правками — добавляем метку времени.
   return `${base}${Date.now().toString(36).slice(-4)}`;
 }
 
@@ -156,7 +160,7 @@ const assetsToBump = changed.map((item) => item.asset);
 // дата та же, и нужен суффикс (20261006b), иначе ?v= не изменится.
 const stamps = new Map();
 for (const item of changed) {
-  stamps.set(item.asset, nextStamp(item.version, nextManifest));
+  stamps.set(item.asset, nextStamp(item.version));
 }
 
 console.log('\nПроставляю версии:');
