@@ -127,6 +127,14 @@
       crossOrigin: true,
       attribution: '',
     });
+    // If tiles from current source fail to load, automatically try next fallback
+    let failedTiles = 0;
+    currentTileLayer.on('tileerror', () => {
+      failedTiles += 1;
+      if (failedTiles === 3 && sourceIndex + 1 < tileSources.length) {
+        setupTiles(sourceIndex + 1);
+      }
+    });
     currentTileLayer.addTo(map);
   }
 

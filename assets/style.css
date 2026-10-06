@@ -1802,6 +1802,16 @@ body[data-theme='dark'] .faq-aside .kicker { color: #FFD382; }
   overflow: hidden;
   border-radius: inherit;
 }
+.calc-leaflet-map.calc-leaflet-map--error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  padding: 16px;
+}
 @media (max-width: 640px) {
   .calc-leaflet-map {
     height: 195px !important;
@@ -5958,64 +5968,64 @@ body[data-theme='dark'] .gcc-info {
 [data-theme='light'] .service-thumb[data-scene='about-road'] { background-image: url('img/light/about-road.webp?v=c7190e77'); }
 .hero-photo__bg[data-scene='approach-truck'],
 .photo-band__bg[data-scene='approach-truck'],
-.service-thumb[data-scene='approach-truck'] { background-image: url('img/approach-truck.svg?v=2cb1df56'); }
+.service-thumb[data-scene='approach-truck'] { background-image: url('img/approach-truck.svg?v=707e3a1c'); }
 [data-theme='light'] .hero-photo__bg[data-scene='approach-truck'],
 [data-theme='light'] .photo-band__bg[data-scene='approach-truck'],
-[data-theme='light'] .service-thumb[data-scene='approach-truck'] { background-image: url('img/light/approach-truck.svg?v=2a17cc40'); }
+[data-theme='light'] .service-thumb[data-scene='approach-truck'] { background-image: url('img/light/approach-truck.svg?v=eab924ff'); }
 .hero-photo__bg[data-scene='calc-road'],
 .photo-band__bg[data-scene='calc-road'],
 .service-thumb[data-scene='calc-road'] { background-image: url('img/calc-road.svg?v=1141a35b'); }
 [data-theme='light'] .hero-photo__bg[data-scene='calc-road'],
 [data-theme='light'] .photo-band__bg[data-scene='calc-road'],
-[data-theme='light'] .service-thumb[data-scene='calc-road'] { background-image: url('img/light/calc-road.svg?v=13a7d7df'); }
+[data-theme='light'] .service-thumb[data-scene='calc-road'] { background-image: url('img/light/calc-road.svg?v=6139e931'); }
 .hero-photo__bg[data-scene='contacts-city'],
 .photo-band__bg[data-scene='contacts-city'],
 .service-thumb[data-scene='contacts-city'] { background-image: url('img/contacts-city.svg?v=5873eedd'); }
 [data-theme='light'] .hero-photo__bg[data-scene='contacts-city'],
 [data-theme='light'] .photo-band__bg[data-scene='contacts-city'],
-[data-theme='light'] .service-thumb[data-scene='contacts-city'] { background-image: url('img/light/contacts-city.svg?v=0806db31'); }
+[data-theme='light'] .service-thumb[data-scene='contacts-city'] { background-image: url('img/light/contacts-city.svg?v=da5c0b1d'); }
 .hero-photo__bg[data-scene='faq-road'],
 .photo-band__bg[data-scene='faq-road'],
 .service-thumb[data-scene='faq-road'] { background-image: url('img/faq-road.svg?v=0c393d2a'); }
 [data-theme='light'] .hero-photo__bg[data-scene='faq-road'],
 [data-theme='light'] .photo-band__bg[data-scene='faq-road'],
-[data-theme='light'] .service-thumb[data-scene='faq-road'] { background-image: url('img/light/faq-road.svg?v=9ca0de4d'); }
+[data-theme='light'] .service-thumb[data-scene='faq-road'] { background-image: url('img/light/faq-road.svg?v=be9718c6'); }
 .hero-photo__bg[data-scene='footer-about'],
 .photo-band__bg[data-scene='footer-about'],
-.service-thumb[data-scene='footer-about'] { background-image: url('img/footer-about.svg?v=2cb1df56'); }
+.service-thumb[data-scene='footer-about'] { background-image: url('img/footer-about.svg?v=707e3a1c'); }
 [data-theme='light'] .hero-photo__bg[data-scene='footer-about'],
 [data-theme='light'] .photo-band__bg[data-scene='footer-about'],
-[data-theme='light'] .service-thumb[data-scene='footer-about'] { background-image: url('img/light/footer-about.svg?v=2a17cc40'); }
+[data-theme='light'] .service-thumb[data-scene='footer-about'] { background-image: url('img/light/footer-about.svg?v=eab924ff'); }
 .hero-photo__bg[data-scene='footer-calc'],
 .photo-band__bg[data-scene='footer-calc'],
-.service-thumb[data-scene='footer-calc'] { background-image: url('img/footer-calc.svg?v=2cb1df56'); }
+.service-thumb[data-scene='footer-calc'] { background-image: url('img/footer-calc.svg?v=707e3a1c'); }
 [data-theme='light'] .hero-photo__bg[data-scene='footer-calc'],
 [data-theme='light'] .photo-band__bg[data-scene='footer-calc'],
-[data-theme='light'] .service-thumb[data-scene='footer-calc'] { background-image: url('img/light/footer-calc.svg?v=2a17cc40'); }
+[data-theme='light'] .service-thumb[data-scene='footer-calc'] { background-image: url('img/light/footer-calc.svg?v=eab924ff'); }
 .hero-photo__bg[data-scene='footer-contacts'],
 .photo-band__bg[data-scene='footer-contacts'],
-.service-thumb[data-scene='footer-contacts'] { background-image: url('img/footer-contacts.svg?v=2cb1df56'); }
+.service-thumb[data-scene='footer-contacts'] { background-image: url('img/footer-contacts.svg?v=707e3a1c'); }
 [data-theme='light'] .hero-photo__bg[data-scene='footer-contacts'],
 [data-theme='light'] .photo-band__bg[data-scene='footer-contacts'],
-[data-theme='light'] .service-thumb[data-scene='footer-contacts'] { background-image: url('img/light/footer-contacts.svg?v=2a17cc40'); }
+[data-theme='light'] .service-thumb[data-scene='footer-contacts'] { background-image: url('img/light/footer-contacts.svg?v=eab924ff'); }
 .hero-photo__bg[data-scene='footer-faq'],
 .photo-band__bg[data-scene='footer-faq'],
-.service-thumb[data-scene='footer-faq'] { background-image: url('img/footer-faq.svg?v=2cb1df56'); }
+.service-thumb[data-scene='footer-faq'] { background-image: url('img/footer-faq.svg?v=707e3a1c'); }
 [data-theme='light'] .hero-photo__bg[data-scene='footer-faq'],
 [data-theme='light'] .photo-band__bg[data-scene='footer-faq'],
-[data-theme='light'] .service-thumb[data-scene='footer-faq'] { background-image: url('img/light/footer-faq.svg?v=2a17cc40'); }
+[data-theme='light'] .service-thumb[data-scene='footer-faq'] { background-image: url('img/light/footer-faq.svg?v=eab924ff'); }
 .hero-photo__bg[data-scene='footer-partners'],
 .photo-band__bg[data-scene='footer-partners'],
-.service-thumb[data-scene='footer-partners'] { background-image: url('img/footer-partners.svg?v=2cb1df56'); }
+.service-thumb[data-scene='footer-partners'] { background-image: url('img/footer-partners.svg?v=707e3a1c'); }
 [data-theme='light'] .hero-photo__bg[data-scene='footer-partners'],
 [data-theme='light'] .photo-band__bg[data-scene='footer-partners'],
-[data-theme='light'] .service-thumb[data-scene='footer-partners'] { background-image: url('img/light/footer-partners.svg?v=2a17cc40'); }
+[data-theme='light'] .service-thumb[data-scene='footer-partners'] { background-image: url('img/light/footer-partners.svg?v=eab924ff'); }
 .hero-photo__bg[data-scene='footer-services'],
 .photo-band__bg[data-scene='footer-services'],
-.service-thumb[data-scene='footer-services'] { background-image: url('img/footer-services.svg?v=2cb1df56'); }
+.service-thumb[data-scene='footer-services'] { background-image: url('img/footer-services.svg?v=707e3a1c'); }
 [data-theme='light'] .hero-photo__bg[data-scene='footer-services'],
 [data-theme='light'] .photo-band__bg[data-scene='footer-services'],
-[data-theme='light'] .service-thumb[data-scene='footer-services'] { background-image: url('img/light/footer-services.svg?v=2a17cc40'); }
+[data-theme='light'] .service-thumb[data-scene='footer-services'] { background-image: url('img/light/footer-services.svg?v=eab924ff'); }
 .hero-photo__bg[data-scene='hero-truck'],
 .photo-band__bg[data-scene='hero-truck'],
 .service-thumb[data-scene='hero-truck'] { background-image: url('img/hero-truck.webp?v=79613df5'); }
@@ -6036,20 +6046,20 @@ body[data-theme='dark'] .gcc-info {
 [data-theme='light'] .service-thumb[data-scene='service-auto'] { background-image: url('img/light/service-auto.webp?v=aec13f91'); }
 .hero-photo__bg[data-scene='service-express'],
 .photo-band__bg[data-scene='service-express'],
-.service-thumb[data-scene='service-express'] { background-image: url('img/service-express.svg?v=47a4f052'); }
+.service-thumb[data-scene='service-express'] { background-image: url('img/service-express.svg?v=642ca0f2'); }
 [data-theme='light'] .hero-photo__bg[data-scene='service-express'],
 [data-theme='light'] .photo-band__bg[data-scene='service-express'],
-[data-theme='light'] .service-thumb[data-scene='service-express'] { background-image: url('img/light/service-express.svg?v=229ace7f'); }
+[data-theme='light'] .service-thumb[data-scene='service-express'] { background-image: url('img/light/service-express.svg?v=1078b386'); }
 .hero-photo__bg[data-scene='service-ltl'],
 .photo-band__bg[data-scene='service-ltl'],
-.service-thumb[data-scene='service-ltl'] { background-image: url('img/service-ltl.svg?v=e550dca3'); }
+.service-thumb[data-scene='service-ltl'] { background-image: url('img/service-ltl.svg?v=37435421'); }
 [data-theme='light'] .hero-photo__bg[data-scene='service-ltl'],
 [data-theme='light'] .photo-band__bg[data-scene='service-ltl'],
-[data-theme='light'] .service-thumb[data-scene='service-ltl'] { background-image: url('img/light/service-ltl.svg?v=b5b7523b'); }
+[data-theme='light'] .service-thumb[data-scene='service-ltl'] { background-image: url('img/light/service-ltl.svg?v=84c51acb'); }
 .hero-photo__bg[data-scene='service-thermo'],
 .photo-band__bg[data-scene='service-thermo'],
-.service-thumb[data-scene='service-thermo'] { background-image: url('img/service-thermo.svg?v=430619c4'); }
+.service-thumb[data-scene='service-thermo'] { background-image: url('img/service-thermo.svg?v=6a201a9f'); }
 [data-theme='light'] .hero-photo__bg[data-scene='service-thermo'],
 [data-theme='light'] .photo-band__bg[data-scene='service-thermo'],
-[data-theme='light'] .service-thumb[data-scene='service-thermo'] { background-image: url('img/light/service-thermo.svg?v=4c25602f'); }
+[data-theme='light'] .service-thumb[data-scene='service-thermo'] { background-image: url('img/light/service-thermo.svg?v=d8ab4cdf'); }
 /* scenes:end */
