@@ -842,7 +842,7 @@
       const loading = els.loading && els.loading.checked ? '1' : '0';
       const totalRaw = parseInt(els.total.textContent.replace(/\D/g, ''), 10) || 0;
       
-      const url = new URL('proposal.html', window.location.href);
+      const url = new URL('proposal', window.location.href);
       url.searchParams.set('from', fromTxt);
       url.searchParams.set('to', toTxt);
       url.searchParams.set('km', km);

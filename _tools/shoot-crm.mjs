@@ -9,7 +9,10 @@
  * Запуск: node _tools/shoot-crm.mjs
  *
  * Результат: _prototypes/crm-new-*.png (1440, 1180 и 390 плюс состояния
- * с открытой карточкой заявки). Каталог _prototypes не публикуется.
+ * с открытой карточкой заявки и кадры тёмной темы `crm-new-dark-*`).
+ * Тёмная тема включается параметром `?tgtheme=dark` — заглушка Telegram
+ * отдаёт `colorScheme: 'dark'`, и интерфейс переключается штатным путём
+ * (`crm-theme.js` + `syncTgChrome()`). Каталог _prototypes не публикуется.
  *
  * Особенности, из-за которых скрипт выглядит сложнее, чем «снять страницу»:
  *  - Chrome не открывает окно уже ~500px, поэтому узкие кадры снимаются
@@ -54,6 +57,8 @@ const DEMO_QR_SVG = JSON.stringify(qrSvg('https://t.me/asmalinesbot?start=login_
 
 const DEMO = `
   const LOGIN_MODE = /(^|[?&])state=login/.test(location.search);
+  // Тема Telegram: ?tgtheme=dark — так проверяется тёмная тема диспетчерской.
+  const TG_THEME = /(^|[?&])tgtheme=dark/.test(location.search) ? 'dark' : 'light';
   const QR_SVG = ${DEMO_QR_SVG};
   window.__QR_SVG = QR_SVG;
   const now = Date.now();
@@ -92,6 +97,14 @@ const DEMO = `
     user: { id: 1014012851, username: 'plombit', name: 'Иван Ефимович' }, isAdmin: true
   };
   window.Telegram = { WebApp: {
+    colorScheme: TG_THEME,
+    themeParams: {
+      bg_color: TG_THEME === 'dark' ? '#191614' : '#f6f3ef',
+      secondary_bg_color: TG_THEME === 'dark' ? '#211d1b' : '#fff',
+      header_bg_color: TG_THEME === 'dark' ? '#1d1917' : '#fffdfc',
+      text_color: TG_THEME === 'dark' ? '#f2ede9' : '#1a1817'
+    },
+    onEvent() {},
     initData: LOGIN_MODE ? '' : 'auth_date=1&user=%7B%22id%22%3A1014012851%7D&hash=demo',
     initDataUnsafe: LOGIN_MODE ? {} : { user: { id: 1014012851, first_name: 'Иван', last_name: 'Ефимович', username: 'plombit' } },
     ready() {}, expand() {}, disableVerticalSwipes() {}, setHeaderColor() {}, setBackgroundColor() {},
@@ -217,7 +230,11 @@ const views = [
   { suffix: 'mobile-detail', width: 390, height: 844, query: '?state=detail', note: 'телефон: карточка-шторка' },
   { suffix: 'mobile-history', width: 390, height: 844, query: '?state=detail&tab=feed', note: 'телефон: история заявки' },
   { suffix: 'login-desktop', width: 1440, height: 900, query: '?state=login', note: 'ПК: вход по коду и QR' },
-  { suffix: 'login-mobile', width: 390, height: 844, query: '?state=login', note: 'телефон: вход по коду и QR' }
+  { suffix: 'login-mobile', width: 390, height: 844, query: '?state=login', note: 'телефон: вход по коду и QR' },
+  { suffix: 'dark-desktop', width: 1440, height: 900, query: '?tgtheme=dark', note: 'тёмная тема Telegram: ПК' },
+  { suffix: 'dark-mobile', width: 390, height: 844, query: '?tgtheme=dark', note: 'тёмная тема Telegram: телефон' },
+  { suffix: 'dark-mobile-detail', width: 390, height: 844, query: '?tgtheme=dark&state=detail', note: 'тёмная тема: карточка-шторка' },
+  { suffix: 'dark-login-desktop', width: 1440, height: 900, query: '?state=login&tgtheme=dark', note: 'тёмная тема: вход' }
 ];
 
 const docViews = [

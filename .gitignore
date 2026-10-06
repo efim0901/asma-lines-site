@@ -17,3 +17,9 @@ data/
 # Снимки страниц для проверки вёрстки и тем (см. _tools/shoot-site.mjs).
 # В репозитории не нужны: это рабочий материал, а не часть сайта.
 _shots/
+
+# Скриншоты макетов диспетчерской: 1,8 МБ, к работе сайта не относятся
+# и пересобираются командой (см. _prototypes/README.md).
+#   node _tools/shoot-prototype.mjs
+#   node _tools/shoot-crm.mjs
+_prototypes/*.png

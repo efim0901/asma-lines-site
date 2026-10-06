@@ -91,6 +91,8 @@ export function withLoginSupport(StoreClass) {
 }
 
 export const SCHEMA_SQL = `
+-- Статус заявки: new, processing, transit, completed, cancelled.
+-- CHECK не ставим — в старых записях есть calculation, in_transit, archived.
 CREATE TABLE IF NOT EXISTS leads (
   id TEXT PRIMARY KEY,
   lead_number TEXT,

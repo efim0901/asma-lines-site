@@ -4,8 +4,8 @@
     "hash": "a0e00feb9756fb3b"
   },
   "style.css": {
-    "version": "20261006",
-    "hash": "49b14b9df17dfcef"
+    "version": "20261006b",
+    "hash": "52f0279d20703440"
   },
   "site.js": {
     "version": "20261006",
@@ -20,16 +20,16 @@
     "hash": "4068f6cd720e8863"
   },
   "calculator.js": {
-    "version": "20261004_js",
-    "hash": "759b3398445e4409"
+    "version": "20261006",
+    "hash": "52f95999ac04b5d6"
   },
   "crm-next.css": {
-    "version": "20261005_v2",
-    "hash": "697e1a7a9544116f"
+    "version": "20261006",
+    "hash": "ef27b250fbdb3a40"
   },
   "crm-next.js": {
-    "version": "20261006",
-    "hash": "6b379a7a9ea829b2"
+    "version": "20261006c",
+    "hash": "62538433e92bf77b"
   },
   "order-doc.js": {
     "version": "20261006",
@@ -38,5 +38,9 @@
   "proposal.js": {
     "version": "20261005_v3",
     "hash": "cf828e4a86a6bb54"
+  },
+  "crm-theme.js": {
+    "version": "20261006",
+    "hash": "fe9af772f3a83a01"
   }
 }

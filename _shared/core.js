@@ -88,18 +88,39 @@ export function makeId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-/** Разрешённые статусы заявки и порядок переходов (state machine). */
+/** Разрешённые статусы заявки: то, что можно записать. Порядок — по этапам. */
 export const LEAD_STATUSES = ['new', 'processing', 'transit', 'completed', 'cancelled'];
 
+/**
+ * Подписи к разрешённым статусам. Ключи обязаны совпадать с LEAD_STATUSES
+ * (следит _tests/statuses.test.js): раньше здесь оставались ключи `calculation`
+ * и `in_transit` — подписи к статусам, которых в списке разрешённых нет.
+ */
 export const LEAD_STATUS_NAMES = {
   new: 'Новая заявка',
   processing: 'В работе / Звонок',
-  calculation: 'Поиск авто / Расчёт',
-  in_transit: 'В рейсе / Исполнение',
   transit: 'В рейсе / Исполнение',
   completed: 'Завершено / Оплачено',
   cancelled: 'Отказ / Архив'
 };
+
+/**
+ * Устаревшие значения статуса: в старых записях D1 они ещё могут лежать,
+ * но записывать их нельзя — isValidStatus вернёт false. При чтении их
+ * приводит к каноническим `normalizedStatus()` в `assets/crm-next.js`;
+ * совпадение двух списков проверяет _tests/statuses.test.js.
+ */
+export const LEGACY_STATUS_ALIASES = {
+  calculation: 'processing',
+  in_transit: 'transit',
+  archived: 'cancelled'
+};
+
+/** Приводит устаревшее значение к каноническому. Неизвестное — как есть. */
+export function normalizeStatus(status) {
+  const value = String(status || '');
+  return LEGACY_STATUS_ALIASES[value] || value;
+}
 
 export function isValidStatus(status) {
   return LEAD_STATUSES.includes(String(status || ''));

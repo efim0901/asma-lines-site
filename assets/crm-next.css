@@ -10,6 +10,9 @@
   color-scheme: light;
 
   --brand: #8b2536;
+  /* Плотный фирменный цвет для заливок: на тёмной теме --brand светлеет,
+     чтобы читался текстом, а кнопки остаются на этом. */
+  --brand-solid: #8b2536;
   --brand-dark: #6b1e2d;
   --brand-soft: #fbf2f4;
   --brand-line: #ebd9dd;
@@ -17,11 +20,37 @@
   --bg: #f6f3ef;
   --surface: #fff;
   --surface-2: #fbf9f7;
+  --side-bg: #fffdfc;
   --ink: #1a1817;
   --ink-2: #4a4441;
   --muted: #7d746e;
   --line: #e5ded7;
+  --line-strong: #d6ccc3;
   --danger: #a8322f;
+
+  /* Полупрозрачные панели поверх списка (верхняя и нижняя на телефоне). */
+  --glass: rgba(255, 255, 255, .92);
+  --glass-strong: rgba(255, 255, 255, .97);
+  --scrim: rgba(26, 24, 23, .32);
+  --focus-ring: rgba(139, 37, 54, .1);
+
+  /* Предупреждение о суточных заявках и блок «Отменена». */
+  --warn-bg: #fdf7ec;
+  --warn-line: #f0ddc0;
+  --warn-ink: #6b4a12;
+  --warn-ink-strong: #8a5b0b;
+  --danger-bg: #fff;
+  --danger-bg-hover: #fdf2f2;
+  --danger-line: #e6c4c3;
+  --danger-line-hover: #d9a9a8;
+  --overdue-bg: #fbecec;
+
+  /* Плашки статусов: фон, рамка и цвет текста на каждый статус. */
+  --chip-new-bg: #f2f7fc;      --chip-new-line: #c6dbf0;      --chip-new-ink: #1e5288;
+  --chip-processing-bg: #fdf7e6; --chip-processing-line: #f0dca8; --chip-processing-ink: #8a5b0b;
+  --chip-transit-bg: #eef8f6;  --chip-transit-line: #bee0da;  --chip-transit-ink: #12665c;
+  --chip-completed-bg: #eff8f2; --chip-completed-line: #bfe0cb; --chip-completed-ink: #1d6642;
+  --chip-cancelled-bg: #f5f3f1; --chip-cancelled-line: #e0dad5; --chip-cancelled-ink: #6e665f;
 
   --st-new: #2866a0;
   --st-processing: #b8860b;
@@ -74,7 +103,7 @@ a { color: inherit; }
 .side {
   display: flex; flex-direction: column; gap: 20px;
   padding: 16px 12px 14px;
-  background: #fffdfc;
+  background: var(--side-bg);
   border-right: 1px solid var(--line);
   overflow-y: auto;
 }
@@ -109,10 +138,10 @@ a { color: inherit; }
 
 .side__foot { margin-top: auto; display: grid; gap: 10px; }
 .side__alert {
-  padding: 11px 12px; border: 1px solid #f0ddc0; border-radius: 8px;
-  background: #fdf7ec; color: #6b4a12; font-size: 11.5px; line-height: 1.45;
+  padding: 11px 12px; border: 1px solid var(--warn-line); border-radius: 8px;
+  background: var(--warn-bg); color: var(--warn-ink); font-size: 11.5px; line-height: 1.45;
 }
-.side__alert b { display: block; margin-bottom: 3px; color: #8a5b0b; font-size: 12px; }
+.side__alert b { display: block; margin-bottom: 3px; color: var(--warn-ink-strong); font-size: 12px; }
 .side__user {
   display: flex; align-items: center; gap: 9px;
   padding: 8px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface);
@@ -122,7 +151,7 @@ a { color: inherit; }
 .side__who small { display: block; color: var(--muted); font-size: 10.5px; }
 .avatar {
   display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 auto;
-  border-radius: 9px; background: linear-gradient(135deg, #a62c40, var(--brand));
+  border-radius: 9px; background: linear-gradient(135deg, #a62c40, var(--brand-solid));
   color: #fff; font-size: 12px; font-weight: 800;
 }
 .avatar--lg { width: 44px; height: 44px; border-radius: 12px; font-size: 16px; }
@@ -133,7 +162,7 @@ a { color: inherit; }
 .topbar {
   display: flex; align-items: center; gap: 12px;
   padding: 12px 18px; border-bottom: 1px solid var(--line);
-  background: rgba(255, 255, 255, .92); backdrop-filter: blur(10px);
+  background: var(--glass); backdrop-filter: blur(10px);
   padding-top: max(12px, env(safe-area-inset-top));
 }
 .search { position: relative; flex: 1; min-width: 0; }
@@ -143,7 +172,7 @@ a { color: inherit; }
   color: var(--ink); font-size: 13px; outline: none;
   transition: border-color .15s, box-shadow .15s;
 }
-.search input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(139, 37, 54, .1); }
+.search input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--focus-ring); }
 .search svg {
   position: absolute; left: 12px; top: 50%; width: 15px; height: 15px;
   transform: translateY(-50%); color: var(--muted);
@@ -159,12 +188,12 @@ a { color: inherit; }
   background: var(--surface); color: var(--ink); font-size: 12.5px; font-weight: 700;
   text-decoration: none; transition: background .15s, border-color .15s;
 }
-.btn:hover { background: var(--surface-2); border-color: #d6ccc3; }
+.btn:hover { background: var(--surface-2); border-color: var(--line-strong); }
 .btn:disabled { opacity: .55; cursor: default; }
-.btn--primary { border-color: var(--brand); background: var(--brand); color: #fff; }
+.btn--primary { border-color: var(--brand-solid); background: var(--brand-solid); color: #fff; }
 .btn--primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
-.btn--danger { border-color: #e6c4c3; background: #fff; color: var(--danger); }
-.btn--danger:hover { background: #fdf2f2; border-color: #d9a9a8; }
+.btn--danger { border-color: var(--danger-line); background: var(--danger-bg); color: var(--danger); }
+.btn--danger:hover { background: var(--danger-bg-hover); border-color: var(--danger-line-hover); }
 .btn--icon { width: 40px; padding: 0; color: var(--ink-2); }
 .btn svg, .row__quick svg { width: 15px; height: 15px; flex: 0 0 auto; }
 
@@ -225,11 +254,11 @@ a { color: inherit; }
   font-size: 10.5px; font-weight: 700; white-space: nowrap;
 }
 .chip i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.chip[data-status="new"] { border-color: #c6dbf0; background: #f2f7fc; color: #1e5288; }
-.chip[data-status="processing"] { border-color: #f0dca8; background: #fdf7e6; color: #8a5b0b; }
-.chip[data-status="transit"] { border-color: #bee0da; background: #eef8f6; color: #12665c; }
-.chip[data-status="completed"] { border-color: #bfe0cb; background: #eff8f2; color: #1d6642; }
-.chip[data-status="cancelled"] { border-color: #e0dad5; background: #f5f3f1; color: #6e665f; }
+.chip[data-status="new"] { border-color: var(--chip-new-line); background: var(--chip-new-bg); color: var(--chip-new-ink); }
+.chip[data-status="processing"] { border-color: var(--chip-processing-line); background: var(--chip-processing-bg); color: var(--chip-processing-ink); }
+.chip[data-status="transit"] { border-color: var(--chip-transit-line); background: var(--chip-transit-bg); color: var(--chip-transit-ink); }
+.chip[data-status="completed"] { border-color: var(--chip-completed-line); background: var(--chip-completed-bg); color: var(--chip-completed-ink); }
+.chip[data-status="cancelled"] { border-color: var(--chip-cancelled-line); background: var(--chip-cancelled-bg); color: var(--chip-cancelled-ink); }
 
 .age { color: var(--muted); font: 500 11px var(--mono); }
 .age--overdue { color: var(--danger); font-weight: 600; }
@@ -272,7 +301,7 @@ a { color: inherit; }
   padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px;
   background: var(--surface-2); color: var(--ink-2); font-size: 11.5px;
 }
-.detail__note[data-kind="cancelled"] { border-color: #e6c4c3; background: #fdf2f2; color: #8d2f2c; }
+.detail__note[data-kind="cancelled"] { border-color: var(--danger-line); background: var(--danger-bg-hover); color: var(--danger); }
 
 .tabs { display: flex; gap: 2px; margin: 14px 0 0; padding: 0 18px; border-bottom: 1px solid var(--line); }
 .tab {
@@ -317,7 +346,7 @@ a { color: inherit; }
   min-height: 72px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px;
   font-size: 12.5px; resize: vertical; outline: none;
 }
-.note-form textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(139, 37, 54, .1); }
+.note-form textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--focus-ring); }
 
 /* ----------------------- Профиль и прочие шторки ----------------------- */
 
@@ -333,7 +362,7 @@ a { color: inherit; }
 .profile { display: flex; align-items: center; gap: 12px; }
 .profile b { display: block; font-size: 14px; }
 .profile small { display: block; margin-top: 2px; color: var(--muted); font-size: 11.5px; }
-.scrim { position: fixed; inset: 0; z-index: 7; background: rgba(26, 24, 23, .32); }
+.scrim { position: fixed; inset: 0; z-index: 7; background: var(--scrim); }
 
 /* ------------------------------ Диалоги ------------------------------- */
 
@@ -367,7 +396,7 @@ a { color: inherit; }
   border-radius: 10px; background: var(--surface); box-shadow: var(--shadow); text-align: center;
 }
 .gate-panel img { width: 42px; height: 42px; }
-.gate-panel h1 { margin: 12px 0 6px; font-size: 20px; }
+.gate-panel h2 { margin: 12px 0 6px; font-size: 20px; }
 .gate-panel p { margin: 0; color: var(--muted); font-size: 12.5px; }
 .gate-panel .btn { margin-top: 16px; }
 
@@ -424,7 +453,7 @@ a { color: inherit; }
 
   .chips {
     display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
-    padding: 9px 11px; border-bottom: 1px solid var(--line); background: rgba(255, 255, 255, .92);
+    padding: 9px 11px; border-bottom: 1px solid var(--line); background: var(--glass);
   }
   .chips::-webkit-scrollbar { display: none; }
 
@@ -450,10 +479,14 @@ a { color: inherit; }
   .row__dispatcher { display: none; } /* диспетчер виден в карточке заявки */
   .row__age { grid-area: 2 / 2 / 3 / 3; justify-self: end; }
   .age { font-size: 10.5px; }
-  .age--overdue { padding: 1px 6px; border-radius: 5px; background: #fbecec; }
+  .age--overdue { padding: 1px 6px; border-radius: 5px; background: var(--overdue-bg); }
+  /* Тач-цели на телефоне — не меньше 44px: по 34-пиксельным кнопкам
+     в строке заявки трудно попадать пальцем. */
+  .btn { min-height: 44px; }
+  .btn--icon { width: 44px; }
   .row__quick { display: flex; gap: 6px; grid-area: 3 / 2 / 4 / 3; justify-self: end; }
   .row__quick a, .row__quick button {
-    display: grid; place-items: center; width: 34px; height: 34px;
+    display: grid; place-items: center; width: 44px; height: 44px;
     border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
     color: var(--ink-2); text-decoration: none;
   }
@@ -486,7 +519,7 @@ a { color: inherit; }
     position: fixed; inset: auto 0 0 0; z-index: 6;
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;
     padding: 5px 6px calc(5px + env(safe-area-inset-bottom));
-    background: rgba(255, 255, 255, .97); border-top: 1px solid var(--line); backdrop-filter: blur(12px);
+    background: var(--glass-strong); border-top: 1px solid var(--line); backdrop-filter: blur(12px);
   }
   .mobile-nav button {
     display: grid; justify-items: center; gap: 2px; min-height: 48px; padding: 5px 2px;
@@ -494,7 +527,7 @@ a { color: inherit; }
   }
   .mobile-nav button[aria-current="true"] { background: var(--brand-soft); color: var(--brand); }
   .mobile-nav svg { width: 18px; height: 18px; }
-  .mobile-nav .add { background: var(--brand); color: #fff; margin: 0 6px; }
+  .mobile-nav .add { background: var(--brand-solid); color: #fff; margin: 0 6px; }
   .field-grid { grid-template-columns: 1fr; }
 }
 
@@ -531,3 +564,81 @@ a { color: inherit; }
     transition-duration: .01ms !important;
   }
 }
+
+/* ----------------------------- Тёмная тема -----------------------------
+
+   Включается атрибутом data-theme="dark" на <html>. Его ставит
+   assets/crm-theme.js: в Telegram — по tg.colorScheme, в обычном браузере —
+   по системной настройке. Дальше crm-next.js слушает themeChanged и меняет
+   цвета шапки и фона самого Telegram.
+
+   Палитра тёплая, в тон фирменному бордовому, а не нейтрально-серая.
+   Отдельно стоит --brand-solid: заливки кнопок остаются насыщенными,
+   потому что по ним белый текст, а --brand светлеет — им набирается текст
+   и иконки, и на тёмном фоне тёмно-бордовый читался бы плохо. */
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --brand: #e0919f;
+  --brand-solid: #9c2c3f;
+  --brand-dark: #85243a;
+  --brand-soft: #2c1d22;
+  --brand-line: #4b2c33;
+
+  --bg: #191614;
+  --surface: #211d1b;
+  --surface-2: #26211f;
+  --side-bg: #1d1917;
+  --ink: #f2ede9;
+  --ink-2: #cfc6c0;
+  --muted: #9b918a;
+  --line: #342e2a;
+  --line-strong: #463e39;
+  --danger: #e8847f;
+
+  --glass: rgba(33, 29, 27, .92);
+  --glass-strong: rgba(33, 29, 27, .97);
+  --scrim: rgba(0, 0, 0, .55);
+  --focus-ring: rgba(224, 145, 159, .22);
+
+  --warn-bg: #2e2617;
+  --warn-line: #4d3f22;
+  --warn-ink: #e2c48b;
+  --warn-ink-strong: #f0d49b;
+  --danger-bg: #2a1e1d;
+  --danger-bg-hover: #33201f;
+  --danger-line: #5a3532;
+  --danger-line-hover: #6d403c;
+  --overdue-bg: #3a2220;
+
+  --chip-new-bg: #16222e;        --chip-new-line: #29405a;        --chip-new-ink: #8fc0ea;
+  --chip-processing-bg: #2b2415; --chip-processing-line: #4d3f22; --chip-processing-ink: #e6bd63;
+  --chip-transit-bg: #142824;    --chip-transit-line: #275048;    --chip-transit-ink: #6fd0c2;
+  --chip-completed-bg: #15271d;  --chip-completed-line: #2b5038;  --chip-completed-ink: #7fce9f;
+  --chip-cancelled-bg: #262322;  --chip-cancelled-line: #3d3835;  --chip-cancelled-ink: #b3a9a2;
+
+  --st-new: #6aa8de;
+  --st-processing: #d9ab4e;
+  --st-transit: #4cbdac;
+  --st-completed: #59b57e;
+  --st-cancelled: #8f8880;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+  --shadow: 0 8px 24px rgba(0, 0, 0, .45);
+  --shadow-lg: 0 20px 50px rgba(0, 0, 0, .55);
+}
+
+/* Логотип внутри <img> выбирает цвет по prefers-color-scheme системы,
+   а не по теме приложения: в тёмной теме Telegram на светлой системе
+   тёмный знак пропадал бы на тёмном сайдбаре. Поэтому подменяем файл.
+   Там, где `content` на <img> не поддержан, остаётся прежнее поведение. */
+:root[data-theme='dark'] img[src$="asma-mark.svg"] {
+  content: url('brand/asma-mark-light.svg');
+}
+
+/* QR-код сканирует камера, поэтому он всегда на белом. */
+:root[data-theme='dark'] .login__qr img { background: #fff; }
+
+/* Мобильная навигация: у кнопки добавления белый текст на фирменной заливке. */
+:root[data-theme='dark'] .mobile-nav .add { color: #fff; }

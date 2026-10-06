@@ -4,6 +4,11 @@
 -- Тот же SQL продублирован в _shared/store.js (SCHEMA_SQL) и применяется
 -- автоматически при первом запросе, так что расхождение исключено.
 
+-- Статус заявки. Допустимые значения — new, processing, transit, completed,
+-- cancelled (LEAD_STATUSES в _shared/core.js). CHECK намеренно не ставим:
+-- в старых записях встречаются устаревшие calculation, in_transit и archived,
+-- и такой CHECK не дал бы применить схему к существующей базе. Значение
+-- проверяет isValidStatus() на сервере, устаревшие приводит crm-next.js.
 CREATE TABLE IF NOT EXISTS leads (
   id TEXT PRIMARY KEY,
   lead_number TEXT,

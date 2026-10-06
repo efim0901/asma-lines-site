@@ -19,6 +19,13 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap">
 
   <style>
+    /* Заголовок страницы для скринридера: визуально он не нужен —
+       название документа видно в шапке бланка. */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; overflow: hidden;
+      clip: rect(0, 0, 0, 0); white-space: nowrap;
+    }
+
     @page {
       size: A4 portrait;
       margin: 10mm 12mm 12mm 12mm;
@@ -662,6 +669,7 @@
   </style>
 </head>
 <body>
+  <h1 class="sr-only">Документ по заявке — ASMA Lines</h1>
 
   <!-- Loading State Screen -->
   <div id="doc-loading-screen" class="doc-loading-screen">

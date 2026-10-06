@@ -17,6 +17,7 @@ const files = [
   'validation.test.js',
   'security.test.js',
   'store.test.js',
+  'statuses.test.js',
   'qr.test.js',
   'sessions.test.js'
 ];

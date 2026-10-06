@@ -15,7 +15,15 @@
  * (у /assets/* стоит immutable на год) не отдаст старую картинку после
  * правки: изменился файл — изменился URL. Руками версию поднимать не нужно.
  *
- *   node _tools/wire-scenes.mjs           # разметка → data-scene, CSS перегенерируется
+ * Четыре тяжёлые сцены (RASTER) отдаются растром WebP: в SVG они весят
+ * 219–433 КБ, в растре — 37–48 КБ, а показываются в полосе под затемняющей
+ * подложкой, где вектор избыточен. См. _tools/make-webp-scenes.py.
+ *
+ * Здесь же правится preload картинки в <head>: он обязан указывать на тот
+ * же файл, что и CSS. Иначе браузер скачает preload (SVG, 433 КБ) и вдобавок
+ * картинку из CSS — то есть станет тяжелее, чем было.
+ *
+ *   node _tools/wire-scenes.mjs           # разметка → data-scene, CSS и preload
  *   node _tools/wire-scenes.mjs --check   # только проверка (для npm run check)
  */
 
@@ -32,6 +40,11 @@ const START = '/* scenes:start — блок создаётся _tools/wire-scene
 const END = '/* scenes:end */';
 
 const htmlPages = fs.readdirSync(root).filter((name) => name.endsWith('.html'));
+
+// Сцены, которые отдаются растром: SVG для них — источник, а не то, что
+// грузит браузер. Список общий с _tools/make-webp-scenes.py.
+const RASTER = new Set(['hero-truck', 'partners-fleet', 'about-road', 'service-auto']);
+const sceneFile = (name) => (RASTER.has(name) ? `${name}.webp` : `${name}.svg`);
 
 /* ---------- 1. Разметка: инлайновые переменные → data-scene ---------- */
 
@@ -84,25 +97,52 @@ const lines = [START];
 const missing = [];
 
 for (const [name, info] of [...scenes].sort((a, b) => a[0].localeCompare(b[0]))) {
-  const darkVersion = assetVersion(`${name}.svg`);
-  const lightVersion = assetVersion(`light/${name}.svg`);
-  if (!darkVersion) missing.push(`assets/img/${name}.svg`);
-  if (!lightVersion) missing.push(`assets/img/light/${name}.svg`);
+  const file = sceneFile(name);
+  const darkVersion = assetVersion(file);
+  const lightVersion = assetVersion(`light/${file}`);
+  if (!darkVersion) missing.push(`assets/img/${file}`);
+  if (!lightVersion) missing.push(`assets/img/light/${file}`);
 
   const darkSelectors = ['.hero-photo__bg', '.photo-band__bg', '.service-thumb']
     .map((cls) => `${cls}[data-scene='${name}']`);
   const lightSelectors = darkSelectors.map((selector) => `[data-theme='light'] ${selector}`);
 
   if (darkVersion) {
-    lines.push(`${darkSelectors.join(',\n')} { background-image: url('img/${name}.svg?v=${darkVersion}'); }`);
+    lines.push(`${darkSelectors.join(',\n')} { background-image: url('img/${file}?v=${darkVersion}'); }`);
   }
   if (lightVersion) {
     // Внимание: путь считается от assets/style.css, поэтому нужен префикс img/.
-    lines.push(`${lightSelectors.join(',\n')} { background-image: url('img/light/${name}.svg?v=${lightVersion}'); }`);
+    lines.push(`${lightSelectors.join(',\n')} { background-image: url('img/light/${file}?v=${lightVersion}'); }`);
   }
 }
 lines.push(END);
 const block = lines.join('\n');
+
+/* ---------- 4b. preload картинки в <head>: тот же файл и та же версия ---------- */
+
+// В <head> каждой страницы лежит preload главной сцены. Он должен совпадать
+// с тем, что отдаёт CSS, иначе браузер скачает два файла вместо одного.
+const preloadPattern = /(<link\s[^>]*rel="preload"[^>]*as="image"[^>]*href=")assets\/img\/(?:light\/)?([A-Za-z0-9_-]+)\.(?:svg|webp)\?v=[^"]*(")/g;
+
+let preloadChanged = 0;
+const preloadWrong = [];
+for (const page of htmlPages) {
+  const file = path.join(root, page);
+  const before = fs.readFileSync(file, 'utf8');
+  const after = before.replace(preloadPattern, (match, head, name, tail) => {
+    const ext = RASTER.has(name) ? 'webp' : 'svg';
+    const version = assetVersion(`${name}.${ext}`);
+    if (!version) {
+      preloadWrong.push(`${page}: preload ссылается на сцену «${name}», файла нет`);
+      return match;
+    }
+    return `${head}assets/img/${name}.${ext}?v=${version}${tail}`;
+  });
+  if (after === before) continue;
+  if (checkOnly) preloadWrong.push(`${page}: preload главной сцены устарел`);
+  else fs.writeFileSync(file, after, 'utf8');
+  preloadChanged += 1;
+}
 
 if (missing.length) {
   console.log('\nНЕТ ФАЙЛОВ ИЛЛЮСТРАЦИЙ:');
@@ -136,7 +176,13 @@ if (checkOnly) {
     console.log('  Выполните: node _tools/wire-scenes.mjs');
     process.exit(1);
   }
-  console.log(`Сцены в порядке: ${scenes.size} иллюстраций, обе темы ✅`);
+  if (preloadWrong.length) {
+    console.log('✖ preload главной сцены не совпадает с CSS:');
+    for (const item of preloadWrong) console.log(`  ✖ ${item}`);
+    console.log('  Выполните: node _tools/wire-scenes.mjs');
+    process.exit(1);
+  }
+  console.log(`Сцены в порядке: ${scenes.size} иллюстраций, обе темы, preload совпадает ✅`);
   process.exit(missing.length ? 1 : 0);
 }
 
@@ -153,8 +199,10 @@ fs.writeFileSync(stylePath, updated, 'utf8');
 
 console.log(`Сцен подключено: ${scenes.size}`);
 for (const [name, info] of [...scenes].sort((a, b) => a[0].localeCompare(b[0]))) {
-  const dark = assetVersion(`${name}.svg`) || '—';
-  const light = assetVersion(`light/${name}.svg`) || '—';
-  console.log(`  ${name.padEnd(20)} тёмная v=${dark}  светлая v=${light}`);
+  const file = sceneFile(name);
+  const dark = assetVersion(file) || '—';
+  const light = assetVersion(`light/${file}`) || '—';
+  const kind = RASTER.has(name) ? 'растр' : 'вектор';
+  console.log(`  ${name.padEnd(20)} ${kind}  тёмная v=${dark}  светлая v=${light}`);
 }
-console.log(`\nРазметка обновлена на ${markupChanged} страницах, блок вписан в assets/style.css`);
+console.log(`\nРазметка обновлена на ${markupChanged} страницах, preload — на ${preloadChanged}, блок вписан в assets/style.css`);

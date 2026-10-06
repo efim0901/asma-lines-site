@@ -1,6 +1,0 @@
-{
-  "name": "ASMA Lines",
-  "description": "ASMA Lines — организация автомобильных грузоперевозок по Беларуси со встроенной Telegram Web App CRM-диспетчерской.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

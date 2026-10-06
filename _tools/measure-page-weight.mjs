@@ -20,11 +20,23 @@ const size = (rel) => {
   return fs.existsSync(full) ? fs.statSync(full).size : 0;
 };
 
-/* Сцены и их светлые версии: браузер берёт одну по активной теме. */
-const scenes = {};
-for (const name of fs.readdirSync(path.join(root, 'assets/img')).filter((f) => f.endsWith('.svg'))) {
-  const key = name.replace(/\.svg$/, '');
-  scenes[key] = size(`assets/img/${name}`);
+/* Сцены: какой файл реально отдаёт CSS и сколько он весит.
+   Считать по расширению .svg нельзя — четыре тяжёлые сцены отдаются
+   растром WebP (см. _tools/make-webp-scenes.py), и браузер грузит его. */
+const sceneFiles = {}; // имя сцены → { dark, light } — пути относительно корня
+for (const statement of read('assets/style.css').split('}')) {
+  const scene = statement.match(/data-scene='([^']+)'/);
+  const url = statement.match(/url\('(img\/[^'?]+)/);
+  if (!scene || !url) continue;
+  const isLight = /\[data-theme='light'\]/.test(statement);
+  sceneFiles[scene[1]] ??= {};
+  sceneFiles[scene[1]][isLight ? 'light' : 'dark'] = `assets/${url[1]}`;
+}
+
+const scenes = {}; // имя сцены → вес файла текущей (тёмной) темы
+for (const [name, files] of Object.entries(sceneFiles)) {
+  const dark = files.dark || files.light;
+  if (dark) scenes[name] = size(dark);
 }
 
 const pages = fs.readdirSync(root).filter((n) => n.endsWith('.html'));
@@ -37,7 +49,8 @@ for (const page of pages) {
   // Фоны, подключённые блоками сцен
   for (const match of text.matchAll(/data-scene="([^"]+)"/g)) {
     const key = match[1];
-    loaded.set(key, { bytes: scenes[key] || 0, via: 'фон' });
+    const file = sceneFiles[key]?.dark || sceneFiles[key]?.light;
+    loaded.set(file || `сцена ${key}`, { bytes: scenes[key] || 0, via: 'фон' });
   }
   // Инлайновые фоны и <img src>
   for (const match of text.matchAll(/background-image:\s*url\(['"]?([^'")]+)['"]?\)/g)) {

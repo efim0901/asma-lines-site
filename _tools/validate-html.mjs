@@ -47,10 +47,14 @@ for (const page of pages) {
   }
 
   // 4. Ссылки на локальные файлы должны существовать.
+  //    Адреса страниц записаны без расширения (их так отдаёт Cloudflare:
+  //    /about.html отвечает 307 на /about), поэтому проверяем оба варианта:
+  //    файл как есть и он же с .html.
   for (const match of content.matchAll(/(?:src|href)="(?!https?:|mailto:|tel:|#|data:|\/)([^"?]+)(?:\?[^"]*)?"/g)) {
     const target = match[1];
     if (!target || target.endsWith('/')) continue;
-    if (!fs.existsSync(path.join(root, target))) {
+    const candidates = [target, `${target}.html`, path.join(target, 'index.html')];
+    if (!candidates.some((candidate) => fs.existsSync(path.join(root, candidate)))) {
       problems.push(`${page}: ссылка на отсутствующий файл ${target}`);
     }
   }

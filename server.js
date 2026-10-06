@@ -942,12 +942,15 @@ const BLOCKED_PATHS = new Set([
   '.gitignore',
   '.assetsignore',
   '_headers',
-  'metadata.json',
-  'DEPLOY-CLOUDFLARE.md'
+  'DEPLOY-CLOUDFLARE.md',
+  // Документы для разработки: публиковать их не нужно (в .assetsignore тоже).
+  'PLAN.md',
+  'AGENTS.md'
 ]);
 
 app.get('/favicon.ico', (req, res) => res.sendFile(path.join(__dirname, 'favicon.ico')));
-app.get('/apple-touch-icon.png', (req, res) => res.sendFile(path.join(__dirname, 'apple-touch-icon.png')));
+app.get('/apple-touch-icon.png', (req, res) =>
+  res.sendFile(path.join(__dirname, 'assets', 'brand', 'apple-touch-icon.png')));
 
 // Явно закрываем служебные пути и каталог с персональными данными.
 app.use((req, res, next) => {

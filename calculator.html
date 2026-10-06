@@ -16,14 +16,14 @@
 <meta name="geo.position" content="52.4345;30.9754">
 <meta name="ICBM" content="52.42416, 31.01428">
 
-<link rel="canonical" href="https://asma-lines-site.firws.workers.dev/calculator.html">
+<link rel="canonical" href="https://asma-lines-site.firws.workers.dev/calculator">
 
 <!-- OpenGraph Social Cards -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ASMA Lines">
 <meta property="og:title" content="Калькулятор стоимости грузоперевозок по Беларуси — ASMA Lines">
 <meta property="og:description" content="Интерактивный онлайн-калькулятор грузоперевозок. Точный расчёт расстояния, тарифа и времени доставки по всей Беларуси.">
-<meta property="og:url" content="https://asma-lines-site.firws.workers.dev/calculator.html">
+<meta property="og:url" content="https://asma-lines-site.firws.workers.dev/calculator">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:image" content="https://asma-lines-site.firws.workers.dev/assets/img/og-cover.png">
   <meta property="og:image:type" content="image/png">
@@ -50,11 +50,11 @@
   "@graph": [
     {
       "@type": "WebApplication",
-      "@id": "https://asma-lines-site.firws.workers.dev/calculator.html#app",
+      "@id": "https://asma-lines-site.firws.workers.dev/calculator#app",
       "name": "Онлайн-калькулятор стоимости грузоперевозок ASMA Lines",
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "All",
-      "url": "https://asma-lines-site.firws.workers.dev/calculator.html",
+      "url": "https://asma-lines-site.firws.workers.dev/calculator",
       "description": "Интерактивный инструмент для автоматического расчёта километража, ориентировочного времени в пути и стоимости автомобильной грузоперевозки по Беларуси.",
       "offers": {
         "@type": "Offer",
@@ -69,7 +69,7 @@
     },
     {
       "@type": "BreadcrumbList",
-      "@id": "https://asma-lines-site.firws.workers.dev/calculator.html#breadcrumbs",
+      "@id": "https://asma-lines-site.firws.workers.dev/calculator#breadcrumbs",
       "itemListElement": [
         {
           "@type": "ListItem",
@@ -81,7 +81,7 @@
           "@type": "ListItem",
           "position": 2,
           "name": "Калькулятор стоимости",
-          "item": "https://asma-lines-site.firws.workers.dev/calculator.html"
+          "item": "https://asma-lines-site.firws.workers.dev/calculator"
         }
       ]
     }
@@ -93,34 +93,34 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-<link rel="preload" as="image" href="assets/img/calc-road.svg?v=20261004_js" fetchpriority="high">
-<link rel="stylesheet" href="assets/style.css?v=20261006">
+<link rel="preload" as="image" href="assets/img/calc-road.svg?v=1141a35b" fetchpriority="high">
+<link rel="stylesheet" href="assets/style.css?v=20261006b">
 <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css?v=20261004_js">
 </head>
 <body>
   <a class="skip-link" href="#main">Перейти к содержимому</a>
 <header class="site-header">
   <div class="container nav-inner">
-    <a class="brand" href="index.html" aria-label="ASMA Lines — на главную">
+    <a class="brand" href="./"" aria-label="ASMA Lines — на главную">
       <img class="brand-logo" src="assets/brand/asma-mark.svg" alt="ASMA Lines" width="34" height="34">
       <span>ASMA</span>
     </a>
     <nav id="main-nav" aria-label="Основная навигация">
-      <a href="index.html">Главная</a>
-      <a href="about.html">О компании</a>
-      <a href="services.html">Услуги</a>
-      <a href="partners.html">Партнёры</a>
+      <a href="./"">Главная</a>
+      <a href="about"">О компании</a>
+      <a href="services"">Услуги</a>
+      <a href="partners"">Партнёры</a>
       <div class="nav-dropdown">
         <button class="nav-link" type="button" aria-haspopup="true" aria-expanded="false">
           Информация <span class="caret">▾</span>
         </button>
         <div class="nav-dropdown-menu">
-          <a href="faq.html">Частые вопросы</a>
-          <a href="privacy.html">Политика конфиденциальности</a>
+          <a href="faq"">Частые вопросы</a>
+          <a href="privacy"">Политика конфиденциальности</a>
         </div>
       </div>
-      <a href="contacts.html">Контакты</a>
-      <a href="contacts.html" class="nav-mobile-calc-btn">Связаться с диспетчером</a>
+      <a href="contacts"">Контакты</a>
+      <a href="contacts"" class="nav-mobile-calc-btn">Связаться с диспетчером</a>
     </nav>
     <div class="nav-tools">
       <button class="theme-toggle" type="button" aria-label="Переключить цветовую тему" title="Переключить тему">◐</button>
@@ -552,7 +552,7 @@
         </div>
       </div>
 
-      <a id="quote-link" class="text-link hidden" href="contacts.html">Перейти на страницу контактов</a>
+      <a id="quote-link" class="text-link hidden" href="contacts"">Перейти на страницу контактов</a>
     </aside>
   </section>
 
@@ -746,7 +746,7 @@
         </div>
         <div class="photo-band__actions">
           <button type="button" class="btn btn-primary" data-action="quick-consult" data-target="btn-quick-consult">Забронировать по этой цене</button>
-          <a class="btn btn-secondary-light" href="contacts.html">Консультация с диспетчером</a>
+          <a class="btn btn-secondary-light" href="contacts"">Консультация с диспетчером</a>
         </div>
       </div>
     </div>
@@ -768,22 +768,22 @@
 <footer class="site-footer">
   <div class="container">
     <div class="footer-bar">
-      <a class="brand" href="index.html">
+      <a class="brand" href="./"">
         <img class="brand-logo" src="assets/brand/asma-mark.svg" alt="" width="28" height="28">
         <span>ASMA</span>
       </a>
       <nav class="footer-nav" aria-label="Навигация в подвале">
-        <a href="about.html">О компании</a>
-        <a href="services.html">Услуги</a>
-        <a href="partners.html">Партнёры</a>
-        <a href="contacts.html">Контакты</a>
+        <a href="about"">О компании</a>
+        <a href="services"">Услуги</a>
+        <a href="partners"">Партнёры</a>
+        <a href="contacts"">Контакты</a>
       </nav>
       <div class="footer-social">
       </div>
     </div>
     <div class="footer-bottom">
       <span>© <span data-year></span> ASMA Lines · Гомель, Беларусь</span>
-      <a href="privacy.html">Политика конфиденциальности</a>
+      <a href="privacy"">Политика конфиденциальности</a>
       <span>ООО «АСМА Лайнс» · г. Гомель, Беларусь · <a href="tel:+375296000000">+375 (29) 600-00-00</a> · <a href="mailto:hello@asmalines.by">hello@asmalines.by</a></span>
     </div>
   </div>
@@ -792,6 +792,6 @@
 <script src="assets/pricing-client.js?v=20261004_pricing" defer></script>
 <script src="assets/vehicles.js?v=20261004_js" defer></script>
 <script src="assets/site.js?v=20261006" defer></script>
-<script src="assets/calculator.js?v=20261004_js" defer></script>
+<script src="assets/calculator.js?v=20261006" defer></script>
 </body>
 </html>

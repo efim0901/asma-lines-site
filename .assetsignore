@@ -47,7 +47,7 @@ eslint.config.js
 .assetsignore
 .git/
 .git/**
-metadata.json
+README.md
 DEPLOY-CLOUDFLARE.md
 PLAN.md
 AGENTS.md

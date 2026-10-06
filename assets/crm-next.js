@@ -136,6 +136,9 @@
     return '';
   }
 
+  // Устаревшие значения, которые могут лежать в старых записях D1:
+  // список и пояснение — LEGACY_STATUS_ALIASES в _shared/core.js.
+  // Совпадение двух списков проверяет _tests/statuses.test.js.
   function normalizedStatus(status) {
     if (status === 'in_transit') return 'transit';
     if (status === 'calculation') return 'processing';
@@ -745,7 +748,7 @@
     if (!lead) return;
     try {
       const result = await api('/api/crm/doc-ticket', { method: 'POST', body: JSON.stringify({ leadId: lead.id }) });
-      const url = new URL('/order-doc.html', location.origin);
+      const url = new URL('/order-doc', location.origin);
       url.searchParams.set('id', lead.id);
       url.searchParams.set('lead', lead.leadNumber || '');
       url.searchParams.set('ticket', result.ticket);
@@ -801,11 +804,20 @@
     } catch (_) { /* старая версия Telegram */ }
   }
 
+  /** Тёмная тема Telegram: атрибут темы + цвет шапки и фона самого клиента.
+   *
+   * Палитра берётся своя (см. crm-next.css), а не tg.themeParams: у Telegram
+   * тема может быть любой, а у диспетчерской есть фирменные цвета, и на
+   * произвольном фоне они могут не читаться. Клиенту сообщаем ровно те цвета,
+   * которые стоят у нас, чтобы его шапка не отличалась от шапки приложения.
+   */
   function syncTgChrome() {
     if (!tg) return;
+    const dark = tg.colorScheme === 'dark';
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
     try {
-      tg.setHeaderColor?.('#fffdfc');
-      tg.setBackgroundColor?.('#f6f3ef');
+      tg.setHeaderColor?.(dark ? '#1d1917' : '#fffdfc');
+      tg.setBackgroundColor?.(dark ? '#191614' : '#f6f3ef');
       tg.disableVerticalSwipes?.();
     } catch (_) { /* метод появился в новых версиях Telegram */ }
   }
@@ -997,6 +1009,9 @@
       tg.ready();
       tg.expand();
       tg.BackButton?.onClick(() => closeDetail());
+      // Смену темы в Telegram применяем сразу: иначе тёмная тема
+      // включится только после перезапуска приложения.
+      tg.onEvent?.('themeChanged', syncTgChrome);
     }
     const telegramUser = tg?.initDataUnsafe?.user;
     if (telegramUser) {

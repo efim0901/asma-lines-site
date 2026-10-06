@@ -3,15 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f6f3ef">
+  <!-- Цвет полосы браузера: в Telegram его дополнительно задаёт
+       setHeaderColor/setBackgroundColor, а это — для браузерного входа. -->
+  <meta name="theme-color" content="#f6f3ef" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#191614" media="(prefers-color-scheme: dark)">
   <meta name="robots" content="noindex,nofollow">
   <title>Диспетчерская ASMA Lines</title>
   <link rel="icon" href="assets/brand/asma-mark.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
-  <link rel="stylesheet" href="assets/crm-next.css?v=20261005_v2">
+  <link rel="stylesheet" href="assets/crm-next.css?v=20261006">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Тема ставится до отрисовки: в тёмной теме Telegram иначе мигает светлым. -->
+  <script src="assets/crm-theme.js?v=20261006"></script>
 </head>
 <body>
   <div class="app" id="crm-app">
@@ -46,6 +51,9 @@
 
     <!-- -------------------------- Список ------------------------- -->
     <main class="list-pane">
+      <!-- Заголовок страницы один: экраны входа, ошибки и закрытого доступа
+           ниже помечены как h2, иначе в документе оказывается четыре h1. -->
+      <h1 class="sr-only">Диспетчерская ASMA Lines</h1>
       <header class="topbar">
         <label class="search">
           <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
@@ -132,14 +140,14 @@
   <section class="gate" id="crm-loading" role="status">
     <div class="gate-panel">
       <img src="assets/brand/asma-mark.svg" alt="">
-      <h1>Подключение диспетчерской</h1>
+      <h2>Подключение диспетчерской</h2>
       <p>Проверяем доступ и загружаем общую базу заявок.</p>
     </div>
   </section>
   <section class="gate" id="crm-offline" hidden>
     <div class="gate-panel">
       <img src="assets/brand/asma-mark.svg" alt="">
-      <h1>База временно недоступна</h1>
+      <h2>База временно недоступна</h2>
       <p>Данные не загружены. Повторите попытку, когда соединение восстановится.</p>
       <button class="btn btn--primary" id="btn-retry" type="button">Повторить</button>
     </div>
@@ -148,7 +156,7 @@
   <section class="gate gate--login" id="crm-login" hidden>
     <div class="gate-panel gate-panel--wide">
       <img src="assets/brand/asma-mark.svg" alt="ASMA Lines">
-      <h1>Вход в диспетчерскую</h1>
+      <h2>Вход в диспетчерскую</h2>
       <p>Откройте Telegram-бот и подтвердите вход — на телефоне это одно касание.</p>
       <div class="login">
         <div class="login__code">
@@ -173,7 +181,7 @@
   <section class="gate" id="crm-gate" hidden>
     <div class="gate-panel">
       <img src="assets/brand/asma-mark.svg" alt="ASMA Lines">
-      <h1>Диспетчерская закрыта</h1>
+      <h2>Диспетчерская закрыта</h2>
       <p id="gate-message">Откройте диспетчерскую через Telegram-бот ASMA Lines.</p>
       <a class="btn btn--primary" href="https://t.me/asmalinesbot?start=crm">Открыть Telegram</a>
     </div>
@@ -232,6 +240,6 @@
   </details>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="assets/crm-next.js?v=20261006"></script>
+  <script src="assets/crm-next.js?v=20261006c"></script>
 </body>
 </html>
