@@ -411,9 +411,11 @@ a { color: inherit; }
 
 /* -------------------------- Журнал системы ---------------------------- */
 
-/* Журнал: свёрнутая кнопка в правом нижнем углу. z-index ниже карточки
-   и шторок — открытая карточка перекрывает журнал, а не наоборот. */
-.diagnostics { position: fixed; z-index: 6; right: 14px; bottom: max(14px, env(safe-area-inset-bottom)); width: min(330px, calc(100vw - 28px)); color: #dce9e4; font: 10px var(--mono); }
+/* Журнал: по умолчанию скрыт (атрибут hidden в разметке), постоянного угла
+   у него нет — открывается кнопкой «Состояние системы» в профиле. Лежит
+   внутри #crm-app, поэтому на экранах входа и «нет доступа» его не видно.
+   z-index выше выдвинутой карточки на ноутбуке (8), но ниже шторок (12). */
+.diagnostics { position: fixed; z-index: 9; right: 14px; bottom: max(14px, env(safe-area-inset-bottom)); width: min(330px, calc(100vw - 28px)); color: #dce9e4; font: 10px var(--mono); }
 .diagnostics summary {
   display: flex; justify-content: space-between; gap: 10px;
   width: max-content; margin-left: auto; padding: 9px 11px;
@@ -511,9 +513,8 @@ a { color: inherit; }
   .sheet { right: 8px; left: 8px; bottom: calc(70px + env(safe-area-inset-bottom)); width: auto; }
   .toast { bottom: calc(76px + env(safe-area-inset-bottom)); }
 
-  /* На телефоне журнал не занимает угол постоянно: его открывают из профиля. */
-  .diagnostics { display: none; }
-  body[data-diag="open"] .diagnostics { display: block; z-index: 13; bottom: calc(76px + env(safe-area-inset-bottom)); }
+  /* На телефоне журнал открывается над нижней навигацией. */
+  .diagnostics { bottom: calc(76px + env(safe-area-inset-bottom)); }
 
   .mobile-nav {
     position: fixed; inset: auto 0 0 0; z-index: 6;

@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
-  <link rel="stylesheet" href="assets/crm-next.css?v=20261006">
+  <link rel="stylesheet" href="assets/crm-next.css?v=20261006b">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Тема ставится до отрисовки: в тёмной теме Telegram иначе мигает светлым. -->
   <script src="assets/crm-theme.js?v=20261006"></script>
@@ -109,6 +109,20 @@
       </div>
       <div class="detail__inner" id="detail-inner" hidden></div>
     </section>
+
+    <!-- ------------------------ Журнал CRM -------------------------
+         Лежит внутри #crm-app, поэтому на экранах входа и «нет доступа»
+         его не видно вместе с приложением: раньше он стоял вне контейнера
+         и показывал число заявок тому, у кого доступа нет.
+         По умолчанию скрыт и не висит поверх интерфейса — открывается
+         кнопкой «Состояние системы» в профиле. -->
+    <details class="diagnostics" id="diagnostic-panel" hidden>
+      <summary>Состояние системы <span id="diag-leads-count">0 заявок</span></summary>
+      <div id="diagnostic-log-area" class="diagnostic-log" role="log" aria-live="polite">
+        <div class="diagnostic-head"><span>ЖУРНАЛ CRM</span><span>LIVE</span></div>
+        <div id="diag-output-console"></div>
+      </div>
+    </details>
   </div>
 
   <div class="scrim" id="scrim" hidden></div>
@@ -230,16 +244,7 @@
     </div>
   </dialog>
 
-  <!-- ------------------------ Журнал CRM ------------------------- -->
-  <details class="diagnostics" id="diagnostic-panel">
-    <summary>Состояние системы <span id="diag-leads-count">0 заявок</span></summary>
-    <div id="diagnostic-log-area" class="diagnostic-log" role="log" aria-live="polite">
-      <div class="diagnostic-head"><span>ЖУРНАЛ CRM</span><span>LIVE</span></div>
-      <div id="diag-output-console"></div>
-    </div>
-  </details>
-
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="assets/crm-next.js?v=20261006c"></script>
+  <script src="assets/crm-next.js?v=20261006d"></script>
 </body>
 </html>

@@ -91,6 +91,26 @@
     container.scrollTop = container.scrollHeight;
   }
 
+  /**
+   * Журнал системы. В разметке он скрыт и лежит внутри #crm-app: пока доступа
+   * нет, приложение скрыто целиком, и журнала вместе с ним не видно — раньше
+   * он стоял вне контейнера и показывал число заявок на экране входа.
+   * Постоянного угла у журнала тоже нет: его открывают из профиля.
+   */
+  function openJournal() {
+    const panel = $('#diagnostic-panel');
+    if (!panel) return;
+    panel.hidden = false;
+    panel.open = true;
+  }
+
+  function closeJournal() {
+    const panel = $('#diagnostic-panel');
+    if (!panel) return;
+    panel.open = false;
+    panel.hidden = true;
+  }
+
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, (char) => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -274,6 +294,7 @@
 
   function showGate(message) {
     stopLoginFlow();
+    closeJournal();
     $('#crm-loading').hidden = true;
     $('#crm-offline').hidden = true;
     $('#crm-login').hidden = true;
@@ -290,6 +311,7 @@
    */
   function showLogin() {
     stopLoginFlow();
+    closeJournal();
     root.hidden = true;
     $('#crm-loading').hidden = true;
     $('#crm-offline').hidden = true;
@@ -873,14 +895,18 @@
     });
     $('#btn-profile-diagnostics').addEventListener('click', () => {
       closeSheets();
+      openJournal();
       const panel = $('#diagnostic-panel');
-      document.body.dataset.diag = 'open';
-      panel.open = true;
       if (!narrow.matches) panel.scrollIntoView({ block: 'end', behavior: 'smooth' });
     });
-    // Закрыли журнал — возвращаем угол на телефоне.
+    // Закрыли журнал — убираем его совсем, чтобы он не занимал угол.
     $('#diagnostic-panel').addEventListener('toggle', (event) => {
-      if (!event.target.open) delete document.body.dataset.diag;
+      if (!event.target.open) event.target.hidden = true;
+    });
+    // Esc закрывает журнал: он открывается поверх карточки заявки
+    // и не должен требовать попадания мышью в угол.
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeJournal();
     });
 
     $('#nav-queue').addEventListener('click', () => {

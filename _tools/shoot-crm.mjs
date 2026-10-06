@@ -151,6 +151,9 @@ const harness = shell
     window.addEventListener('load', () => {
       const params = new URLSearchParams(location.search);
       if (params.get('state') === 'detail') setTimeout(() => document.querySelector('.row')?.click(), 600);
+      if (params.get('state') === 'journal') setTimeout(() => {
+        document.getElementById('btn-profile-diagnostics')?.click();
+      }, 700);
       if (params.get('tab')) setTimeout(() => document.querySelector('[data-tab="' + params.get('tab') + '"]')?.click(), 900);
       // Заглушка не может подменить <img src> через fetch: подставляем QR вручную.
       if (params.get('state') === 'login') {
@@ -231,6 +234,10 @@ const views = [
   { suffix: 'mobile-history', width: 390, height: 844, query: '?state=detail&tab=feed', note: 'телефон: история заявки' },
   { suffix: 'login-desktop', width: 1440, height: 900, query: '?state=login', note: 'ПК: вход по коду и QR' },
   { suffix: 'login-mobile', width: 390, height: 844, query: '?state=login', note: 'телефон: вход по коду и QR' },
+  // Журнал: по умолчанию скрыт, открывается кнопкой в профиле. Снимок нужен,
+  // чтобы видеть, что он не висит поверх интерфейса и не виден без доступа.
+  { suffix: 'journal-desktop', width: 1440, height: 900, query: '?state=journal', note: 'ПК: журнал открыт из профиля' },
+  { suffix: 'journal-mobile', width: 390, height: 844, query: '?state=journal', note: 'телефон: журнал открыт из профиля' },
   { suffix: 'dark-desktop', width: 1440, height: 900, query: '?tgtheme=dark', note: 'тёмная тема Telegram: ПК' },
   { suffix: 'dark-mobile', width: 390, height: 844, query: '?tgtheme=dark', note: 'тёмная тема Telegram: телефон' },
   { suffix: 'dark-mobile-detail', width: 390, height: 844, query: '?tgtheme=dark&state=detail', note: 'тёмная тема: карточка-шторка' },
