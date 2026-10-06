@@ -49,4 +49,5 @@ eslint.config.js
 .git/**
 metadata.json
 DEPLOY-CLOUDFLARE.md
+PLAN.md
 _headers
