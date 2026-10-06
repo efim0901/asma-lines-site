@@ -246,14 +246,32 @@ python _tools/find-static-bands.py _shots/index-light-full.png _shots/index-dark
 8. **Не полагаться на `_headers` для заголовков, которые отдаёт Worker.**
    По документации Cloudflare ([Workers → Headers](https://developers.cloudflare.com/workers/static-assets/headers/))
    правила из `_headers` **не применяются** к ответам, которые формирует код
-   Worker. А `_worker.js` перехватывает все не-API пути и сам вызывает
-   `env.ASSETS.fetch()` — поэтому, например, правило для `/crm.html` в
-   `_headers` не срабатывает, и страница уходит с `frame-ancestors 'none'`
-   вместо разрешения Telegram Web. Заголовки нужно ставить прямо в Worker.
-9. **Не считать проверку заголовков выполненной, если смотреть только
-   `X-Frame-Options`.** Встраивание запрещает и `frame-ancestors` в CSP,
-   а его легко пропустить: заголовка `X-Frame-Options` в ответе нет, но
-   встраивание всё равно заблокировано.
+   Worker. Все заголовки ставит `withStaticHeaders()` в `_worker.js`, а
+   `_headers` оставлен пустым (только пояснение).
+9. **Помнить, что Cloudflare переименовывает адреса страниц.** Запрос
+   `/crm.html` приходит в Worker как `/crm` (`html_handling` по умолчанию —
+   `auto-trailing-slash`), а сам адрес отвечает `307`. Из-за этого:
+   * сравнение `pathname === '/crm.html'` никогда не срабатывает — сравнивайте
+     адрес без расширения;
+   * правила в `_headers` вида `/crm.html` не совпадают ни с одним запросом;
+   * `Disallow: /crm.html` в `robots.txt` не закрывает страницу — нужно
+     `Disallow: /crm`;
+   * canonical, `og:url`, sitemap и 154 внутренние ссылки написаны с `.html`
+     и ведут на перенаправление. Это известная незакрытая задача.
+   * `html_handling = "none"` в `wrangler.toml` проблему не решает: главная
+     (`/`) начинает отдавать 404.
+10. **Не считать проверку заголовков выполненной, если смотреть только
+    `X-Frame-Options`.** Встраивание запрещает и `frame-ancestors` в CSP,
+    а его легко пропустить: заголовка `X-Frame-Options` в ответе нет, но
+    встраивание всё равно заблокировано.
+11. **После правки `wrangler.toml` чистите `.wrangler` перед деплоем.**
+    Иначе `run_worker_first` и другие настройки ассетов не доезжают:
+    wrangler пишет «No updated asset files to upload» и не обновляет
+    конфигурацию. Проверено на практике.
+
+```powershell
+Remove-Item .wrangler -Recurse -Force   # перед деплоем после правки wrangler.toml
+```
 
 ---
 

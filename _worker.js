@@ -752,17 +752,26 @@ const CSP_CRM = "default-src 'self'; script-src 'self' https://telegram.org; sty
 function withStaticHeaders(response, pathname) {
   const headers = new Headers(response.headers);
 
+  /*
+   * Cloudflare нормализует адреса страниц: запрос `/crm.html` приходит в Worker
+   * как `/crm` (html_handling = auto-trailing-slash, значение по умолчанию).
+   * Из-за этого не срабатывало сравнение с '/crm.html' — и точно так же не
+   * срабатывали правила для конкретных путей в `_headers`. Сравниваем адрес
+   * без расширения, тогда работают обе формы записи.
+   */
+  const page = pathname.replace(/\/index\.html$/, '/').replace(/\.html$/, '');
+
   headers.set('X-Content-Type-Options', 'nosniff');
   headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()');
   headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   headers.set('Content-Security-Policy', CSP_DEFAULT);
 
-  if (pathname === '/crm.html') {
+  if (page === '/crm') {
     headers.set('Content-Security-Policy', CSP_CRM);
     headers.set('X-Robots-Tag', 'noindex, nofollow');
     headers.set('Cache-Control', 'no-store');
-  } else if (pathname === '/order-doc.html' || pathname === '/proposal.html') {
+  } else if (page === '/order-doc' || page === '/proposal') {
     headers.set('X-Robots-Tag', 'noindex, nofollow');
     headers.set('X-Frame-Options', 'DENY');
     headers.set('Cache-Control', 'no-store');

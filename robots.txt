@@ -8,9 +8,14 @@
 User-agent: *
 Allow: /
 Disallow: /api/
-Disallow: /crm.html
-Disallow: /order-doc.html
-Disallow: /proposal.html
+
+# Адреса страниц без расширения: Cloudflare перенаправляет /crm.html → /crm
+# (html_handling по умолчанию), поэтому прежние правила «/crm.html» не
+# совпадали ни с одним реальным адресом и служебные страницы не закрывались.
+# Правило-префикс без расширения закрывает обе формы записи.
+Disallow: /crm
+Disallow: /order-doc
+Disallow: /proposal
 
 # Sitemap
 Sitemap: https://asma-lines-site.firws.workers.dev/sitemap.xml
