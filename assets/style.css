@@ -52,14 +52,16 @@
      а справа оставляет машину открытой. Вертикальный — лёгкий: в светлой
      теме тёмный текст на светлой сцене читается и без плотной пелены. */
   --band-overlay: linear-gradient(90deg,
-    rgba(250, 248, 244, .95) 0%,
-    rgba(250, 248, 244, .72) 44%,
-    rgba(250, 248, 244, .18) 76%,
+    rgba(250, 248, 244, .98) 0%,
+    rgba(250, 248, 244, .90) 36%,
+    rgba(250, 248, 244, .25) 58%,
+    rgba(250, 248, 244, 0) 75%,
     rgba(250, 248, 244, 0) 100%);
   --band-overlay-vertical: linear-gradient(180deg,
-    rgba(250, 248, 244, .08) 0%,
-    rgba(250, 248, 244, .22) 55%,
-    rgba(250, 248, 244, .45) 100%);
+    rgba(250, 248, 244, .92) 0%,
+    rgba(250, 248, 244, .65) 42%,
+    rgba(250, 248, 244, .15) 78%,
+    rgba(250, 248, 244, 0) 100%);
   --band-thumb-veil: linear-gradient(180deg, rgba(250, 248, 244, .05), rgba(250, 248, 244, .45));
 }
 
@@ -121,14 +123,16 @@
   --band-chip-bg-hover: rgba(255, 255, 255, .22);
   --band-text-shadow: 0 2px 14px rgba(0, 0, 0, .6);
   --band-overlay: linear-gradient(90deg,
-    rgba(15, 10, 13, .88) 0%,
-    rgba(15, 10, 13, .7) 42%,
-    rgba(15, 10, 13, .2) 75%,
-    rgba(15, 10, 13, .05) 100%);
+    rgba(18, 14, 17, .97) 0%,
+    rgba(18, 14, 17, .90) 36%,
+    rgba(18, 14, 17, .25) 58%,
+    rgba(18, 14, 17, 0) 75%,
+    rgba(18, 14, 17, 0) 100%);
   --band-overlay-vertical: linear-gradient(180deg,
-    rgba(16, 10, 13, .35) 0%,
-    rgba(16, 10, 13, .72) 45%,
-    rgba(16, 10, 13, .95) 100%);
+    rgba(18, 14, 17, .92) 0%,
+    rgba(18, 14, 17, .65) 42%,
+    rgba(18, 14, 17, .15) 78%,
+    rgba(18, 14, 17, 0) 100%);
   --band-thumb-veil: linear-gradient(180deg, rgba(15, 12, 10, .05), rgba(15, 12, 10, .35));
 }
 
@@ -485,7 +489,8 @@ h1, h2, h3 { margin: 0; font-weight: 700; letter-spacing: -.024em; }
 }
 .hero-photo__overlay {
   position: absolute; inset: 0;
-  background: var(--band-overlay), var(--band-overlay-vertical);
+  background: var(--band-overlay);
+  pointer-events: none;
 }
 .hero-photo__inner {
   position: relative;
@@ -1277,18 +1282,18 @@ body[data-theme='dark'] .faq-aside .kicker { color: #FFD382; }
   .service-grid { grid-template-columns: 1fr; }
   .photo-band { min-height: auto; }
   .photo-band__bg {
-    background-position: center bottom;
+    background-position: right center;
     background-size: cover;
     background-repeat: no-repeat;
-    opacity: 0.35;
+    opacity: 0.9;
   }
   .photo-band__overlay {
-    background: var(--band-overlay-vertical);
+    background: var(--band-overlay);
   }
   .hero-photo { min-height: 480px; }
-  .hero-photo__bg { background-position: center bottom; background-size: cover; }
+  .hero-photo__bg { background-position: right center; background-size: cover; opacity: 0.9; }
   .hero-photo__overlay {
-    background: linear-gradient(180deg, rgba(16,10,13,.75) 0%, rgba(16,10,13,.38) 48%, rgba(16,10,13,.82) 100%);
+    background: var(--band-overlay);
   }
 }
 @media (max-width: 900px) {
@@ -1572,20 +1577,32 @@ body[data-theme='dark'] .faq-aside .kicker { color: #FFD382; }
   .photo-band { min-height: auto; border-radius: var(--r-md); }
   .photo-band__inner { padding-top: 28px; padding-bottom: 30px; }
   .photo-band__bg {
-    background-position: center bottom;
+    background-position: right bottom;
     background-size: cover;
     background-repeat: no-repeat;
-    opacity: 0.35;
+    opacity: 0.82;
   }
   .hero-photo { min-height: auto; }
   .hero-photo--inner { min-height: auto; }
   .hero-photo__inner { padding-top: 28px; padding-bottom: 32px; }
   .hero-photo__bg {
-    background-position: 70% bottom;
+    background-position: 80% center;
     background-size: cover;
+    opacity: 0.85;
   }
   .hero-photo__overlay {
-    background: var(--band-overlay-vertical);
+    background: linear-gradient(180deg,
+      rgba(250, 248, 244, 0.95) 0%,
+      rgba(250, 248, 244, 0.86) 45%,
+      rgba(250, 248, 244, 0.45) 75%,
+      rgba(250, 248, 244, 0.15) 100%);
+  }
+  [data-theme='dark'] .hero-photo__overlay {
+    background: linear-gradient(180deg,
+      rgba(18, 14, 17, 0.95) 0%,
+      rgba(18, 14, 17, 0.86) 45%,
+      rgba(18, 14, 17, 0.45) 75%,
+      rgba(18, 14, 17, 0.15) 100%);
   }
   .hero-photo__content {
     display: flex;
@@ -1607,7 +1624,7 @@ body[data-theme='dark'] .faq-aside .kicker { color: #FFD382; }
     font-size: 14px;
     line-height: 1.5;
     margin-bottom: 18px;
-    color: rgba(248, 247, 239, 0.88);
+    color: var(--band-text-soft);
   }
   .hero-photo__badge {
     display: none !important;

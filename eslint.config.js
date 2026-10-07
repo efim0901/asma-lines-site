@@ -49,6 +49,7 @@ const workerGlobals = {
   Request: 'readonly',
   Response: 'readonly',
   Headers: 'readonly',
+  HTMLRewriter: 'readonly',
   TextEncoder: 'readonly',
   TextDecoder: 'readonly',
   AbortSignal: 'readonly',

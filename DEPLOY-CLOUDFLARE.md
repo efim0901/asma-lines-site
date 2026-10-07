@@ -85,8 +85,14 @@ Cloudflare → **Workers & Pages** → `asma-lines-site` → **Settings** →
 | `TELEGRAM_CHAT_ID` | Text | id чата/канала для уведомлений |
 | `TELEGRAM_WEBHOOK_SECRET` | **Secret** | см. `~/.cf-secrets.txt` |
 | `SETUP_TOKEN` | **Secret** | см. `~/.cf-secrets.txt` |
+| `YANDEX_MAPS_API_KEY` | **Secret** | ключ [Кабинета разработчика Яндекс](https://developer.tech.yandex.ru/) (JS API и Геокодер) |
 | `CRM_APP_URL` | Text | `https://asma-lines-site.firws.workers.dev/crm.html` |
 | `TELEGRAM_BOT_USERNAME` | Text | имя бота в ссылке входа (по умолчанию `asmalinesbot`) |
+
+Добавить ключ Яндекс.Карт в Cloudflare через консоль:
+```bash
+npx wrangler secret put YANDEX_MAPS_API_KEY
+```
 
 `ALLOWED_ORIGINS` — только для сторонних сайтов, для работы самого сайта не нужен.
 

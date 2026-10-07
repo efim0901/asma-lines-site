@@ -55,7 +55,7 @@ export async function geocode(query, env = {}) {
   const cached = geocodeCache.get(cacheKey);
   if (cached !== undefined) return cached;
 
-  const apiKey = env.YANDEX_GEOCODER_KEY || '';
+  const apiKey = env.YANDEX_MAPS_API_KEY || env.YANDEX_GEOCODER_KEY || '';
 
   if (apiKey) {
     try {

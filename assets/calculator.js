@@ -3,14 +3,7 @@
   if (!form) return;
 
   const mapEl = document.querySelector('#calc-leaflet-map');
-  const hintElFallback = document.querySelector('#calc-hint');
   if (!mapEl) return;
-  if (typeof window.L === 'undefined') {
-    mapEl.classList.add('calc-leaflet-map--error');
-    mapEl.textContent = 'Карта временно недоступна.';
-    if (hintElFallback) hintElFallback.textContent = 'Карта не загрузилась (F12 → Console).';
-    return;
-  }
 
   // Тарифы берём из общего модуля assets/pricing-client.js — он совпадает
   // с серверным расчётом, поэтому показанная цена равна той, что увидит диспетчер.
@@ -70,8 +63,37 @@
   }
 
   // Map Engine Setup: Yandex Maps API v2.1 Primary, Leaflet Fallback
-  let map = null;
+  let ymap = null;
+  let ymapRoute = null;
+  let ymapMarkerFrom = null;
+  let ymapMarkerTo = null;
+  let map = null; // Leaflet map fallback
   let currentTileLayer = null;
+
+  function initYandexMaps() {
+    if (typeof window.ymaps === 'undefined' || !window.ymaps.ready) return false;
+    window.ymaps.ready(() => {
+      try {
+        if (ymap) return;
+        mapEl.innerHTML = '';
+        ymap = new window.ymaps.Map(mapEl, {
+          center: [53.70, 27.95],
+          zoom: 7,
+          controls: ['zoomControl']
+        }, {
+          suppressMapOpenBlock: true,
+          yandexMapDisablePoiInteractivity: true
+        });
+        if (fromPlace || toPlace) {
+          updateRoute();
+        }
+      } catch (err) {
+        console.warn('Yandex Maps init failed, falling back to Leaflet:', err);
+        initLeafletFallback();
+      }
+    });
+    return true;
+  }
 
   function initLeafletFallback() {
     if (map || typeof window.L === 'undefined') return;
@@ -99,16 +121,42 @@
     }
   }
 
+  function initMapEngine() {
+    if (typeof window.ymaps !== 'undefined') {
+      initYandexMaps();
+    } else if (typeof window.L !== 'undefined') {
+      initLeafletFallback();
+    } else {
+      let attempts = 0;
+      const retryTimer = setInterval(() => {
+        attempts += 1;
+        if (typeof window.ymaps !== 'undefined') {
+          clearInterval(retryTimer);
+          initYandexMaps();
+        } else if (typeof window.L !== 'undefined') {
+          clearInterval(retryTimer);
+          initLeafletFallback();
+        } else if (attempts > 20) {
+          clearInterval(retryTimer);
+          mapEl.classList.add('calc-leaflet-map--error');
+          mapEl.textContent = 'Карта временно недоступна (расчёт по тарифам активен).';
+        }
+      }, 200);
+    }
+  }
+
   function getTileSources(isDark) {
     if (isDark) {
       return [
+        { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', subdomains: 'abcd', maxZoom: 19 },
         { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', subdomains: '', maxZoom: 16 },
         { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', subdomains: 'abc', maxZoom: 19 }
       ];
     }
     return [
-      { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', subdomains: 'abc', maxZoom: 19 },
-      { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', subdomains: '', maxZoom: 18 }
+      { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', subdomains: 'abcd', maxZoom: 19 },
+      { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', subdomains: '', maxZoom: 18 },
+      { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', subdomains: 'abc', maxZoom: 19 }
     ];
   }
 
@@ -127,7 +175,6 @@
       crossOrigin: true,
       attribution: '',
     });
-    // If tiles from current source fail to load, automatically try next fallback
     let failedTiles = 0;
     currentTileLayer.on('tileerror', () => {
       failedTiles += 1;
@@ -138,13 +185,18 @@
     currentTileLayer.addTo(map);
   }
 
-  initLeafletFallback();
+  initMapEngine();
 
   window.addEventListener('themechange', () => {
     if (map) setupTiles(0);
+    const isDark = isDarkTheme();
     if (routeLine && map) {
-      const isDark = isDarkTheme();
       routeLine.setStyle({ color: isDark ? '#FFD382' : '#8B2536' });
+    }
+    if (ymapRoute && typeof ymapRoute.getPaths === 'function') {
+      try {
+        ymapRoute.getPaths().options.set({ strokeColor: isDark ? 'FFD382' : '8B2536' });
+      } catch (_) {}
     }
   });
 
@@ -582,6 +634,37 @@
   }
 
   function placeMarker(which, place) {
+    if (ymap && typeof window.ymaps !== 'undefined') {
+      if (which === 'from') {
+        if (ymapMarkerFrom) {
+          try { ymap.geoObjects.remove(ymapMarkerFrom); } catch (_) {}
+          ymapMarkerFrom = null;
+        }
+        if (place) {
+          ymapMarkerFrom = new window.ymaps.Placemark([place.lat, place.lon], {
+            hintContent: `Пункт отправления: ${place.name}`,
+            iconCaption: place.name
+          }, {
+            preset: 'islands#redDotIconWithCaption'
+          });
+          ymap.geoObjects.add(ymapMarkerFrom);
+        }
+      } else {
+        if (ymapMarkerTo) {
+          try { ymap.geoObjects.remove(ymapMarkerTo); } catch (_) {}
+          ymapMarkerTo = null;
+        }
+        if (place) {
+          ymapMarkerTo = new window.ymaps.Placemark([place.lat, place.lon], {
+            hintContent: `Пункт назначения: ${place.name}`,
+            iconCaption: place.name
+          }, {
+            preset: 'islands#darkGreenDotIconWithCaption'
+          });
+          ymap.geoObjects.add(ymapMarkerTo);
+        }
+      }
+    }
     if (map) {
       const existing = which === 'from' ? markerFrom : markerTo;
       if (!place) {
@@ -605,8 +688,64 @@
 
       setHint(`Маршрут: ${fromPlace.name} → ${toPlace.name}`);
       const token = ++routeToken;
+
+      // Primary: Yandex Maps Route
+      if (ymap && typeof window.ymaps !== 'undefined' && window.ymaps.route) {
+        try {
+          if (ymapRoute) {
+            try { ymap.geoObjects.remove(ymapRoute); } catch (_) {}
+            ymapRoute = null;
+          }
+          const yRoute = await window.ymaps.route([[fromPlace.lat, fromPlace.lon], [toPlace.lat, toPlace.lon]], {
+            mapStateAutoApply: true,
+            routingMode: 'auto'
+          });
+          if (token !== routeToken) return;
+          ymapRoute = yRoute;
+          const isDark = isDarkTheme();
+          ymapRoute.getPaths().options.set({
+            strokeColor: isDark ? 'FFD382' : '8B2536',
+            strokeWidth: 4.5,
+            opacity: 0.95
+          });
+          const wayPoints = ymapRoute.getWayPoints();
+          if (wayPoints) wayPoints.options.set({ visible: false });
+          ymap.geoObjects.add(ymapRoute);
+
+          const distanceMeters = yRoute.getLength();
+          const kmReal = Math.round(distanceMeters / 1000);
+          const kmRounded = Math.max(5, Math.round(kmReal / 5) * 5);
+          routeCalculatedKm = kmRounded;
+
+          if (!distanceTouched) {
+            els.distance.value = kmRounded;
+            if (els.range && kmRounded > Number(els.range.max)) els.range.max = Math.ceil(kmRounded / 50) * 50;
+          }
+          updateResetButtonState();
+          recalc();
+          return;
+        } catch (yErr) {
+          console.warn('Yandex route fallback to standard route calculator:', yErr);
+        }
+      }
+
       const route = await fetchRoute(fromPlace, toPlace);
       if (token !== routeToken) return;
+
+      if (ymap && typeof window.ymaps !== 'undefined') {
+        if (ymapRoute) {
+          try { ymap.geoObjects.remove(ymapRoute); } catch (_) {}
+          ymapRoute = null;
+        }
+        const isDark = isDarkTheme();
+        ymapRoute = new window.ymaps.Polyline(route.coords, {}, {
+          strokeColor: isDark ? '#FFD382' : '#8B2536',
+          strokeWidth: 4,
+          strokeOpacity: 0.9
+        });
+        ymap.geoObjects.add(ymapRoute);
+        ymap.setBounds(ymapRoute.geometry.getBounds(), { checkZoomRange: true, zoomMargin: 30 });
+      }
 
       // Render Leaflet route line if Leaflet map is active
       if (map) {
@@ -640,11 +779,16 @@
     routeCalculatedKm = null;
     updateResetButtonState();
     if (routeLine && map) { map.removeLayer(routeLine); routeLine = null; }
+    if (ymapRoute && ymap) {
+      try { ymap.geoObjects.remove(ymapRoute); } catch (_) {}
+      ymapRoute = null;
+    }
     stopVan();
     if (fromPlace || toPlace) {
       const known = fromPlace || toPlace;
       const missing = fromPlace ? 'назначения' : 'отправления';
       setHint(`Город "${known.name}" найден — введите пункт ${missing}`);
+      if (ymap) ymap.setCenter([known.lat, known.lon], 9, { checkZoomRange: true });
       if (map) map.flyTo([known.lat, known.lon], 9, { animate: !reducedMotion });
     } else {
       setHint('Начните вводить город, посёлок или деревню — любой населённый пункт Беларуси');

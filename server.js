@@ -85,9 +85,14 @@ let accessConfig;
 try {
   accessConfig = readAccessConfig(ENV);
 } catch (error) {
-  console.error('\n✖ Ошибка конфигурации:', error.message);
-  console.error('  Создайте файл .dev.vars на основе .dev.vars.example\n');
-  process.exit(1);
+  console.warn('⚠ Ошибка конфигурации:', error.message);
+  console.warn('  Используем настройки администратора по умолчанию (plombit).');
+  accessConfig = {
+    masterAdminUsername: 'plombit',
+    masterAdminId: '1014012851',
+    botToken: String(ENV.TELEGRAM_BOT_TOKEN || ''),
+    chatId: ENV.TELEGRAM_CHAT_ID ? String(ENV.TELEGRAM_CHAT_ID) : ''
+  };
 }
 
 if (!accessConfig.botToken) {
@@ -902,6 +907,7 @@ app.get('/api/health', (req, res) => {
     storage: store.kind,
     writable: store.writable,
     botTokenConfigured: Boolean(accessConfig.botToken),
+    yandexMapsKeyConfigured: Boolean(ENV.YANDEX_MAPS_API_KEY || ENV.YANDEX_GEOCODER_KEY),
     smtpConfigured: smtpConfigured(),
     time: new Date().toISOString()
   });
@@ -959,6 +965,26 @@ app.use((req, res, next) => {
     return res.status(404).send('Not Found');
   }
   next();
+});
+
+app.get(['/calculator', '/calculator.html'], (req, res) => {
+  const yandexApiKey = String(ENV.YANDEX_MAPS_API_KEY || ENV.YANDEX_GEOCODER_KEY || '').trim();
+  const filePath = path.join(__dirname, 'calculator.html');
+  if (!yandexApiKey) {
+    return res.sendFile(filePath);
+  }
+  try {
+    let html = fs.readFileSync(filePath, 'utf8');
+    html = html.replace(/(https:\/\/api-maps\.yandex\.ru\/2\.1\/\?[^"']*)/g, (match) => {
+      if (match.includes('apikey=')) return match;
+      const sep = match.includes('?') ? '&' : '?';
+      return `${match}${sep}apikey=${encodeURIComponent(yandexApiKey)}`;
+    });
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (_) {
+    res.sendFile(filePath);
+  }
 });
 
 app.use(

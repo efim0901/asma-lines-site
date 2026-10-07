@@ -551,7 +551,7 @@ async function geocode(query, env = {}) {
   const cached = geocodeCache.get(cacheKey);
   if (cached !== undefined) return cached;
 
-  const apiKey = env.YANDEX_GEOCODER_KEY || '';
+  const apiKey = env.YANDEX_MAPS_API_KEY || env.YANDEX_GEOCODER_KEY || '';
   if (apiKey) {
     try {
       const response = await fetchWithTimeout(
@@ -742,7 +742,7 @@ function errorResponse(error, extraHeaders = {}) {
  * Заголовки ставятся через `set`, поэтому дублирования не будет.
  */
 
-const CSP_DEFAULT = "default-src 'self'; script-src 'self' https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://server.arcgisonline.com; connect-src 'self' https://nominatim.openstreetmap.org https://router.project-osrm.org https://*.tile.openstreetmap.org; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests";
+const CSP_DEFAULT = "default-src 'self'; script-src 'self' https://telegram.org https://api-maps.yandex.ru https://yandex.st https://suggest-maps.yandex.ru 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.maps.yandex.net https://api-maps.yandex.ru https://yandex.st https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://server.arcgisonline.com https://*.basemaps.cartocdn.com; connect-src 'self' https://api-maps.yandex.ru https://suggest-maps.yandex.ru https://*.maps.yandex.net https://nominatim.openstreetmap.org https://router.project-osrm.org https://*.tile.openstreetmap.org; frame-src 'self' https://api-maps.yandex.ru; child-src 'self' https://api-maps.yandex.ru blob:; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests";
 
 // Для диспетчерской разрешаем встраивание: Mini App открывается во фрейме
 // на web.telegram.org. Список источников уже, чем у обычных страниц.
@@ -1093,6 +1093,20 @@ export default {
     if (!url.pathname.startsWith('/api/')) {
       if (!env.ASSETS) return new Response('Not found', { status: 404 });
       const asset = await env.ASSETS.fetch(request);
+      const page = url.pathname.replace(/\/index\.html$/, '/').replace(/\.html$/, '');
+      const yandexApiKey = String(env.YANDEX_MAPS_API_KEY || env.YANDEX_GEOCODER_KEY || '').trim();
+      if ((page === '/calculator' || url.pathname === '/calculator.html') && yandexApiKey && typeof HTMLRewriter !== 'undefined') {
+        const rewriter = new HTMLRewriter().on('script[src*="api-maps.yandex.ru"]', {
+          element(el) {
+            const src = el.getAttribute('src') || '';
+            if (src && !src.includes('apikey=')) {
+              const sep = src.includes('?') ? '&' : '?';
+              el.setAttribute('src', `${src}${sep}apikey=${encodeURIComponent(yandexApiKey)}`);
+            }
+          }
+        });
+        return withStaticHeaders(rewriter.transform(asset), url.pathname);
+      }
       // Заголовки ставим здесь: `_headers` к ответам Worker не применяется.
       return withStaticHeaders(asset, url.pathname);
     }
@@ -1611,6 +1625,7 @@ export default {
             storage: store.kind,
             writable: store.writable,
             botTokenConfigured: Boolean(config.botToken),
+            yandexMapsKeyConfigured: Boolean(env.YANDEX_MAPS_API_KEY || env.YANDEX_GEOCODER_KEY),
             time: new Date().toISOString()
           },
           200,

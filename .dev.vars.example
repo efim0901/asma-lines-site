@@ -34,7 +34,10 @@ CRM_APP_URL=https://asma-lines-site.firws.workers.dev/crm.html
 ALLOWED_ORIGINS=
 
 # ── Необязательные ────────────────────────────────────────────────────
-# Ключ Yandex Geocoder. Без него используется бесплатный OpenStreetMap Nominatim.
+# Ключ Яндекс.Карт и геокодера (JavaScript API и HTTP-геокодер).
+# В Cloudflare добавляется как Secret: npx wrangler secret put YANDEX_MAPS_API_KEY
+# Без него карта работает в базовом режиме.
+YANDEX_MAPS_API_KEY=
 YANDEX_GEOCODER_KEY=
 
 # E-mail уведомления о заявках (SMTP).
