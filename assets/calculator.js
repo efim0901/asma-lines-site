@@ -79,11 +79,15 @@
         ymap = new window.ymaps.Map(mapEl, {
           center: [53.70, 27.95],
           zoom: 7,
+          type: 'yandex#map',
           controls: ['zoomControl']
         }, {
           suppressMapOpenBlock: true,
           yandexMapDisablePoiInteractivity: true
         });
+        setTimeout(() => {
+          try { if (ymap && ymap.container) ymap.container.fitToViewport(); } catch (_) {}
+        }, 150);
         if (fromPlace || toPlace) {
           updateRoute();
         }
