@@ -1,0 +1,21 @@
+# robots.txt для asma-lines-site.firws.workers.dev
+#
+# Раньше здесь были отдельные группы для Googlebot и Yandex с одним лишь
+# «Allow: /». Группы в robots.txt НЕ наследуют правила друг друга, поэтому
+# эти боты игнорировали все Disallow из группы «*» и могли обходить
+# /api/ и служебные страницы. Теперь правила заданы одной группой.
+
+User-agent: *
+Allow: /
+Disallow: /api/
+
+# Адреса страниц без расширения: Cloudflare перенаправляет /crm.html → /crm
+# (html_handling по умолчанию), поэтому прежние правила «/crm.html» не
+# совпадали ни с одним реальным адресом и служебные страницы не закрывались.
+# Правило-префикс без расширения закрывает обе формы записи.
+Disallow: /crm
+Disallow: /order-doc
+Disallow: /proposal
+
+# Sitemap
+Sitemap: https://asma-lines-site.firws.workers.dev/sitemap.xml

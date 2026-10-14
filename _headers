@@ -1,0 +1,20 @@
+# Файл намеренно оставлен пустым (только комментарии).
+#
+# Все заголовки ставит сам Worker — функция withStaticHeaders() в `_worker.js`.
+#
+# Почему так. Раньше заголовки описывались здесь, но правила для конкретных
+# путей (`/crm.html`, `/order-doc.html`, `/proposal.html`) до страниц не
+# доходили, а общий блок `/*` перекрывал то, что выставлял Worker. В итоге
+# диспетчерская уходила с `frame-ancestors 'none'`, и Mini App нельзя было
+# открыть во фрейме Telegram Web.
+#
+# В `wrangler.toml` для этого включён `run_worker_first = true`: иначе Worker
+# вообще не вызывается для запросов, совпавших со статикой, и заголовки
+# ставить некому.
+#
+# Правьте заголовки в `_worker.js` и проверяйте ответ реального запроса:
+#   curl -sI https://asma-lines-site.firws.workers.dev/crm.html
+
+# Документация:
+#   https://developers.cloudflare.com/workers/static-assets/headers/
+#   https://developers.cloudflare.com/workers/static-assets/binding/
