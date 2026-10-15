@@ -2062,8 +2062,8 @@ h1,h2,h3{letter-spacing:-.03em;font-weight:500}
 .popular-route-pill{min-height:100px;border-radius:0}
 .calculator-layout .quote{background:var(--rd-card);border:1px solid var(--rd-wine);border-radius:10px;padding:28px;box-shadow:none}
 @media(max-width:760px){.calculator-layout{padding-top:38px!important}#calculator.calculator{padding:16px}.calc-section-block{padding:16px!important}.popular-routes-grid{grid-template-columns:1fr 1fr}}
-.calculator-layout .quote .calc-map{display:none!important}
-.calculator-layout .quote:before{content:"А / МИНСК                                  Б / БРЕСТ";display:flex;align-items:center;padding:0 24px;height:160px;margin-bottom:22px;background:radial-gradient(ellipse 130% 90% at 40% 135%,transparent 61%,var(--rd-wine) 61.5%,var(--rd-wine) 62.2%,transparent 62.7%),linear-gradient(var(--rd-surface),var(--rd-surface));background-size:100% 100%;color:var(--rd-ink);font:10px ui-monospace,monospace;letter-spacing:.06em}
+.calculator-layout .quote .calc-map{display:block!important}
+.calculator-layout .quote:before{content:none;display:none}
 .ecb-list{grid-template-columns:repeat(2,minmax(0,1fr))}
 .page-calculator .calc-routes-section{padding-top:72px}
 .calc-routes-section .popular-routes-title{color:var(--rd-wine);font:10px ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase}
@@ -2072,7 +2072,7 @@ h1,h2,h3{letter-spacing:-.03em;font-weight:500}
 .calc-steps-heading h2{font-size:clamp(36px,3.8vw,48px);margin:0}
 .page-calculator .calculator-layout{padding-top:28px!important}
 .page-calculator .calculator-layout .quote{background:var(--rd-card)}
-.page-calculator .calculator-layout .quote:before{content:"";height:190px;background:radial-gradient(ellipse 115% 94% at 38% 140%,transparent 61%,var(--rd-pink) 61.5%,var(--rd-pink) 62%,transparent 62.5%),linear-gradient(var(--rd-wine-dark),var(--rd-wine-dark))}
+.page-calculator .calculator-layout .quote:before{content:none;display:none}
 .calc-illustration{padding:80px 0;background:var(--rd-paper)}
 .calc-illustration__inner{display:grid;grid-template-columns:1fr 1.15fr;gap:64px;align-items:center}
 .calc-illustration__art{height:240px;background:var(--rd-wine-dark);position:relative;overflow:hidden;padding:34px;color:#fff}

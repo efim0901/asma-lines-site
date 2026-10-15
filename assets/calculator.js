@@ -62,12 +62,12 @@
     return document.documentElement.getAttribute('data-theme') === 'dark' || document.body.dataset.theme === 'dark';
   }
 
-  // Map Engine Setup: Yandex Maps API v2.1 Primary, Leaflet Fallback
+  // Карта: только Яндекс.Карты JS API 2.1 (Leaflet/OSM не используются)
   let ymap = null;
   let ymapRoute = null;
   let ymapMarkerFrom = null;
   let ymapMarkerTo = null;
-  let map = null; // Leaflet map fallback
+  let map = null; // legacy: не используется, карта только Яндекс
   let currentTileLayer = null;
 
   function initYandexMaps() {
@@ -92,61 +92,34 @@
           updateRoute();
         }
       } catch (err) {
-        console.warn('Yandex Maps init failed, falling back to Leaflet:', err);
-        initLeafletFallback();
+        console.warn('Yandex Maps init failed:', err);
+        showMapUnavailable();
       }
     });
     return true;
   }
 
-  function initLeafletFallback() {
-    if (map || typeof window.L === 'undefined') return;
-    try {
-      mapEl.innerHTML = '';
-      const BY_CENTER = [53.55, 28.0];
-      const BY_BOUNDS = window.L.latLngBounds([50.9, 22.6], [56.4, 33.1]);
-      const isTouch = window.matchMedia('(pointer: coarse)').matches || ('ontouchstart' in window);
-      map = window.L.map(mapEl, {
-        zoomControl: true,
-        attributionControl: false,
-        scrollWheelZoom: false,
-        dragging: !isTouch,
-        tap: false,
-        minZoom: 6,
-        maxZoom: 18,
-      }).setView(BY_CENTER, 7);
-      map.setMaxBounds(BY_BOUNDS.pad(0.2));
-      setupTiles(0);
-      setTimeout(triggerInvalidate, 80);
-      setTimeout(triggerInvalidate, 400);
-      setTimeout(triggerInvalidate, 1000);
-    } catch (err) {
-      console.warn('Leaflet fallback init error:', err);
-    }
+  function showMapUnavailable() {
+    mapEl.classList.add('calc-leaflet-map--error');
+    mapEl.textContent = 'Карта временно недоступна (расчёт по тарифам активен).';
   }
 
   function initMapEngine() {
     if (typeof window.ymaps !== 'undefined') {
       initYandexMaps();
-    } else if (typeof window.L !== 'undefined') {
-      initLeafletFallback();
-    } else {
-      let attempts = 0;
-      const retryTimer = setInterval(() => {
-        attempts += 1;
-        if (typeof window.ymaps !== 'undefined') {
-          clearInterval(retryTimer);
-          initYandexMaps();
-        } else if (typeof window.L !== 'undefined') {
-          clearInterval(retryTimer);
-          initLeafletFallback();
-        } else if (attempts > 20) {
-          clearInterval(retryTimer);
-          mapEl.classList.add('calc-leaflet-map--error');
-          mapEl.textContent = 'Карта временно недоступна (расчёт по тарифам активен).';
-        }
-      }, 200);
+      return;
     }
+    let attempts = 0;
+    const retryTimer = setInterval(() => {
+      attempts += 1;
+      if (typeof window.ymaps !== 'undefined') {
+        clearInterval(retryTimer);
+        initYandexMaps();
+      } else if (attempts > 25) {
+        clearInterval(retryTimer);
+        showMapUnavailable();
+      }
+    }, 200);
   }
 
   function getTileSources(isDark) {
