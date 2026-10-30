@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0E1726"/>
+      <stop offset="100%" stop-color="#070C14"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#E23E3E"/>
+      <stop offset="100%" stop-color="#FF5C5C"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+
+  <!-- Glowing Accent Curves -->
+  <circle cx="1050" cy="150" r="320" fill="rgba(226, 62, 62, 0.08)" filter="blur(60px)"/>
+  <circle cx="150" cy="500" r="280" fill="rgba(42, 171, 238, 0.05)" filter="blur(60px)"/>
+
+  <!-- Top Brand Row -->
+  <g transform="translate(90, 80)">
+    <!-- Brand Mark -->
+    <rect width="56" height="56" rx="14" fill="url(#accentGrad)"/>
+    <path d="M16 42 L28 14 L40 42 Z" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linejoin="round"/>
+    <path d="M21 33 L35 33" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round"/>
+    
+    <!-- Brand Name -->
+    <text x="74" y="39" font-family="'Inter', -apple-system, sans-serif" font-size="32" font-weight="800" fill="#FFFFFF" letter-spacing="1">ASMA <tspan fill="#E23E3E">LINES</tspan></text>
+    
+    <!-- Badge -->
+    <rect x="290" y="8" width="220" height="40" rx="20" fill="rgba(255,255,255,0.07)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+    <circle cx="312" cy="28" r="4" fill="#22C55E"/>
+    <text x="326" y="34" font-family="'Inter', sans-serif" font-size="14" font-weight="600" fill="#E2E8F0">Диспетчер онлайн 24/7</text>
+  </g>
+
+  <!-- Main Headline -->
+  <g transform="translate(90, 220)">
+    <text x="0" y="0" font-family="'Inter', -apple-system, sans-serif" font-size="54" font-weight="800" fill="#FFFFFF" line-height="1.15">
+      Грузоперевозки
+    </text>
+    <text x="0" y="65" font-family="'Inter', -apple-system, sans-serif" font-size="54" font-weight="800" fill="#FFFFFF">
+      по всей <tspan fill="url(#accentGrad)">Беларуси</tspan>
+    </text>
+    <text x="0" y="125" font-family="'Inter', -apple-system, sans-serif" font-size="22" font-weight="400" fill="#94A3B8">
+      Организация автомобильных грузоперевозок для бизнеса: тент, реф, бус, сборные грузы.
+    </text>
+  </g>
+
+  <!-- Feature Tags -->
+  <g transform="translate(90, 420)">
+    <!-- Pill 1 -->
+    <rect x="0" y="0" width="220" height="48" rx="12" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)"/>
+    <text x="20" y="30" font-family="'Inter', sans-serif" font-size="16" font-weight="600" fill="#F8FAFC">⚡️ Подача от 2 часов</text>
+
+    <!-- Pill 2 -->
+    <rect x="236" y="0" width="230" height="48" rx="12" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)"/>
+    <text x="256" y="30" font-family="'Inter', sans-serif" font-size="16" font-weight="600" fill="#F8FAFC">⏱ Расчёт за 15 минут</text>
+
+    <!-- Pill 3 -->
+    <rect x="482" y="0" width="230" height="48" rx="12" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)"/>
+    <text x="502" y="30" font-family="'Inter', sans-serif" font-size="16" font-weight="600" fill="#F8FAFC">📄 Договор с НДС / ЭДО</text>
+  </g>
+
+  <!-- Bottom Bar: Routes & Contact -->
+  <g transform="translate(90, 540)">
+    <text x="0" y="0" font-family="'Inter', sans-serif" font-size="16" font-weight="500" fill="#64748B">
+      Гомель · Минск · Брест · Гродно · Витебск · Могилёв · Вся Беларусь
+    </text>
+    <text x="1020" y="0" text-anchor="end" font-family="'Inter', sans-serif" font-size="18" font-weight="700" fill="#E23E3E">
+      asmalines.by · +375 (29) 600-00-00
+    </text>
+  </g>
+</svg>

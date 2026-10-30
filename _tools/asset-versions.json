@@ -1,0 +1,90 @@
+{
+  "theme-init.js": {
+    "version": "20261028b",
+    "hash": "d19990b47e4e7a16"
+  },
+  "site.js": {
+    "version": "20261030",
+    "hash": "abbf485f725df2bc"
+  },
+  "pricing-client.js": {
+    "version": "20261028b",
+    "hash": "5d9db3c79aacd61a"
+  },
+  "vehicles.js": {
+    "version": "20261004_js",
+    "hash": "4068f6cd720e8863"
+  },
+  "calculator.js": {
+    "version": "20261030b",
+    "hash": "c090ae8d34cfef47"
+  },
+  "crm-next.css": {
+    "version": "20261030",
+    "hash": "4869a2751dcafac8"
+  },
+  "crm-next.js": {
+    "version": "20261030",
+    "hash": "d020a108c00c441e"
+  },
+  "order-doc.js": {
+    "version": "20261028",
+    "hash": "0ce3cfbc6f6f658a"
+  },
+  "proposal.js": {
+    "version": "20261030",
+    "hash": "0cbf64b49bf87b67"
+  },
+  "crm-theme.js": {
+    "version": "20261006",
+    "hash": "fe9af772f3a83a01"
+  },
+  "home.css": {
+    "version": "20261030b",
+    "hash": "0f67c6ba7608177b"
+  },
+  "calculator.css": {
+    "version": "20261030",
+    "hash": "c24bfd7f97c7295c"
+  },
+  "order-modal.css": {
+    "version": "20261014",
+    "hash": "7e4f6c668ca0a6d5"
+  },
+  "interior-polish.css": {
+    "version": "20261028b",
+    "hash": "7ba4f2194849c691"
+  },
+  "system.css": {
+    "version": "20261029c",
+    "hash": "8c07945f0e23d1d1"
+  },
+  "b2b-v8.css": {
+    "version": "20261028",
+    "hash": "4c245f9fec2f941b"
+  },
+  "xlsx-reader.js": {
+    "version": "20261028",
+    "hash": "560166e5ab395ef5"
+  },
+  "bulk-request.js": {
+    "version": "20261028",
+    "hash": "48a4c489f5a1c69f"
+  },
+  "materials.js": {
+    "version": "20261028",
+    "hash": "d90deae30b9083ca"
+  },
+  "request-wizard.js": {
+    "version": "20261028",
+    "hash": "ecef141048f9dcee"
+  },
+  "tracking.js": {
+    "version": "20261030",
+    "hash": "65474bce19d29a91"
+  },
+  "forms-polish.css": {
+    "version": "20261030e",
+    "hash": "c2ec3c0cd8dc0d84"
+  }
+}

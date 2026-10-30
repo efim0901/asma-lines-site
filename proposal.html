@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <script src="assets/theme-init.js?v=20261028b"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Индивидуальное коммерческое предложение по автомобильным грузоперевозкам по Беларуси от ASMA Lines.">
+  <title>Коммерческое предложение — ASMA Lines</title>
+  <!-- Страница формируется калькулятором с параметрами в URL и содержит
+       персональные данные клиента: закрыта от индексации. -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <link rel="canonical" href="https://asma-lines-site.firws.workers.dev/proposal">
+  <link rel="icon" type="image/svg+xml" href="assets/brand/asma-mark.svg?v=20260926">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32x32.png?v=20260926">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16x16.png?v=20260926">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png?v=20260926">
+  <link rel="shortcut icon" href="favicon.ico?v=20260926">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap">
+  <style>
+    @page { size: A4 portrait; margin: 16mm 14mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #1C1A1B;
+      background: #fff;
+      margin: 0;
+      padding: 24px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .kp-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      border-bottom: 2px solid #7A1F33;
+      padding-bottom: 18px;
+      margin-bottom: 24px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-title {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      color: #7A1F33;
+      line-height: 1;
+    }
+    .brand-sub {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #666;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+    .kp-doc-info {
+      text-align: right;
+      font-size: 12px;
+      color: #555;
+    }
+    .kp-doc-num {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1C1A1B;
+      margin-bottom: 4px;
+    }
+    .kp-title {
+      font-size: 20px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      margin: 0 0 8px;
+    }
+    .kp-desc {
+      color: #555;
+      margin: 0 0 24px;
+      font-size: 13.5px;
+    }
+    .kp-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .kp-box {
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      padding: 14px 18px;
+      background: #FAF8F0;
+    }
+    .kp-box-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #7A1F33;
+      margin-bottom: 8px;
+    }
+    .kp-box-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1C1A1B;
+    }
+    .kp-box-sub {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .kp-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+    }
+    .kp-table th {
+      background: #7A1F33;
+      color: #fff;
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .kp-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #E5E5E5;
+      font-size: 13.5px;
+    }
+    .kp-table td.tar { text-align: right; }
+    .kp-total-row td {
+      background: #F4ECEE;
+      font-weight: 800;
+      font-size: 16px;
+      color: #7A1F33;
+      border-bottom: 2px solid #7A1F33;
+    }
+    .kp-notes {
+      font-size: 12px;
+      color: #666;
+      line-height: 1.6;
+      border-left: 3px solid #7A1F33;
+      padding-left: 14px;
+      margin-bottom: 32px;
+    }
+    .kp-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-top: 1px solid #ddd;
+      padding-top: 16px;
+      font-size: 12px;
+      color: #666;
+    }
+    .kp-sign-box {
+      text-align: right;
+    }
+    .kp-sign-line {
+      display: inline-block;
+      width: 200px;
+      border-bottom: 1px solid #000;
+      margin-top: 24px;
+    }
+    .no-print-bar {
+      background: #1C1A1B;
+      color: #fff;
+      padding: 12px 20px;
+      margin: -24px -24px 24px -24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: 0;
+    }
+    .btn-print {
+      background: #8B2536;
+      color: #fff;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .btn-close {
+      background: transparent;
+      color: #ccc;
+      border: 1px solid #555;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    @media print {
+      .no-print-bar { display: none !important; }
+      body { padding: 0 !important; }
+    }
+
+    /* Screen layout: polished document canvas; print stays neutral white. */
+    html[data-theme="dark"] body { background: #151114; color: #f5eeef; }
+    html[data-theme="light"] body { background: #efebe2; color: #1c1a1b; }
+    .no-print-bar { max-width: 940px; margin: 0 auto 16px; padding: 12px 16px; gap: 12px; border: 1px solid rgba(255,255,255,.08); }
+    .no-print-bar > span { font-size: 12px; letter-spacing: .01em; }
+    .no-print-bar > div { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn-print, .btn-close { min-height: 40px; border-radius: 4px; padding: 9px 14px; }
+    .proposal-sheet { max-width: 940px; margin: 0 auto; padding: clamp(22px, 4vw, 48px); background: #fff; color: #1c1a1b; border: 1px solid #e5ddd7; box-shadow: 0 18px 54px rgba(35, 18, 25, .10); }
+    .kp-header { gap: 18px; }
+    .kp-table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .kp-table { min-width: 560px; }
+    .kp-box, .kp-table th, .kp-total-row td { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    @media (max-width: 680px) {
+      body { padding: 10px; font-size: 13px; }
+      .no-print-bar { align-items: stretch; flex-direction: column; margin-bottom: 10px; padding: 12px; }
+      .no-print-bar > div { display: grid; grid-template-columns: 1fr 1fr; }
+      .no-print-bar button { width: 100%; }
+      .proposal-sheet { padding: 20px 14px; }
+      .kp-header { flex-direction: column; align-items: stretch; padding-bottom: 16px; margin-bottom: 20px; }
+      .brand-title { font-size: 23px; }
+      .kp-doc-info { text-align: left; padding-top: 12px; border-top: 1px solid #e5ddd7; }
+      .kp-title { font-size: 18px; line-height: 1.3; }
+      .kp-grid { grid-template-columns: 1fr; gap: 10px; }
+      .kp-box { padding: 13px 14px; }
+      .kp-footer { flex-direction: column; align-items: flex-start; gap: 18px; }
+      .kp-sign-box { text-align: left; }
+      .kp-sign-line { max-width: 70vw; }
+    }
+    @media print {
+      html[data-theme="dark"] body, html[data-theme="light"] body { background: #fff !important; color: #1c1a1b !important; }
+      body { padding: 0 !important; }
+      .no-print-bar { display: none !important; }
+      .proposal-sheet { max-width: none; margin: 0; padding: 0; border: 0; box-shadow: none; }
+      .kp-table-wrap { overflow: visible; }
+      .kp-table { min-width: 0; }
+    }
+
+  </style>
+
+  <link rel="stylesheet" href="assets/forms-polish.css?v=20261030e">
+</head>
+<body class="page-proposal">
+  <div class="no-print-bar">
+    <span>Печатная форма коммерческого предложения ASMA Lines</span>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-print" data-action="print">Сохранить в PDF / Печать</button>
+      <button class="btn-close" data-action="close-window">Закрыть</button>
+    </div>
+  </div>
+
+  <main class="proposal-sheet" id="proposal-sheet">
+  <div class="kp-header">
+    <div class="brand">
+      <div>
+        <div class="brand-title">ASMA LINES</div>
+        <div class="brand-sub">Грузовые автоперевозки по Беларуси</div>
+      </div>
+    </div>
+    <div class="kp-doc-info">
+      <div class="kp-doc-num" id="doc-num">КП — ожидает формирования</div>
+      <div id="doc-date">Дата формирования: —</div>
+      <div>Предварительные условия согласуются отдельно</div>
+    </div>
+  </div>
+
+  <h1 class="kp-title">Коммерческое предложение</h1>
+  <p class="kp-desc">Предварительный расчёт организации перевозки. Итоговая ставка и условия подтверждаются после уточнения параметров.</p>
+  <div id="proposal-status" role="status" hidden style="border-left:3px solid #7A1F33;background:#FAF8F0;padding:12px 14px;margin:0 0 20px;color:#1c1a1b"></div>
+  <div class="kp-client-line" style="font-size:12px;color:#555;margin:-12px 0 18px">Получатель: <span id="client-text">—</span></div>
+
+  <div class="kp-grid">
+    <div class="kp-box">
+      <div class="kp-box-title">Маршрут следования</div>
+      <div class="kp-box-value" id="route-text">Гомель → Минск</div>
+      <div class="kp-box-sub" id="distance-text">Расстояние: ~310 км</div>
+    </div>
+    <div class="kp-box">
+      <div class="kp-box-title">Характеристики груза</div>
+      <div class="kp-box-value" id="cargo-weight">Вес груза: 5.0 т</div>
+      <div class="kp-box-sub" id="cargo-type">Тип: Стандартный тент</div>
+    </div>
+  </div>
+
+  <div class="kp-table-wrap">
+  <table class="kp-table">
+    <thead>
+      <tr>
+        <th>Наименование статьи расходов</th>
+        <th class="tar">Тариф / База</th>
+        <th class="tar">Сумма (BYN)</th>
+      </tr>
+    </thead>
+    <tbody id="proposal-breakdown"><tr><td colspan="3">Ожидаем данные для расчёта…</td></tr></tbody>
+  </table>
+  </div>
+
+  <section class="proposal-response" id="proposal-response" hidden aria-labelledby="proposal-response-title">
+    <p class="proposal-response__eyebrow">ОБРАТНАЯ СВЯЗЬ</p>
+    <h2 id="proposal-response-title">Как продолжим согласование?</h2>
+    <p class="proposal-response__intro">Можно подтвердить интерес к предложению или попросить изменить параметры. Менеджер получит ваш ответ и свяжется для дальнейшего согласования.</p>
+    <label class="proposal-response__label" for="proposal-response-comment">Комментарий (необязательно)</label>
+    <textarea id="proposal-response-comment" rows="3" maxlength="1000" placeholder="Например: уточнить дату готовности, тип кузова или условия погрузки"></textarea>
+    <div class="proposal-response__actions">
+      <button class="btn btn--primary" type="button" data-proposal-response="interested">Подтвердить интерес</button>
+      <button class="btn btn-2" type="button" data-proposal-response="changes_requested">Запросить корректировки</button>
+    </div>
+    <p class="proposal-response__legal">Ответ фиксирует запрос на дальнейшее согласование и сам по себе не является акцептом оферты, подтверждением ставки или заключением договора.</p>
+    <p class="proposal-response__status" id="proposal-response-status" role="status" aria-live="polite" hidden></p>
+  </section>
+
+  <div class="kp-notes">
+    <b>Примечания:</b>
+    <br>1. Указанная стоимость является предварительным расчётом, а не подтверждением доступности транспорта или окончательной офертой.
+    <br>2. Итоговая цена зависит от уточнённых адресов, даты, параметров груза, условий погрузки и согласованного типа транспорта.
+    <br>3. Состав документов и остальные условия согласуются отдельно для конкретной перевозки.
+  </div>
+
+  <div class="kp-footer">
+    <div>
+      <b>Контакты диспетчерской службы ASMA Lines:</b><br>
+      Телефон / Мессенджеры: <a href="tel:+375296000000">+375 (29) 600-00-00</a><br>
+      E-mail: <a href="mailto:hello@asmalines.by">hello@asmalines.by</a> · Сайт: asma-lines-site.firws.workers.dev<br>
+      Республика Беларусь
+    </div>
+    <div class="kp-sign-box">
+      <div>Организация перевозки: <b>ASMA Lines</b></div>
+      <div class="kp-sign-line"></div>
+      <div style="font-size:11px;color:#888;">(подпись / печать)</div>
+    </div>
+  </div>
+
+  </main>
+  <script src="assets/proposal.js?v=20261030" defer></script>
+</body>
+</html>

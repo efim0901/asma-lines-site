@@ -1,0 +1,418 @@
+/* ASMA Lines — interior pages polish
+   Shared by calculator, FAQ, partners and legal pages. Uses the site theme tokens. */
+
+.page-faq,
+.page-partners,
+.page-privacy,
+.page-calculator {
+  --panel-radius: 10px;
+  --panel-shadow: 0 10px 28px rgba(43, 19, 28, .045);
+}
+
+.page-faq .page-hero,
+.page-partners .page-hero,
+.page-calculator .page-hero {
+  padding-top: clamp(34px, 5vw, 66px);
+}
+
+.page-faq .page-hero .container,
+.page-partners .page-hero .container,
+.page-calculator .page-hero .container {
+  grid-template-columns: minmax(0, 1.22fr) minmax(280px, .78fr);
+  gap: clamp(26px, 5vw, 68px);
+  align-items: center;
+  padding-bottom: clamp(28px, 4vw, 48px);
+}
+
+.page-faq .page-hero h1,
+.page-partners .page-hero h1,
+.page-calculator .page-hero h1 {
+  max-width: 12em;
+  font-size: clamp(36px, 4.65vw, 60px);
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.page-faq .page-hero .lede,
+.page-partners .page-hero .lede,
+.page-calculator .page-hero .lede {
+  max-width: 37em;
+  font-size: clamp(14px, 1.2vw, 16px);
+  line-height: 1.8;
+}
+
+.page-faq .page-hero .map,
+.page-partners .page-hero .map,
+.page-calculator .page-hero .map,
+.page-partners .pmap .map {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 160px;
+  padding: 19px 20px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--panel-radius);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--card) 92%, var(--acc) 8%), var(--band));
+  box-shadow: var(--panel-shadow);
+}
+
+.page-faq .page-hero .map::before,
+.page-partners .page-hero .map::before,
+.page-calculator .page-hero .map::before,
+.page-partners .pmap .map::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  opacity: .45;
+  background-image: linear-gradient(to right, var(--line) 1px, transparent 1px), linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size: 27px 27px;
+  mask-image: linear-gradient(135deg, #000 0%, transparent 84%);
+}
+
+.page-faq .page-hero .map svg,
+.page-partners .page-hero .map svg,
+.page-calculator .page-hero .map svg,
+.page-partners .pmap .map svg {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 104px;
+  margin: 0 0 8px;
+}
+
+.page-faq .page-hero .map .pt,
+.page-partners .page-hero .map .pt,
+.page-calculator .page-hero .map .pt,
+.page-partners .pmap .map .pt {
+  gap: 12px;
+  color: var(--ink);
+  font-size: 10px;
+}
+
+.page-faq .page-hero .map small,
+.page-partners .page-hero .map small,
+.page-calculator .page-hero .map small,
+.page-partners .pmap .map small {
+  display: block;
+  margin-top: 12px;
+  color: var(--kick);
+}
+
+/* FAQ: readable accordion with one clear question hierarchy */
+.page-faq .faqg {
+  grid-template-columns: minmax(0, 1.8fr) minmax(260px, .82fr);
+  gap: clamp(22px, 4vw, 52px);
+  margin-top: clamp(24px, 3.3vw, 38px);
+}
+
+.page-faq .qa { gap: 8px; min-width: 0; }
+.page-faq .qa details {
+  min-width: 0;
+  padding: 0;
+  overflow: clip;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  box-shadow: none;
+  transition: border-color .18s ease, background .18s ease;
+}
+
+.page-faq .qa details[open],
+.page-faq .qa details.is-active {
+  border-color: color-mix(in srgb, var(--kick) 55%, var(--line));
+  background: var(--card);
+}
+
+.page-faq .qa summary {
+  grid-template-columns: 34px minmax(0, 1fr) 20px;
+  gap: 10px;
+  align-items: center;
+  min-height: 66px;
+  padding: 16px 18px;
+  font-size: clamp(14px, 1.1vw, 16px);
+  line-height: 1.5;
+}
+
+.page-faq .qa summary i {
+  align-self: start;
+  padding-top: 3px;
+  font-size: 10px;
+}
+
+.page-faq .qa summary:after {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font: 500 15px/1 Inter, sans-serif;
+}
+
+.page-faq .qa details[open] summary:after {
+  border-color: color-mix(in srgb, var(--kick) 38%, var(--line));
+  background: var(--band);
+}
+
+.page-faq .qa details p {
+  max-width: none;
+  margin: 0;
+  padding: 0 48px 20px 62px;
+  color: var(--mute);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.page-faq .faqa {
+  position: sticky;
+  top: 22px;
+  padding: clamp(22px, 2.4vw, 30px);
+  border: 1px solid color-mix(in srgb, #fff 16%, var(--acc));
+  border-radius: 10px;
+  background: var(--acc);
+  color: #fff;
+  box-shadow: var(--panel-shadow);
+}
+
+.page-faq .faqa .kicker { color: #f0c6d0; }
+.page-faq .faqa h3 { font-size: clamp(24px, 2.5vw, 31px); line-height: 1.12; text-wrap: balance; }
+.page-faq .faqa p { line-height: 1.75; }
+.page-faq .faqa .btn { border-radius: 5px; background: #fffaf8; color: #641b2c; border-color: #fffaf8; }
+.page-faq .faqa .btn:hover { filter: none; background: #f1e7e6; }
+.page-faq .terms { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.page-faq .terms > div { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
+.page-faq .terms .tag { margin-bottom: 18px; }
+
+/* Partners: benefits, vehicle categories and form become one coherent flow */
+.page-partners .pillars { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.page-partners .pillar {
+  min-width: 0;
+  padding: 22px 20px 24px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  box-shadow: none;
+  transition: border-color .18s ease, transform .18s ease;
+}
+.page-partners .pillar .tag { display: inline-flex; align-items: center; gap: 8px; }
+.page-partners .pillar .tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--kick); }
+.page-partners .pillar h3 { font-size: clamp(17px, 1.55vw, 21px); line-height: 1.25; text-wrap: balance; }
+.page-partners .pillar p { line-height: 1.8; }
+@media (hover: hover) {
+  .page-partners .pillar:hover { border-color: color-mix(in srgb, var(--kick) 42%, var(--line)); transform: translateY(-2px); }
+}
+
+.page-partners .fleet .services { gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.page-partners .fleet .svc {
+  min-height: 142px;
+  padding: 22px 20px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--card);
+}
+.page-partners .fleet .svc:last-child { border-right: 0; }
+.page-partners .fleet .svc h3 { font-size: 18px; line-height: 1.35; }
+.page-partners .fleet .svc p { font: 11px "JetBrains Mono", ui-monospace, monospace; color: var(--kick); text-transform: uppercase; letter-spacing: .03em; }
+.page-partners .pmap { grid-template-columns: minmax(0, 1fr) minmax(0, .8fr); gap: clamp(22px, 4vw, 50px); margin-top: 28px; }
+.page-partners .pmap .map { background: linear-gradient(135deg, var(--card), var(--band)); }
+.page-partners .pmap .map .pt,
+.page-partners .pmap .map small { color: var(--ink); }
+.page-partners .pmap .map svg path:first-child { stroke: var(--kick); }
+.page-partners .pmap .map svg path:last-child { stroke: var(--mute); opacity: .6; }
+.page-partners .pform { grid-template-columns: minmax(0, 1.45fr) minmax(245px, .8fr); gap: clamp(22px, 4vw, 44px); }
+.page-partners .pf { min-width: 0; padding: clamp(18px, 2.5vw, 30px); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--panel-shadow); }
+.page-partners .pside { min-width: 0; padding: 24px 0 0; }
+.page-partners .pside .ph { overflow-wrap: anywhere; font-size: clamp(21px, 2.1vw, 27px); }
+.page-partners .pside a.l { margin: 8px 0; overflow-wrap: anywhere; }
+.page-partners .pf label.f,
+.page-partners .pf .partner-role-tab,
+.page-partners .pf .partner-fleet-chip { border-radius: 6px; }
+.page-partners .pf label.f { min-width: 0; }
+.page-partners .pf input:not([type="checkbox"]):not([type="hidden"]),
+.page-partners .pf textarea { min-width: 0; max-width: 100%; }
+.page-partners .pf textarea { line-height: 1.55; }
+.page-partners .pf .consent { align-items: flex-start; line-height: 1.65; }
+.page-partners .pf .consent input { flex: 0 0 auto; margin-top: 3px; accent-color: var(--acc); }
+.page-partners .pf .sub .btn { max-width: 100%; white-space: normal; }
+.page-partners .pf .form-status { overflow-wrap: anywhere; }
+
+/* Privacy / legal copy: editorial index on desktop, readable document on mobile */
+.page-privacy .page-hero .container { grid-template-columns: minmax(0, 1fr); max-width: 1200px; }
+.page-privacy .page-hero h1 { max-width: 12em; }
+.page-privacy .page-hero .lede { max-width: 58em; }
+.page-privacy .legal { grid-template-columns: minmax(210px, .72fr) minmax(0, 2fr); gap: clamp(26px, 4.5vw, 64px); }
+.page-privacy .legal-toc {
+  top: 24px;
+  padding: 20px 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  box-shadow: var(--panel-shadow);
+}
+.page-privacy .legal-toc nav { margin: 12px 0 24px; }
+.page-privacy .legal-toc nav a { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 8px; padding: 13px 0; line-height: 1.5; overflow-wrap: anywhere; }
+.page-privacy .legal-toc nav a::first-letter { color: var(--kick); }
+.page-privacy .legal-toc .op { font-size: 12px; }
+.page-privacy .legal-toc .legal-contact a { display: inline-block; max-width: 100%; color: var(--kick); overflow-wrap: anywhere; }
+.page-privacy .legal-sec { grid-template-columns: minmax(170px, .8fr) minmax(0, 1.7fr); gap: clamp(20px, 3vw, 38px); padding: 34px 0 38px; scroll-margin-top: 28px; }
+.page-privacy .legal-sec h2 { font-size: clamp(22px, 2.4vw, 27px); line-height: 1.2; text-wrap: balance; }
+.page-privacy .legal-sec p,
+.page-privacy .legal-sec li { font-size: 14px; line-height: 1.85; overflow-wrap: anywhere; }
+.page-privacy .legal-sec strong { color: var(--ink); }
+.page-privacy .legal-sec a { overflow-wrap: anywhere; }
+
+/* Calculator: a clear path from route presets to specification and estimate */
+.page-calculator .calc-routes-section { padding-top: clamp(42px, 6vw, 72px); padding-bottom: clamp(40px, 5vw, 64px); }
+.page-calculator .calc-routes-section h2 { max-width: 19em; margin-bottom: 26px; }
+:root:root .page-calculator .popular-routes-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+:root:root .page-calculator .popular-route-pill {
+  min-width: 0;
+  min-height: 130px;
+  padding: 18px;
+  border-radius: 8px;
+  background: var(--card);
+  transition: border-color .18s ease, background .18s ease, transform .18s ease;
+}
+:root:root .page-calculator .popular-route-pill:hover { border-color: var(--kick); transform: translateY(-1px); }
+:root:root .page-calculator .popular-route-pill.is-active,
+:root:root .page-calculator .popular-route-pill[aria-pressed="true"] { background: color-mix(in srgb, var(--acc) 6%, var(--card)); border-color: var(--kick); }
+:root:root .page-calculator .popular-route-pill .popular-route-name { font-size: clamp(16px, 1.65vw, 20px); line-height: 1.3; overflow-wrap: anywhere; }
+:root:root .page-calculator .popular-route-pill .popular-route-price { font-size: 13px; }
+.page-calculator .calc-steps-band { padding: clamp(42px, 6vw, 72px) 0 clamp(44px, 6vw, 68px); }
+.page-calculator .calc-steps-band > .container > h2 { max-width: 20em; }
+:root:root .page-calculator .calculator-layout { grid-template-columns: minmax(0, 1.42fr) minmax(300px, .9fr); gap: 18px; }
+:root:root .page-calculator .calc-section-block { border-radius: 8px; padding: clamp(18px, 2.2vw, 28px); }
+:root:root .page-calculator .calc-block-title { font-size: clamp(20px, 2.1vw, 25px); line-height: 1.25; }
+:root:root .page-calculator .b2b-route-col,
+:root:root .page-calculator .bmr-item:not(.bmr-actions),
+:root:root .page-calculator .b2b-weight-input-wrap,
+:root:root .page-calculator .b2b-cargo-card,
+:root:root .page-calculator .b2b-opt-item,
+:root:root .page-calculator .b2b-vcard { border-radius: 6px; }
+:root:root .page-calculator .b2b-vcard { min-width: 0; margin: 0; padding: 15px; }
+:root:root .page-calculator .b2b-vcard-cap { font-size: clamp(20px, 2vw, 24px); }
+:root:root .page-calculator .b2b-cargo-card,
+:root:root .page-calculator .b2b-opt-item { min-width: 0; }
+.page-calculator .b2b-cargo-info,
+.page-calculator .b2b-opt-content,
+:root:root .page-calculator .b2b-route-col,
+.page-calculator .bmr-item { min-width: 0; }
+.page-calculator .calculator input:not([type="checkbox"]):not([type="radio"]),
+.page-calculator .calculator textarea,
+.page-calculator .calculator select { max-width: 100%; min-width: 0; }
+.page-calculator .calculator input:focus-visible,
+.page-calculator .calculator textarea:focus-visible,
+.page-calculator .calculator select:focus-visible { outline: 2px solid var(--kick); outline-offset: 3px; }
+:root:root .page-calculator .quote { top: 18px; border-radius: 8px; box-shadow: var(--panel-shadow); }
+:root:root .page-calculator .quote .btn-calc-main,
+:root:root .page-calculator .quote .btn-calc-sec,
+:root:root .page-calculator .quote .quote-share-btn { border-radius: 5px; min-height: 42px; }
+:root:root .page-calculator .quote .btn-calc-main { justify-self: stretch; width: 100%; }
+:root:root .page-calculator .quote .btn-calc-sec { justify-self: stretch; width: 100%; }
+:root:root .page-calculator .calc-map { overflow: hidden; border-radius: 6px; }
+:root:root .page-calculator .calc-more .art { overflow: hidden; border-radius: 8px; }
+.page-calculator .calc-mobile-bar { padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+.page-calculator .btn-mobile-bar-cta { border-radius: 5px; }
+
+/* Theme-sensitive controls and status surfaces */
+:root[data-theme="dark"] .page-faq .faqa { background: linear-gradient(145deg, #351b25, #24171c); border-color: #50303a; }
+:root[data-theme="dark"] .page-partners .pmap .map { background: linear-gradient(135deg, var(--card), var(--band)); }
+:root[data-theme="dark"] .page-partners .pf { background: var(--card); }
+:root[data-theme="dark"] .page-calculator .popular-route-pill.is-active,
+:root[data-theme="dark"] .page-calculator .popular-route-pill[aria-pressed="true"] { background: color-mix(in srgb, var(--acc) 14%, var(--card)); }
+:root[data-theme="dark"] .page-calculator .b2b-qweight-btn.is-active,
+:root[data-theme="dark"] .page-calculator .b2b-qweight-btn[aria-pressed="true"],
+:root[data-theme="dark"] .page-calculator .btn-reset-distance { color: #fff; background: var(--burgundy-primary); border-color: var(--burgundy-primary); }
+
+/* Responsive breakpoints are deliberately shared by every interior page. */
+@media (max-width: 1100px) {
+  .page-partners .pillars { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  :root:root .page-calculator .calculator-layout { grid-template-columns: minmax(0, 1fr); }
+  :root:root .page-calculator .quote { position: static; }
+}
+
+@media (max-width: 960px) {
+  .page-faq .page-hero .container,
+  .page-partners .page-hero .container,
+  .page-calculator .page-hero .container { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .page-faq .page-hero .map,
+  .page-partners .page-hero .map,
+  .page-calculator .page-hero .map { max-width: 680px; width: 100%; }
+  .page-faq .faqg { grid-template-columns: minmax(0, 1fr); }
+  .page-faq .faqa { position: static; }
+  .page-partners .pmap,
+  .page-partners .pform { grid-template-columns: minmax(0, 1fr); }
+  .page-partners .pmap > p { max-width: 44em; }
+  .page-partners .fleet .services { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .page-partners .fleet .svc:nth-child(2) { border-right: 0; }
+  .page-partners .fleet .svc:nth-child(n + 3) { border-top: 1px solid var(--line); }
+  .page-privacy .legal { grid-template-columns: minmax(0, 1fr); }
+  .page-privacy .legal-toc { position: static; }
+  .page-privacy .legal-toc nav { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 16px; }
+  .page-privacy .legal-sec { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  :root:root .page-calculator .popular-routes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 620px) {
+  .page-faq .page-hero h1,
+  .page-partners .page-hero h1,
+  .page-calculator .page-hero h1 { font-size: clamp(34px, 9.6vw, 47px); }
+  .page-faq .page-hero .map,
+  .page-partners .page-hero .map,
+  .page-calculator .page-hero .map,
+  .page-partners .pmap .map { min-height: 140px; padding: 15px; }
+  .page-faq .page-hero .map svg,
+  .page-partners .page-hero .map svg,
+  .page-calculator .page-hero .map svg,
+  .page-partners .pmap .map svg { height: 82px; }
+  .page-faq .qa summary { grid-template-columns: 25px minmax(0, 1fr) 20px; gap: 7px; padding: 14px 13px; font-size: 14px; }
+  .page-faq .qa details p { padding: 0 14px 18px 45px; font-size: 13px; }
+  .page-faq .terms { grid-template-columns: minmax(0, 1fr); }
+  .page-partners .pillars { grid-template-columns: minmax(0, 1fr); gap: 9px; }
+  .page-partners .pillar { padding: 18px; }
+  .page-partners .pillar h3 { margin: 12px 0 8px; }
+  .page-partners .fleet .services { grid-template-columns: minmax(0, 1fr); }
+  .page-partners .fleet .svc,
+  .page-partners .fleet .svc:nth-child(2) { border-right: 0; border-top: 1px solid var(--line); min-height: 0; }
+  .page-partners .fleet .svc:first-child { border-top: 0; }
+  .page-partners .pg { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .page-partners .pf { padding: 16px 13px; }
+  .page-partners .partner-role-tabs,
+  .page-partners .partner-fleet-chips { gap: 7px; }
+  .page-partners .partner-role-tab,
+  .page-partners .partner-fleet-chip { max-width: 100%; padding: 9px 10px; font-size: 11px; text-align: left; }
+  .page-partners .pf .sub .btn { width: 100%; justify-content: center; }
+  .page-partners .pside { padding-top: 4px; }
+  .page-privacy .legal-toc { padding: 17px 15px; }
+  .page-privacy .legal-toc nav { grid-template-columns: minmax(0, 1fr); }
+  .page-privacy .legal-sec { padding: 26px 0 30px; }
+  .page-privacy .legal-sec h2 { font-size: 22px; }
+  .page-calculator .calc-routes-section { padding-top: 42px; }
+  :root:root .page-calculator .popular-routes-grid { grid-template-columns: minmax(0, 1fr); }
+  :root:root .page-calculator .popular-route-pill { min-height: 0; padding: 15px; }
+  :root:root .page-calculator .popular-route-pill .popular-route-meta { margin-bottom: 6px; }
+  :root:root .page-calculator .calc-section-block { padding: 16px 13px; }
+  .page-calculator .calc-block-header { margin-bottom: 16px; padding-bottom: 14px; }
+  :root:root .page-calculator .calc-block-title { font-size: 19px; }
+  .page-calculator .b2b-route-row,
+  .page-calculator .b2b-metrics-row { grid-template-columns: minmax(0, 1fr); }
+  .page-calculator .b2b-vehicle-matrix { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  :root:root .page-calculator .b2b-vcard { margin: 0; }
+  .page-calculator .b2b-metrics-row .bmr-actions { grid-column: 1; }
+  .page-calculator .b2b-adjust-btn,
+  .page-calculator .b2b-qweight-btn,
+  :root:root .page-calculator .quote-share-btn { max-width: 100%; white-space: normal; }
+  :root:root .page-calculator .quote { padding: 17px 14px; }
+  .page-calculator #quote-total { font-size: clamp(34px, 10vw, 46px); overflow-wrap: anywhere; }
+  :root:root .page-calculator .quote-actions-row { grid-template-columns: minmax(0, 1fr); }
+  .page-calculator .calc-more { padding: 48px 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-partners .pillar,
+  :root:root .page-calculator .popular-route-pill { transition: none; transform: none; }
+}

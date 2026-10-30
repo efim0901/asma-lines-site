@@ -1,0 +1,35 @@
+
+/* Быстрый заказ рейса — новый дизайн. Подключать ПОСЛЕ style.css */
+:root .modal-backdrop .modal-card{--m-bg:#faf8f0;--m-sub:#efebe2;--m-field:#fff;--m-ink:#1c1a1b;--m-mute:#6b6667;--m-line:#dcd7cc;--m-acc:#6b1e2d;--m-kick:#6b1e2d;--m-price:#6b1e2d;
+background:var(--m-bg);color:var(--m-ink);border:1px solid var(--m-line);border-radius:14px;box-shadow:0 24px 64px -12px rgba(15,6,10,.45);max-width:600px;padding:36px;font-family:Inter,system-ui,sans-serif}
+[data-theme=dark] .modal-backdrop .modal-card{--m-bg:#141012;--m-sub:#1d191b;--m-field:#1b1719;--m-ink:#f3eeee;--m-mute:#a79fa1;--m-line:#3a3336;--m-acc:#8c2a3f;--m-kick:#c98a98;--m-price:#d99aa8}
+:root .modal-backdrop .modal-card .modal-top-bar{display:flex;justify-content:space-between;align-items:flex-start;margin:0 0 22px;padding:0;border:0;background:none}
+:root .modal-backdrop .modal-card .modal-badge{background:none;border:0;padding:0;box-shadow:none;color:var(--m-kick);font:11px "JetBrains Mono",ui-monospace,monospace;letter-spacing:.04em;text-transform:uppercase;gap:0}
+:root .modal-backdrop .modal-card .modal-badge svg,:root .modal-backdrop .modal-card .modal-badge-pulse{display:none}
+:root .modal-backdrop .modal-card .modal-close-btn{width:40px;height:40px;border-radius:2px;background:none;border:1px solid var(--m-line);color:var(--m-ink);box-shadow:none}
+:root .modal-backdrop .modal-card .modal-close-btn:hover{border-color:var(--m-kick);background:none;color:var(--m-ink)}
+:root .modal-backdrop .modal-card .modal-order-title{font-size:34px;line-height:1.1;font-weight:500;letter-spacing:-.03em;color:var(--m-ink);margin:0 0 18px}
+:root .modal-backdrop .modal-card .modal-order-subtitle{font-size:16px;line-height:1.5;color:var(--m-mute);margin:0 0 28px}
+:root .modal-backdrop .modal-card .modal-route-voucher{background:var(--m-sub);border:1px solid var(--m-line);border-radius:6px;padding:22px 24px;margin:0 0 24px;gap:0;box-shadow:none}
+:root .modal-backdrop .modal-card .mrv-main{padding-bottom:16px;border-bottom:1px solid var(--m-line);flex-wrap:nowrap}
+:root .modal-backdrop .modal-card .mrv-city-point{font-size:22px;font-weight:500;letter-spacing:-.02em;color:var(--m-ink)}:root .modal-backdrop .modal-card .mrv-dot{display:none}
+:root .modal-backdrop .modal-card .mrv-arrow-divider{color:var(--m-ink)}
+:root .modal-backdrop .modal-card .mrv-price-pill{background:none;border:0;box-shadow:none;padding:0;border-radius:0;color:var(--m-price);font-size:22px;font-weight:500}
+:root .modal-backdrop .modal-card .mrv-tags{display:block;border:0;padding:16px 0 0}
+:root .modal-backdrop .modal-card .mrv-tag{display:inline;background:none;border:0;padding:0;border-radius:0;font-size:14px;font-weight:400;line-height:1.9;color:var(--m-ink)}
+:root .modal-backdrop .modal-card .mrv-tag svg{display:none}:root .modal-backdrop .modal-card .mrv-tag-highlight{background:none;color:var(--m-ink);border:0}
+:root .modal-backdrop .modal-card .modal-fields-stack{gap:16px}
+:root .modal-backdrop .modal-card .modal-field-group{background:var(--m-field);border:1px solid var(--m-line);border-radius:6px;padding:16px 16px 12px}
+:root .modal-backdrop .modal-card .modal-field-group:focus-within{border-color:var(--m-kick)}
+:root .modal-backdrop .modal-card .modal-field-label{font-size:13px;font-weight:600;color:var(--m-ink);margin:0 0 10px}
+:root .modal-backdrop .modal-card .modal-text-input,:root .modal-backdrop .modal-card .modal-textarea{background:none;border:0;box-shadow:none;border-radius:0;padding:4px 0;color:var(--m-ink);font:400 16px Inter,sans-serif;outline:0}
+:root .modal-backdrop .modal-card .modal-text-input::placeholder,:root .modal-backdrop .modal-card .modal-textarea::placeholder{color:var(--m-mute);opacity:.85}
+:root .modal-backdrop .modal-card .modal-textarea{min-height:76px}
+:root .modal-backdrop .modal-card .modal-submit-btn{background:var(--m-acc);border:1px solid var(--m-acc);color:#fff;border-radius:2px;box-shadow:none;width:auto;padding:16px 22px;font:500 16px Inter,sans-serif;letter-spacing:0;transform:none}
+:root .modal-backdrop .modal-card .modal-submit-btn:hover{filter:brightness(1.15);background:var(--m-acc);transform:none;box-shadow:none}
+:root .modal-backdrop .modal-card .modal-trust-bar{background:none;border:0;padding:0;color:var(--m-mute);font-size:14px;gap:6px}:root .modal-backdrop .modal-card .modal-trust-item{color:var(--m-mute)}:root .modal-backdrop .modal-card .modal-trust-item svg,:root .modal-backdrop .modal-card .modal-trust-dot{display:none}
+:root .modal-backdrop .modal-card .modal-alt-contact{border-top:1px solid var(--m-line);margin-top:22px;padding-top:22px}
+:root .modal-backdrop .modal-card .modal-divider-line{display:none}:root .modal-backdrop .modal-card .modal-divider-text{background:none;padding:0;color:var(--m-kick);font:11px "JetBrains Mono",monospace;letter-spacing:.04em;text-transform:uppercase}
+:root .modal-backdrop .modal-card .modal-telegram-btn{background:var(--m-field);border:1px solid var(--m-line);border-radius:2px;color:var(--m-ink);box-shadow:none;font:500 16px Inter,sans-serif;padding:14px 22px;width:auto}
+:root .modal-backdrop .modal-card .modal-telegram-btn:hover{border-color:var(--m-kick);background:var(--m-field);transform:none}
+@media(max-width:560px){:root .modal-backdrop .modal-card{padding:24px 20px}:root .modal-backdrop .modal-card .modal-order-title{font-size:28px}}

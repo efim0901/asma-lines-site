@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- Цвет полосы браузера: в Telegram его дополнительно задаёт
+       setHeaderColor/setBackgroundColor, а это — для браузерного входа. -->
+  <meta name="theme-color" content="#f6f3ef" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#191614" media="(prefers-color-scheme: dark)">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Диспетчерская ASMA Lines</title>
+  <link rel="icon" href="assets/brand/asma-mark.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="assets/crm-next.css?v=20261030">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Тема ставится до отрисовки: в тёмной теме Telegram иначе мигает светлым. -->
+  <script src="assets/crm-theme.js?v=20261006"></script>
+  <link rel="stylesheet" href="assets/forms-polish.css?v=20261030e">
+</head>
+<body>
+  <div class="app" id="crm-app">
+    <!-- ------------------------- Разделы ------------------------- -->
+    <aside class="side" id="side">
+      <a class="side__brand" href="/" aria-label="ASMA Lines, на сайт">
+        <img class="img-light" src="assets/brand/asma-mark-light.svg" alt="" width="42" height="42"><img class="img-dark" src="assets/brand/asma-mark-dark.svg" alt="" width="42" height="42">
+        <span><b>ASMA Lines</b><small>Диспетчерская</small></span>
+      </a>
+
+      <div>
+        <div class="side__label" id="queue-label">Очередь</div>
+        <nav class="nav" id="nav" aria-labelledby="queue-label">
+          <button class="nav__item" type="button" data-filter="all" aria-current="true"><i class="nav__dot"></i>Все заявки<span class="nav__count" data-count="all">0</span></button>
+          <button class="nav__item" type="button" data-filter="new"><i class="nav__dot"></i>Новые<span class="nav__count" data-count="new">0</span></button>
+          <button class="nav__item" type="button" data-filter="processing"><i class="nav__dot"></i>В работе<span class="nav__count" data-count="processing">0</span></button>
+          <button class="nav__item" type="button" data-filter="transit"><i class="nav__dot"></i>В рейсе<span class="nav__count" data-count="transit">0</span></button>
+          <button class="nav__item" type="button" data-filter="completed"><i class="nav__dot"></i>Завершены<span class="nav__count" data-count="completed">0</span></button>
+          <button class="nav__item" type="button" data-filter="cancelled"><i class="nav__dot"></i>Отменены<span class="nav__count" data-count="cancelled">0</span></button>
+        </nav>
+        <div class="side__label" id="actions-label">Следующие действия</div>
+        <nav class="nav nav--actions" id="action-nav" aria-labelledby="actions-label">
+          <button class="nav__item" type="button" data-filter="action_today" aria-current="false"><i class="nav__dot"></i>На сегодня<span class="nav__count" data-count="action_today">0</span></button>
+          <button class="nav__item" type="button" data-filter="action_overdue" aria-current="false"><i class="nav__dot"></i>Просрочено<span class="nav__count" data-count="action_overdue">0</span></button>
+          <button class="nav__item" type="button" data-filter="no_action" aria-current="false"><i class="nav__dot"></i>Без действия<span class="nav__count" data-count="no_action">0</span></button>
+        </nav>
+      </div>
+
+      <div class="side__foot">
+        <div class="side__alert" id="side-alert" hidden></div>
+        <div class="side__user">
+          <span class="avatar" id="user-avatar" aria-hidden="true">A</span>
+          <span class="side__who"><b id="operator-name">Диспетчер</b><small id="operator-role">Telegram</small></span>
+          <button class="btn btn--icon" type="button" id="btn-access" title="Доступ диспетчеров" aria-label="Доступ диспетчеров" hidden>⋯</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- -------------------------- Список ------------------------- -->
+    <main class="list-pane">
+      <!-- Заголовок страницы один: экраны входа, ошибки и закрытого доступа
+           ниже помечены как h2, иначе в документе оказывается четыре h1. -->
+      <h1 class="sr-only">Диспетчерская ASMA Lines</h1>
+      <header class="topbar">
+        <label class="search">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input id="search" type="search" placeholder="Имя, телефон, маршрут, номер заявки" autocomplete="off" aria-label="Поиск заявок">
+        </label>
+        <span class="conn" id="connection-status" data-state="connecting" role="status"><i></i>Подключаемся</span>
+        <button class="btn btn--icon" type="button" id="btn-refresh" aria-label="Обновить заявки" title="Обновить">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.4"></path><path d="M21 4v5h-5"></path></svg>
+        </button>
+        <button class="btn btn--primary" type="button" id="btn-new">+ Заявка</button>
+      </header>
+
+      <div class="chips" id="mobile-filters" role="group" aria-label="Фильтр по статусу">
+        <button class="chips__item" type="button" data-filter="all" aria-pressed="true">Все<span>0</span></button>
+        <button class="chips__item" type="button" data-filter="new" aria-pressed="false">Новые<span>0</span></button>
+        <button class="chips__item" type="button" data-filter="processing" aria-pressed="false">В работе<span>0</span></button>
+        <button class="chips__item" type="button" data-filter="transit" aria-pressed="false">В рейсе<span>0</span></button>
+        <button class="chips__item" type="button" data-filter="completed" aria-pressed="false">Завершены<span>0</span></button>
+        <button class="chips__item" type="button" data-filter="cancelled" aria-pressed="false">Отменены<span>0</span></button>
+        <button class="chips__item" type="button" data-filter="action_today" aria-pressed="false">На сегодня<span data-count="action_today">0</span></button>
+        <button class="chips__item" type="button" data-filter="action_overdue" aria-pressed="false">Просрочено<span data-count="action_overdue">0</span></button>
+        <button class="chips__item" type="button" data-filter="no_action" aria-pressed="false">Без действия<span data-count="no_action">0</span></button>
+      </div>
+
+      <div class="crm-view-toolbar" role="group" aria-label="Режим отображения заявок">
+        <span>Представление</span>
+        <div class="crm-view-switch">
+          <button type="button" data-view="table" aria-pressed="true">Список</button>
+          <button type="button" data-view="kanban" aria-pressed="false">По этапам</button>
+        </div>
+      </div>
+      <div class="table-head" id="lead-table-head" aria-hidden="true">
+        <span>№</span><span>Клиент</span><span>Маршрут</span><span>Ставка</span><span>Статус</span><span>Диспетчер</span><span>В очереди</span>
+      </div>
+
+      <div class="rows" id="lead-list" role="list" aria-live="polite"></div>
+      <div class="kanban-board" id="kanban-board" hidden aria-label="Заявки по этапам"></div>
+
+      <div class="empty" id="empty-state" hidden>
+        <strong>Заявок не найдено</strong>
+        <p>Измените фильтр или поисковый запрос.</p>
+      </div>
+
+      <nav class="mobile-nav" aria-label="Навигация">
+        <button type="button" id="nav-queue" aria-current="true">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"></path></svg>
+          Заявки
+        </button>
+        <button type="button" class="add" id="nav-new">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+          Заявка
+        </button>
+        <button type="button" id="nav-profile">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.4"></circle><path d="M5 20c0-3.6 3.1-5.6 7-5.6s7 2 7 5.6"></path></svg>
+          Профиль
+        </button>
+      </nav>
+    </main>
+
+    <!-- --------------------- Карточка заявки --------------------- -->
+    <section class="detail" id="detail" aria-label="Карточка заявки">
+      <div class="detail__empty" id="detail-empty">
+        <div><b>Заявка не выбрана</b>Выберите заявку из списка — здесь появятся данные клиента, история и документы.</div>
+      </div>
+      <div class="detail__inner" id="detail-inner" hidden></div>
+    </section>
+
+    <!-- ------------------------ Журнал CRM -------------------------
+         Лежит внутри #crm-app, поэтому на экранах входа и «нет доступа»
+         его не видно вместе с приложением: раньше он стоял вне контейнера
+         и показывал число заявок тому, у кого доступа нет.
+         По умолчанию скрыт и не висит поверх интерфейса — открывается
+         кнопкой «Состояние системы» в профиле. -->
+    <details class="diagnostics" id="diagnostic-panel" hidden>
+      <summary>Состояние системы <span id="diag-leads-count">0 заявок</span></summary>
+      <div id="diagnostic-log-area" class="diagnostic-log" role="log" aria-live="polite">
+        <div class="diagnostic-head"><span>ЖУРНАЛ CRM</span><span>LIVE</span></div>
+        <div id="diag-output-console"></div>
+      </div>
+    </details>
+  </div>
+
+  <div class="scrim" id="scrim" hidden></div>
+
+  <!-- ------------------------- Профиль ------------------------- -->
+  <section class="sheet" id="profile-sheet" hidden aria-label="Профиль">
+    <header class="sheet__head">
+      <h2>Профиль</h2>
+      <button class="btn btn--icon" type="button" data-sheet-close aria-label="Закрыть">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </button>
+    </header>
+    <div class="sheet__body">
+      <div class="profile">
+        <span class="avatar avatar--lg" id="profile-avatar" aria-hidden="true">A</span>
+        <span><b id="profile-name">Диспетчер</b><small id="profile-role">Telegram WebApp</small></span>
+      </div>
+      <div class="actions actions--stack">
+        <button class="btn" type="button" id="btn-profile-refresh">Обновить заявки</button>
+        <button class="btn" type="button" id="btn-profile-access" hidden>Доступ диспетчеров</button>
+        <button class="btn" type="button" id="btn-profile-diagnostics">Состояние системы</button>
+        <button class="btn btn--danger" type="button" id="btn-profile-logout" hidden>Выйти на этом устройстве</button>
+        <a class="btn" href="https://t.me/asmalinesbot" target="_blank" rel="noopener">Бот диспетчерской в Telegram</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------ Экраны загрузки и отказа ------------------ -->
+  <section class="gate" id="crm-loading" role="status">
+    <div class="gate-panel">
+      <img class="img-light" src="assets/brand/asma-mark-light.svg" alt="" width="42" height="42"><img class="img-dark" src="assets/brand/asma-mark-dark.svg" alt="" width="42" height="42">
+      <h2>Подключение диспетчерской</h2>
+      <p>Проверяем доступ и загружаем общую базу заявок.</p>
+    </div>
+  </section>
+  <section class="gate" id="crm-offline" hidden>
+    <div class="gate-panel">
+      <img class="img-light" src="assets/brand/asma-mark-light.svg" alt="" width="42" height="42"><img class="img-dark" src="assets/brand/asma-mark-dark.svg" alt="" width="42" height="42">
+      <h2>База временно недоступна</h2>
+      <p>Данные не загружены. Повторите попытку, когда соединение восстановится.</p>
+      <button class="btn btn--primary" id="btn-retry" type="button">Повторить</button>
+    </div>
+  </section>
+  <!-- ------------------- Вход с компьютера ------------------- -->
+  <section class="gate gate--login" id="crm-login" hidden>
+    <div class="gate-panel gate-panel--wide">
+      <img class="img-light" src="assets/brand/asma-mark-light.svg" alt="ASMA Lines" width="42" height="42"><img class="img-dark" src="assets/brand/asma-mark-dark.svg" alt="" width="42" height="42">
+      <h2>Вход в диспетчерскую</h2>
+      <p>Откройте Telegram-бот и подтвердите вход — на телефоне это одно касание.</p>
+      <div class="login">
+        <div class="login__code">
+          <span>Код входа</span>
+          <b id="login-code">—</b>
+          <small id="login-timer"></small>
+        </div>
+        <div class="login__qr">
+          <img id="login-qr" alt="QR-код: откройте бота и подтвердите вход" hidden>
+          <small>Наведите камеру телефона — Telegram откроется с этим кодом</small>
+        </div>
+      </div>
+      <p class="login__status" id="login-status" role="status" aria-live="polite">Готовим код…</p>
+      <div class="login__actions">
+        <a class="btn btn--primary" id="login-open" href="https://t.me/asmalinesbot" target="_blank" rel="noopener">Открыть Telegram</a>
+        <button class="btn" type="button" id="login-restart">Новый код</button>
+      </div>
+      <p class="login__hint">Можно и текстом: отправьте боту <code id="login-hint-code">/login 482-173</code>.</p>
+    </div>
+  </section>
+
+  <section class="gate" id="crm-gate" hidden>
+    <div class="gate-panel">
+      <img class="img-light" src="assets/brand/asma-mark-light.svg" alt="ASMA Lines" width="42" height="42"><img class="img-dark" src="assets/brand/asma-mark-dark.svg" alt="" width="42" height="42">
+      <h2>Диспетчерская закрыта</h2>
+      <p id="gate-message">Откройте диспетчерскую через Telegram-бот ASMA Lines.</p>
+      <a class="btn btn--primary" href="https://t.me/asmalinesbot?start=crm">Открыть Telegram</a>
+    </div>
+  </section>
+
+  <!-- ------------------------ Новая заявка ------------------------ -->
+  <dialog class="dialog" id="lead-dialog">
+    <form id="lead-form">
+      <header class="dialog-head"><h2>Новая заявка</h2><button class="btn btn--icon" data-close type="button" aria-label="Закрыть">✕</button></header>
+      <div class="dialog-body">
+        <label class="field">Клиент / компания<input name="name" maxlength="160" required></label>
+        <div class="field-grid">
+          <label class="field">Телефон или Telegram<input name="contact" maxlength="120" required></label>
+          <label class="field">Email<input name="email" type="email" maxlength="160"></label>
+        </div>
+        <label class="field">Маршрут<input name="route" maxlength="240" placeholder="Минск → Брест"></label>
+        <div class="field-grid">
+          <label class="field">Транспорт<input name="vehicle" maxlength="120"></label>
+          <label class="field">Вес / объём<input name="weight" maxlength="80"></label>
+        </div>
+        <label class="field">Ориентир стоимости<input name="price" maxlength="80"></label>
+        <label class="field">Комментарий<textarea name="comment" maxlength="1500"></textarea></label>
+      </div>
+      <footer class="dialog-actions">
+        <button class="btn" data-close type="button">Отмена</button>
+        <button class="btn btn--primary" type="submit">Создать заявку</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- --------------------- Доступ диспетчеров --------------------- -->
+  <dialog class="dialog" id="access-dialog">
+    <header class="dialog-head"><h2>Доступ диспетчеров</h2><button class="btn btn--icon" data-close type="button" aria-label="Закрыть">✕</button></header>
+    <div class="dialog-body">
+      <ul class="access-list" id="access-list"></ul>
+      <form id="access-form">
+        <div class="dialog-body" style="padding:0">
+          <div class="field-grid">
+            <label class="field">Telegram username<input name="username" placeholder="@username"></label>
+            <label class="field">Telegram ID<input name="id" inputmode="numeric" placeholder="123456789"></label>
+          </div>
+          <label class="field">Имя<input name="name" maxlength="100"></label>
+        </div>
+        <div class="dialog-actions" style="padding:14px 0 0"><button class="btn btn--primary" type="submit">Выдать доступ</button></div>
+      </form>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="assets/crm-next.js?v=20261030"></script>
+</body>
+</html>
